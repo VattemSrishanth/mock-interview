@@ -1,0 +1,201 @@
+package com.intervai.config;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intervai.entity.*;
+import com.intervai.repository.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class DataInitializer implements CommandLineRunner {
+
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final SkillRepository skillRepository;
+    private final InterviewRepository interviewRepository;
+    private final InterviewQuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final PerformanceRepository performanceRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final ObjectMapper objectMapper;
+
+    @Override
+    public void run(String... args) throws Exception {
+        // 1. Roles
+        Role studentRole = roleRepository.findByName(RoleName.ROLE_STUDENT)
+                .orElseGet(() -> roleRepository.save(Role.builder().name(RoleName.ROLE_STUDENT).build()));
+
+        Role adminRole = roleRepository.findByName(RoleName.ROLE_ADMIN)
+                .orElseGet(() -> roleRepository.save(Role.builder().name(RoleName.ROLE_ADMIN).build()));
+
+        // 2. Skills
+        List<String> defaultSkills = List.of(
+                "React", "JavaScript", "TypeScript", "HTML", "CSS", "Tailwind CSS", "Next.js",
+                "Java", "Spring Boot", "Spring Data JPA", "Microservices", "Hibernate",
+                "Python", "Django", "FastAPI",
+                "SQL", "PostgreSQL", "MongoDB", "Redis",
+                "AWS", "Docker", "Kubernetes", "Git", "REST APIs",
+                "System Design", "Communication", "Problem Solving"
+        );
+
+        Map<String, Skill> skillMap = new HashMap<>();
+        for (String skillName : defaultSkills) {
+            Skill s = skillRepository.findByNameIgnoreCase(skillName)
+                    .orElseGet(() -> skillRepository.save(Skill.builder().name(skillName).category("General").build()));
+            skillMap.put(skillName, s);
+        }
+
+        // 3. Demo Student User: Revanth
+        if (!userRepository.existsByEmail("revanth@intervai.com")) {
+            Set<Skill> revanthSkills = new HashSet<>();
+            revanthSkills.add(skillMap.get("React"));
+            revanthSkills.add(skillMap.get("JavaScript"));
+            revanthSkills.add(skillMap.get("HTML"));
+            revanthSkills.add(skillMap.get("CSS"));
+            revanthSkills.add(skillMap.get("REST APIs"));
+
+            User revanth = User.builder()
+                    .name("Revanth")
+                    .email("revanth@intervai.com")
+                    .password(passwordEncoder.encode("password123"))
+                    .targetRole("Frontend Developer")
+                    .experience("Fresher")
+                    .careerGoal("Secure a Frontend Engineer role at a top-tier tech product company")
+                    .avatarUrl("https://api.dicebear.com/7.x/bottts/svg?seed=Revanth")
+                    .interviewStreak(5)
+                    .roles(Set.of(studentRole))
+                    .skills(revanthSkills)
+                    .build();
+
+            revanth = userRepository.save(revanth);
+            log.info("Default student user seeded: revanth@intervai.com / password123");
+
+            // Seed sample past completed interviews for Revanth
+            seedSampleInterview(revanth, "Frontend Developer", "Technical", "Medium", 84, 88, 78, 86, 82, 76,
+                    LocalDateTime.now().minusHours(2), 5,
+                    List.of("Strong grasp of React rendering cycles and hooks", "Structured modular approach to state management"),
+                    List.of("Could provide deeper real-world examples for Core Web Vitals"),
+                    List.of("Review INP and cumulative layout shift optimizations in large SPAs"));
+
+            seedSampleInterview(revanth, "Backend Developer", "HR", "Medium", 76, 72, 82, 78, 75, 74,
+                    LocalDateTime.now().minusDays(1), 5,
+                    List.of("Articulate and professional presence", "Clear enthusiasm for continuous learning"),
+                    List.of("Use the STAR framework more strictly when narrating past conflict resolution"),
+                    List.of("Quantify business outcomes and team velocity improvements"));
+
+            seedSampleInterview(revanth, "Full Stack Developer", "System Design", "Hard", 88, 90, 84, 91, 86, 82,
+                    LocalDateTime.now().minusDays(3), 5,
+                    List.of("Excellent breakdown of micro-frontends and caching layers", "Effective database sharding rationale"),
+                    List.of("Expand on distributed locking with Redis vs Zookeeper"),
+                    List.of("Practice drawing rapid ASCII/mental architecture topologies"));
+
+            // Seed skill performances
+            seedPerformance(revanth, "React", 88, 12);
+            seedPerformance(revanth, "JavaScript", 85, 10);
+            seedPerformance(revanth, "REST APIs", 82, 8);
+            seedPerformance(revanth, "Communication", 79, 15);
+            seedPerformance(revanth, "System Design", 84, 6);
+        }
+
+        // 4. Demo Admin User: Admin
+        if (!userRepository.existsByEmail("admin@intervai.com")) {
+            User admin = User.builder()
+                    .name("Platform Admin")
+                    .email("admin@intervai.com")
+                    .password(passwordEncoder.encode("admin123"))
+                    .targetRole("Site Administrator")
+                    .experience("5+ years")
+                    .careerGoal("Platform Governance")
+                    .avatarUrl("https://api.dicebear.com/7.x/bottts/svg?seed=Admin")
+                    .interviewStreak(12)
+                    .roles(Set.of(adminRole, studentRole))
+                    .build();
+
+            userRepository.save(admin);
+            log.info("Default admin user seeded: admin@intervai.com / admin123");
+        }
+    }
+
+    private void seedPerformance(User user, String skillName, int score, int count) {
+        performanceRepository.save(Performance.builder()
+                .user(user)
+                .skillName(skillName)
+                .score(score)
+                .totalQuestionsEvaluated(count)
+                .build());
+    }
+
+    private void seedSampleInterview(User user, String role, String type, String diff, int overall,
+                                     int tech, int comm, int rel, int clar, int conf,
+                                     LocalDateTime completedAt, int questionsCount,
+                                     List<String> strengths, List<String> weaknesses, List<String> suggestions) throws Exception {
+
+        Interview interview = Interview.builder()
+                .user(user)
+                .jobRole(role)
+                .experience("Fresher")
+                .skills("React,JavaScript,REST APIs")
+                .interviewType(type)
+                .difficulty(diff)
+                .numberOfQuestions(questionsCount)
+                .interviewMode("Text")
+                .status("COMPLETED")
+                .overallScore(overall)
+                .technicalKnowledgeScore(tech)
+                .communicationScore(comm)
+                .relevanceScore(rel)
+                .clarityScore(clar)
+                .confidenceScore(conf)
+                .summaryFeedback("Impressive performance demonstrating strong foundational mastery for " + role + ".")
+                .strengthsJson(objectMapper.writeValueAsString(strengths))
+                .weaknessesJson(objectMapper.writeValueAsString(weaknesses))
+                .recommendationsJson(objectMapper.writeValueAsString(suggestions))
+                .durationSeconds(720)
+                .startedAt(completedAt.minusMinutes(12))
+                .completedAt(completedAt)
+                .build();
+
+        Interview saved = interviewRepository.save(interview);
+
+        // Seed 1 question with answer & feedback
+        InterviewQuestion q1 = questionRepository.save(InterviewQuestion.builder()
+                .interview(saved)
+                .questionOrder(1)
+                .questionText("Explain the difference between useState and useEffect in React.")
+                .category("Technical")
+                .targetSkill("React")
+                .expectedKeyPoints("State updates trigger renders; effects manage asynchronous lifecycle tasks.")
+                .modelAnswer("useState manages local component state and triggers reconciliation upon changes, while useEffect handles asynchronous side effects such as data fetching or subscriptions after DOM render.")
+                .build());
+
+        Answer a1 = answerRepository.save(Answer.builder()
+                .question(q1)
+                .answerText("useState is used for managing component state which causes re-renders when updated. useEffect is used for side effects like API calls and DOM manipulation after rendering.")
+                .timeSpentSeconds(65)
+                .isSkipped(false)
+                .build());
+
+        feedbackRepository.save(Feedback.builder()
+                .answer(a1)
+                .score(overall)
+                .technicalKnowledgeScore(tech)
+                .communicationScore(comm)
+                .relevanceScore(rel)
+                .clarityScore(clar)
+                .confidenceScore(conf)
+                .strengthsJson(objectMapper.writeValueAsString(strengths))
+                .weaknessesJson(objectMapper.writeValueAsString(weaknesses))
+                .suggestionsJson(objectMapper.writeValueAsString(suggestions))
+                .modelAnswer(q1.getModelAnswer())
+                .build());
+    }
+}
