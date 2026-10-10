@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   Bot,
   LayoutDashboard,
@@ -16,11 +17,14 @@ import {
   ChevronRight,
   Menu,
   X,
-  Compass
+  Compass,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export default function Sidebar({ onOpenCoach }) {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { theme, toggleTheme, isLight } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
@@ -66,6 +70,14 @@ export default function Sidebar({ onOpenCoach }) {
             </div>
           </Link>
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 border border-white/10 transition"
+              title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+              aria-label="Toggle Theme"
+            >
+              {isLight ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+            </button>
             <Link
               to="/login"
               className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition"
@@ -99,6 +111,14 @@ export default function Sidebar({ onOpenCoach }) {
           </span>
         </Link>
         <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg bg-white/5 border border-white/10 text-xs"
+            title={isLight ? 'Dark Mode' : 'Light Mode'}
+            aria-label="Toggle Theme"
+          >
+            {isLight ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+          </button>
           <button
             onClick={onOpenCoach}
             className="p-2 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-xs"
@@ -253,6 +273,18 @@ export default function Sidebar({ onOpenCoach }) {
 
         {/* Bottom AI Coach Trigger & Signout */}
         <div className="p-3 border-t border-white/5 space-y-2 shrink-0">
+          {/* Light / Dark Mode Toggle */}
+          <button
+            onClick={toggleTheme}
+            title={collapsed ? (isLight ? 'Dark Mode' : 'Light Mode') : undefined}
+            className={`w-full flex items-center gap-2.5 py-2 px-3 rounded-xl border border-white/10 hover:bg-white/5 transition text-xs font-semibold ${
+              isLight ? 'text-amber-600 bg-amber-500/10' : 'text-slate-300 bg-white/5'
+            } ${collapsed ? 'justify-center' : ''}`}
+          >
+            {isLight ? <Moon className="w-4 h-4 text-indigo-500 shrink-0" /> : <Sun className="w-4 h-4 text-amber-400 shrink-0" />}
+            {!collapsed && <span>{isLight ? 'Dark Mode' : 'Light Mode'}</span>}
+          </button>
+
           <button
             onClick={() => {
               setMobileOpen(false);
@@ -282,3 +314,4 @@ export default function Sidebar({ onOpenCoach }) {
     </>
   );
 }
+
