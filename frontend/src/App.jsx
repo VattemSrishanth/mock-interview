@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import AiCoachDrawer from './components/AiCoachDrawer';
+import { useAuth } from './context/AuthContext';
 
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -20,12 +21,15 @@ import ProfilePage from './pages/ProfilePage';
 
 export default function App() {
   const [isCoachOpen, setIsCoachOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#080c15] text-slate-100 selection:bg-brand-500/30 selection:text-brand-400">
-      <Navbar onOpenCoach={() => setIsCoachOpen(true)} />
+    <div className="min-h-screen bg-[#080c15] text-slate-100 selection:bg-brand-500/30 selection:text-brand-400">
+      <Sidebar onOpenCoach={() => setIsCoachOpen(true)} />
 
-      <main className="flex-grow">
+      {/* Main Content Area: adjusts margin when authenticated user views with sidebar */}
+      <div className={`flex flex-col min-h-screen ${isAuthenticated ? 'md:pl-64 transition-all duration-300' : ''}`}>
+        <main className="flex-grow">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
@@ -130,6 +134,7 @@ export default function App() {
       </main>
 
       <Footer />
+      </div>
 
       {/* Global AI Career Coach Drawer */}
       <AiCoachDrawer
