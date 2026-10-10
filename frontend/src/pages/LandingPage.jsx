@@ -40,7 +40,7 @@ export default function LandingPage() {
     {
       icon: BrainCircuit,
       title: "Adaptive AI Questioning",
-      desc: "Dynamically formulates contextual follow-up questions tailored to your responses, just like an experienced engineering Interrviewer.",
+      desc: "Dynamically formulates contextual follow-up questions tailored to your responses, just like an experienced engineering interviewer.",
       color: "from-brand-500/20 to-emerald-500/20",
       accent: "text-brand-400"
     },
