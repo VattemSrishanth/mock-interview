@@ -53,7 +53,7 @@ export default function LoginPage() {
             </div>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Sign In to Interv<span className="text-brand-400">AI</span>
+            Sign In to Interview <span className="text-brand-400">AI</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mt-2">
             Continue your interview preparation and performance tracking

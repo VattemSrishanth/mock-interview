@@ -389,7 +389,7 @@ export default function LiveInterviewPage() {
 
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center justify-center gap-1.5">
-                  IntervAI Senior Evaluator
+                  Interview AI Senior Evaluator
                 </h3>
                 <p className="text-[11px] text-slate-400">
                   {isAiSpeaking ? 'Narrating question...' : isEvaluating ? 'Evaluating technical depth...' : 'Listening actively'}

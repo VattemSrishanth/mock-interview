@@ -20,7 +20,7 @@ export default function AiCoachDrawer({ isOpen, onClose }) {
     {
       id: 1,
       sender: 'coach',
-      text: "👋 Hi! I'm your IntervAI Career Coach. I can analyze your target role, advise on STAR method strategies, or recommend skills to focus on. How can I assist you today?"
+      text: "👋 Hi! I'm your Interview AI Career Coach. I can analyze your target role, advise on STAR method strategies, or recommend skills to focus on. How can I assist you today?"
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
@@ -270,7 +270,7 @@ export default function AiCoachDrawer({ isOpen, onClose }) {
                 Dual-AI Smart Engine
               </div>
               <p>
-                IntervAI comes equipped with simulated intelligent generation out-of-the-box. To connect your live Gemini or OpenAI models, provide your private key below.
+                Interview AI comes equipped with simulated intelligent generation out-of-the-box. To connect your live Gemini or OpenAI models, provide your private key below.
               </p>
             </div>
 

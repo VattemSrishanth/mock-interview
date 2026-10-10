@@ -66,7 +66,7 @@ export default function InterviewLobbyPage() {
   const testAudioOutput = () => {
     setSpeakerTesting(true);
     if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance("IntervAI audio test. Audio is functional.");
+      const utterance = new SpeechSynthesisUtterance("Interview AI audio test. Audio is functional.");
       utterance.rate = 1.0;
       utterance.onend = () => setSpeakerTesting(false);
       utterance.onerror = () => setSpeakerTesting(false);

@@ -53,7 +53,7 @@ export default function Navbar({ onOpenCoach }) {
             </div>
             <div>
               <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                Interv<span className="text-brand-400">AI</span>
+                Interview <span className="text-brand-400">AI</span>
               </span>
               <span className="hidden sm:inline-block ml-2 px-1.5 py-0.5 text-[10px] uppercase font-semibold tracking-wider text-brand-400 bg-brand-500/10 border border-brand-500/20 rounded">
                 PRO AI

@@ -11,7 +11,7 @@ export default function Footer() {
               <Bot className="w-4 h-4 text-brand-400" />
             </div>
             <span className="text-sm font-semibold text-white tracking-wide">
-              Interv<span className="text-brand-400">AI</span> Platform
+              Interview <span className="text-brand-400">AI</span> Platform
             </span>
             <span className="text-slate-600">|</span>
             <span className="text-slate-400">Production AI Mock Interview System</span>
@@ -29,7 +29,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]">
-          <p>© {new Date().getFullYear()} IntervAI Technologies. Engineered for aspiring software engineers.</p>
+          <p>© {new Date().getFullYear()} Interview AI Technologies. Engineered for aspiring software engineers.</p>
           <div className="flex items-center gap-4">
             <span className="hover:text-slate-300 transition cursor-pointer">Security Standards</span>
             <span className="hover:text-slate-300 transition cursor-pointer">API Reference</span>

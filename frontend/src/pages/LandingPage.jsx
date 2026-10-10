@@ -180,7 +180,7 @@ export default function LandingPage() {
             <div className="md:col-span-7 space-y-4">
               <div className="flex items-center gap-2 text-xs font-semibold text-brand-400 uppercase tracking-wider">
                 <Bot className="w-4 h-4" />
-                IntervAI Technical Question 02 / 05 &bull; React Internal Architecture
+                Interview AI Technical Question 02 / 05 &bull; React Internal Architecture
               </div>
               <h3 className="text-lg md:text-xl font-semibold text-white leading-snug">
                 "Explain how React's reconciliation algorithm works with the Virtual DOM, and why key props are crucial when rendering dynamic lists?"

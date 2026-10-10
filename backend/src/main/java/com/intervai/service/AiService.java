@@ -611,7 +611,29 @@ public class AiService {
     }
 
     private String generateModelAnswer(String question, String skill) {
-        return "An exemplary response defines the primary concept clearly, illustrates a concrete real-world implementation example, discusses architectural trade-offs (such as memory vs latency or complexity vs maintainability), and highlights how telemetry and edge cases are handled in production.";
+        if (question == null) return "A strong answer articulates the core principle, real-world application, and architectural trade-offs.";
+        String q = question.toLowerCase();
+
+        if (q.contains("usestate") && q.contains("useeffect")) {
+            return "A senior-level answer contrasts useState (which manages local state triggers and causes component re-renders) with useEffect (which defers side-effects asynchronously after the paint phase). Crucially, useLayoutEffect runs synchronously immediately after all DOM mutations but before the browser paints. It is specifically used when measuring layout geometries (getBoundingClientRect) or mutating styles synchronously to prevent visual flicker.";
+        }
+        if (q.contains("virtual dom") || q.contains("reconciliation")) {
+            return "An exemplary response explains that modern React maintains a lightweight fiber-node tree representing the UI. During reconciliation, React's diffing heuristic assumes elements with different types will produce different trees, and uses unique 'key' props to track list items across renders without tearing down DOM nodes. Updates are scheduled in lanes and committed in batch to maximize 60fps responsiveness.";
+        }
+        if (q.contains("hashmap") && q.contains("collision")) {
+            return "An ideal answer details Java's array of bucket nodes where indices are calculated via key.hashCode() spread functions. Collisions are handled via linked nodes in each bucket. Since Java 8, when a bucket exceeds TREEIFY_THRESHOLD (8 entries) and table capacity reaches 64, it morphs into a balanced Red-Black Tree, safeguarding lookup performance at O(log n) instead of worst-case O(n).";
+        }
+        if (q.contains("singleton") || q.contains("prototype")) {
+            return "A strong candidate distinguishes that Spring Singleton creates exactly one shared instance per ApplicationContext container, while Prototype creates a new instance on every lookup/injection. Because singleton beans are accessed by multiple request threads concurrently, they must remain strictly stateless or use atomic thread-safe primitives to prevent race conditions.";
+        }
+        if (q.contains("event loop")) {
+            return "An exemplary response outlines how JavaScript runs on a single thread with a call stack. Asynchronous operations offload to browser/Node APIs. When the call stack clears, the Event Loop first drains all jobs in the Microtask queue (Promises, queueMicrotask) completely before dequeuing the next single Task from the Macrotask queue (setTimeout, setInterval, I/O).";
+        }
+        if (q.contains("jwt") || q.contains("refresh token")) {
+            return "Production-ready answer: Short-lived access tokens (10-15m) are sent in the Authorization header. Long-lived refresh tokens are stored in secure, HttpOnly, SameSite=Strict cookies to protect against XSS. Token rotation is enforced on every refresh call, and token revocation is tracked via Redis blacklists or user token versioning.";
+        }
+
+        return "An exemplary response defines the primary concept clearly, illustrates a concrete real-world implementation example, discusses architectural trade-offs (such as memory vs latency or complexity vs maintainability), and highlights how telemetry, error boundaries, and edge cases are handled in production.";
     }
 
     private AiCoachResponse fallbackCoachResponse(String message) {
