@@ -24,7 +24,11 @@ export default function LandingPage() {
   const handleQuickDemo = async (role) => {
     try {
       if (role === 'student') {
-        await login({ email: 'revanth@intervai.com', password: 'password123' });
+        try {
+          await login({ email: 'srishanth@intervai.com', password: 'password123' });
+        } catch {
+          await login({ email: 'revanth@intervai.com', password: 'password123' });
+        }
         navigate('/dashboard');
       } else {
         await login({ email: 'admin@intervai.com', password: 'admin123' });
@@ -142,7 +146,7 @@ export default function LandingPage() {
                 onClick={() => handleQuickDemo('student')}
                 className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 font-medium transition"
               >
-                Demo Student (Revanth)
+                Demo Student (V Srishanth)
               </button>
               <button
                 onClick={() => handleQuickDemo('admin')}

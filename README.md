@@ -29,7 +29,7 @@ The platform automatically seeds demo accounts with realistic mock interview his
 
 | Role | Email | Password | Pre-seeded Features |
 |------|-------|----------|---------------------|
-| **Student** | `revanth@intervai.com` | `password123` | Frontend focus, 5-day streak, 3 completed interviews, skill metrics |
+| **Student (V Srishanth)** | `srishanth@intervai.com` | `password123` | Frontend focus, 5-day streak, 3 completed interviews, skill metrics |
 | **Admin** | `admin@intervai.com` | `admin123` | Platform governance, candidate directory, interview logs |
 
 *Note: You can also register a brand-new account from the Register page.*

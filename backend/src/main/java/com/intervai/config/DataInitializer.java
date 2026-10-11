@@ -54,56 +54,64 @@ public class DataInitializer implements CommandLineRunner {
             skillMap.put(skillName, s);
         }
 
-        // 3. Demo Student User: Revanth
-        if (!userRepository.existsByEmail("revanth@intervai.com")) {
-            Set<Skill> revanthSkills = new HashSet<>();
-            revanthSkills.add(skillMap.get("React"));
-            revanthSkills.add(skillMap.get("JavaScript"));
-            revanthSkills.add(skillMap.get("HTML"));
-            revanthSkills.add(skillMap.get("CSS"));
-            revanthSkills.add(skillMap.get("REST APIs"));
+        // 3. Demo Student User: V Srishanth
+        if (!userRepository.existsByEmail("srishanth@intervai.com") && !userRepository.existsByEmail("revanth@intervai.com")) {
+            Set<Skill> srishanthSkills = new HashSet<>();
+            srishanthSkills.add(skillMap.get("React"));
+            srishanthSkills.add(skillMap.get("JavaScript"));
+            srishanthSkills.add(skillMap.get("HTML"));
+            srishanthSkills.add(skillMap.get("CSS"));
+            srishanthSkills.add(skillMap.get("REST APIs"));
 
-            User revanth = User.builder()
-                    .name("Revanth")
-                    .email("revanth@intervai.com")
+            User srishanth = User.builder()
+                    .name("V Srishanth")
+                    .email("srishanth@intervai.com")
                     .password(passwordEncoder.encode("password123"))
                     .targetRole("Frontend Developer")
                     .experience("Fresher")
                     .careerGoal("Secure a Frontend Engineer role at a top-tier tech product company")
-                    .avatarUrl("https://api.dicebear.com/7.x/bottts/svg?seed=Revanth")
+                    .avatarUrl("https://api.dicebear.com/7.x/bottts/svg?seed=Srishanth")
                     .interviewStreak(5)
                     .roles(Set.of(studentRole))
-                    .skills(revanthSkills)
+                    .skills(srishanthSkills)
                     .build();
 
-            revanth = userRepository.save(revanth);
-            log.info("Default student user seeded: revanth@intervai.com / password123");
+            srishanth = userRepository.save(srishanth);
+            log.info("Default student user seeded: srishanth@intervai.com / password123");
 
-            // Seed sample past completed interviews for Revanth
-            seedSampleInterview(revanth, "Frontend Developer", "Technical", "Medium", 84, 88, 78, 86, 82, 76,
+            // Seed sample past completed interviews for V Srishanth
+            seedSampleInterview(srishanth, "Frontend Developer", "Technical", "Medium", 84, 88, 78, 86, 82, 76,
                     LocalDateTime.now().minusHours(2), 5,
                     List.of("Strong grasp of React rendering cycles and hooks", "Structured modular approach to state management"),
                     List.of("Could provide deeper real-world examples for Core Web Vitals"),
                     List.of("Review INP and cumulative layout shift optimizations in large SPAs"));
 
-            seedSampleInterview(revanth, "Backend Developer", "HR", "Medium", 76, 72, 82, 78, 75, 74,
+            seedSampleInterview(srishanth, "Backend Developer", "HR", "Medium", 76, 72, 82, 78, 75, 74,
                     LocalDateTime.now().minusDays(1), 5,
                     List.of("Articulate and professional presence", "Clear enthusiasm for continuous learning"),
                     List.of("Use the STAR framework more strictly when narrating past conflict resolution"),
                     List.of("Quantify business outcomes and team velocity improvements"));
 
-            seedSampleInterview(revanth, "Full Stack Developer", "System Design", "Hard", 88, 90, 84, 91, 86, 82,
+            seedSampleInterview(srishanth, "Full Stack Developer", "System Design", "Hard", 88, 90, 84, 91, 86, 82,
                     LocalDateTime.now().minusDays(3), 5,
                     List.of("Excellent breakdown of micro-frontends and caching layers", "Effective database sharding rationale"),
                     List.of("Expand on distributed locking with Redis vs Zookeeper"),
                     List.of("Practice drawing rapid ASCII/mental architecture topologies"));
 
             // Seed skill performances
-            seedPerformance(revanth, "React", 88, 12);
-            seedPerformance(revanth, "JavaScript", 85, 10);
-            seedPerformance(revanth, "REST APIs", 82, 8);
-            seedPerformance(revanth, "Communication", 79, 15);
-            seedPerformance(revanth, "System Design", 84, 6);
+            seedPerformance(srishanth, "React", 88, 12);
+            seedPerformance(srishanth, "JavaScript", 85, 10);
+            seedPerformance(srishanth, "REST APIs", 82, 8);
+            seedPerformance(srishanth, "Communication", 79, 15);
+            seedPerformance(srishanth, "System Design", 84, 6);
+        } else if (userRepository.existsByEmail("revanth@intervai.com")) {
+            userRepository.findByEmail("revanth@intervai.com").ifPresent(u -> {
+                u.setName("V Srishanth");
+                u.setEmail("srishanth@intervai.com");
+                u.setAvatarUrl("https://api.dicebear.com/7.x/bottts/svg?seed=Srishanth");
+                userRepository.save(u);
+                log.info("Updated existing demo student to V Srishanth (srishanth@intervai.com)");
+            });
         }
 
         // 4. Demo Admin User: Admin

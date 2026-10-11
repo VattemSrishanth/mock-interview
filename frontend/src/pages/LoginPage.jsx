@@ -69,10 +69,16 @@ export default function LoginPage() {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => handleQuickLogin('revanth@intervai.com', 'password123')}
+              onClick={async () => {
+                try {
+                  await handleQuickLogin('srishanth@intervai.com', 'password123');
+                } catch {
+                  await handleQuickLogin('revanth@intervai.com', 'password123');
+                }
+              }}
               className="px-3 py-2 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 text-xs font-medium text-left transition"
             >
-              <div className="font-semibold text-white">Student (Revanth)</div>
+              <div className="font-semibold text-white">Student (V Srishanth)</div>
               <div className="text-[10px] text-indigo-300 opacity-80">Frontend Track</div>
             </button>
             <button
