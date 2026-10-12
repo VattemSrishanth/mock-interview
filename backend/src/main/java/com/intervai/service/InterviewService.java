@@ -316,8 +316,9 @@ public class InterviewService {
                 .orElseThrow(() -> new ResourceNotFoundException("Interview not found with id: " + interviewId));
 
         if (!interview.getUser().getId().equals(userId)) {
-            // Also allow admin check if needed
-            boolean isAdmin = interview.getUser().getRoles().stream()
+            User requestingUser = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+            boolean isAdmin = requestingUser.getRoles().stream()
                     .anyMatch(r -> r.getName().equals(RoleName.ROLE_ADMIN));
             if (!isAdmin) {
                 throw new UnauthorizedException("You are not authorized to access this interview");

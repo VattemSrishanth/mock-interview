@@ -50,6 +50,7 @@ public class AiCoachController {
     }
 
     @PostMapping("/configure-key")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Map<String, String>> configureKey(@RequestBody Map<String, String> body) {
         String provider = body.get("provider");
         String key = body.get("apiKey");

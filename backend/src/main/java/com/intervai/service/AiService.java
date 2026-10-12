@@ -37,7 +37,10 @@ public class AiService {
 
     public AiService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        this.restTemplate = new RestTemplate();
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10000); // 10s timeout
+        factory.setReadTimeout(20000);    // 20s timeout
+        this.restTemplate = new RestTemplate(factory);
     }
 
     public synchronized void setGeminiApiKey(String key) {

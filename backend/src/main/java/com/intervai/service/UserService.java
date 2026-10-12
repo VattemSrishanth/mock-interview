@@ -62,6 +62,17 @@ public class UserService {
     public List<UserDto> getLeaderboard() {
         return userRepository.findAll().stream()
                 .map(this::mapToDto)
+                .map(u -> {
+                    // Privacy protection: Mask email in public leaderboards
+                    if (u.getEmail() != null && u.getEmail().contains("@")) {
+                        String[] parts = u.getEmail().split("@");
+                        String maskedPrefix = parts[0].length() > 2
+                                ? parts[0].substring(0, 2) + "***"
+                                : "***";
+                        u.setEmail(maskedPrefix + "@" + parts[1]);
+                    }
+                    return u;
+                })
                 .sorted((a, b) -> {
                     Double scoreA = a.getAverageScore() != null ? a.getAverageScore() : 0.0;
                     Double scoreB = b.getAverageScore() != null ? b.getAverageScore() : 0.0;
