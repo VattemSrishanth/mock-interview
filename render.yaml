@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: intervai-backend
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
