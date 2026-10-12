@@ -1,0 +1,7 @@
+node_modules/
+frontend/
+.git/
+.gitignore
+backend/target/
+backend/data/
+*.log
