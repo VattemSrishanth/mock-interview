@@ -14,6 +14,17 @@ import {
   Cpu
 } from 'lucide-react';
 
+const ROLE_SKILLS = {
+  'Frontend Developer': ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'Web Performance'],
+  'Backend Developer': ['Java', 'Spring Boot', 'REST APIs', 'SQL', 'PostgreSQL', 'Redis'],
+  'Full Stack Developer': ['React', 'TypeScript', 'Node.js', 'REST APIs', 'PostgreSQL', 'Docker'],
+  'DevOps Engineer': ['Linux', 'Docker', 'Kubernetes', 'AWS', 'CI/CD', 'Terraform'],
+  'Data Engineer': ['Python', 'SQL', 'PostgreSQL', 'Apache Spark', 'Kafka', 'AWS'],
+  'Machine Learning Engineer': ['Python', 'PyTorch', 'TensorFlow', 'Scikit-learn', 'MLOps', 'SQL'],
+  'Software Engineer': ['Java', 'Python', 'Data Structures', 'Algorithms', 'SQL', 'Git'],
+  'System Architect': ['System Design', 'Microservices', 'AWS', 'Kubernetes', 'Kafka', 'PostgreSQL']
+};
+
 export default function CreateInterviewPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,9 +37,7 @@ export default function CreateInterviewPage() {
     difficulty: preset.diff || 'Medium',
     questionCount: 5,
     mode: 'AUDIO_AND_TEXT',
-    skills: preset.role === 'Backend Developer' 
-      ? ['Java', 'Spring Boot', 'SQL']
-      : ['React', 'JavaScript', 'CSS']
+    skills: ROLE_SKILLS[preset.role || 'Frontend Developer']
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -60,13 +69,18 @@ export default function CreateInterviewPage() {
   ];
 
   const skillOptions = [
-    'React', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'Tailwind CSS', 'Next.js',
+    'React', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'Tailwind CSS', 'Next.js', 'Web Performance',
     'Java', 'Spring Boot', 'Spring Data JPA', 'Microservices', 'Hibernate',
-    'Python', 'Django', 'FastAPI', 'Node.js',
+    'Python', 'Django', 'FastAPI', 'Node.js', 'Linux', 'CI/CD', 'Terraform',
     'SQL', 'PostgreSQL', 'MongoDB', 'Redis',
-    'Docker', 'Kubernetes', 'AWS', 'Git', 'REST APIs',
+    'Docker', 'Kubernetes', 'AWS', 'Git', 'REST APIs', 'Apache Spark', 'Kafka',
+    'PyTorch', 'TensorFlow', 'Scikit-learn', 'MLOps', 'Data Structures', 'Algorithms',
     'System Design', 'Communication', 'STAR Method'
   ];
+
+  const handleRoleChange = (jobRole) => {
+    setFormData((prev) => ({ ...prev, jobRole, skills: ROLE_SKILLS[jobRole] || prev.skills }));
+  };
 
   const toggleSkill = (skill) => {
     setFormData((prev) => {
@@ -151,7 +165,7 @@ export default function CreateInterviewPage() {
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">Job Role</label>
               <select
                 value={formData.jobRole}
-                onChange={(e) => setFormData({ ...formData, jobRole: e.target.value })}
+                onChange={(e) => handleRoleChange(e.target.value)}
                 className="w-full bg-[#151f33] border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-brand-500"
               >
                 {jobRoles.map((role) => (
@@ -326,6 +340,7 @@ export default function CreateInterviewPage() {
             </button>
           </div>
 
+          <p className="text-[11px] text-slate-400">Suggested stack for {formData.jobRole}. Add or remove skills to customize what the interviewer focuses on.</p>
           <div className="flex flex-wrap gap-2">
             {skillOptions.map((skill) => {
               const active = formData.skills.includes(skill);

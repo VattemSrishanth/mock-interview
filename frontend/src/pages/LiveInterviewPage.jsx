@@ -37,40 +37,57 @@ export default function LiveInterviewPage() {
   const [showHint, setShowHint] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   const recognitionRef = useRef(null);
 
   // Fetch interview session
   useEffect(() => {
+    let cancelled = false;
     const fetchInterview = async () => {
-      try {
-        const data = await interviewApi.getById(id);
-        setInterview(data);
+      setLoading(true);
+      setError('');
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          const data = await interviewApi.getById(id);
+          if (cancelled) return;
+          setInterview(data);
 
-        if (data.status === 'COMPLETED') {
-          navigate(`/interviews/${id}/result`);
-          return;
-        }
-
-        // Find first unanswered question
-        if (data.questions && data.questions.length > 0) {
-          const firstUnansweredIndex = data.questions.findIndex((q) => !q.isAnswered);
-          if (firstUnansweredIndex !== -1) {
-            setCurrentQuestionIndex(firstUnansweredIndex);
-          } else {
-            // All answered, navigate to result
+          if (data.status === 'COMPLETED') {
             navigate(`/interviews/${id}/result`);
+            return;
           }
+
+          if (data.questions && data.questions.length > 0) {
+            const firstUnansweredIndex = data.questions.findIndex((q) => !q.isAnswered);
+            if (firstUnansweredIndex !== -1) {
+              setCurrentQuestionIndex(firstUnansweredIndex);
+            } else {
+              navigate(`/interviews/${id}/result`);
+            }
+          }
+          setLoading(false);
+          return;
+        } catch (err) {
+          if (cancelled) return;
+          const status = err.response?.status;
+          const retryable = !status || status >= 500;
+          if (!retryable || attempt === 2) {
+            const serverMessage = err.response?.data?.message;
+            setError(serverMessage || (status
+              ? `Could not load this interview (HTTP ${status}). Please retry or return to your dashboard.`
+              : 'Cannot reach the interview service. Check that the backend is running, then retry.'));
+            setLoading(false);
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
         }
-      } catch (err) {
-        setError('Failed to load active interview session.');
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchInterview();
-  }, [id, navigate]);
+    return () => { cancelled = true; };
+  }, [id, navigate, loadAttempt]);
 
   // Session timer
   useEffect(() => {
@@ -288,12 +305,20 @@ export default function LiveInterviewPage() {
         <AlertCircle className="w-10 h-10 text-red-400 mx-auto" />
         <h2 className="text-lg font-bold text-white">Session Unavailable</h2>
         <p className="text-xs text-slate-400">{error || 'Interview session missing.'}</p>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold"
-        >
-          Return to Dashboard
-        </button>
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => { setInterview(null); setLoading(true); setLoadAttempt((attempt) => attempt + 1); }}
+            className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-slate-950 text-xs font-semibold"
+          >
+            Retry Loading
+          </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold"
+          >
+            Return to Dashboard
+          </button>
+        </div>
       </div>
     );
   }

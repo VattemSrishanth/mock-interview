@@ -317,12 +317,13 @@ public class AiService {
     // ==========================================
 
     private String buildQuestionGenerationPrompt(CreateInterviewRequest request, int count) {
-        return "Generate exactly " + count + " realistic, high-impact interview questions for a mock interview.\n"
+        return "Act as a specialist interviewer. Generate exactly " + count + " realistic questions.\n"
                 + "Target Job Role: " + request.getJobRole() + "\n"
                 + "Experience Level: " + request.getExperience() + "\n"
-                + "Skills: " + (request.getSkills() != null ? String.join(", ", request.getSkills()) : "General") + "\n"
+                + "Candidate-selected technologies and focus skills (mandatory question coverage): " + (request.getSkills() != null ? String.join(", ", request.getSkills()) : "General") + "\n"
                 + "Interview Type: " + request.getInterviewType() + "\n"
-                + "Difficulty: " + request.getDifficulty() + "\n\n"
+                + "Difficulty: " + request.getDifficulty() + "\n"
+                + "Every question must test at least one selected skill and explicitly name its technology/concept. Distribute questions across selected skills; do not use generic unrelated questions. Match the requested track: Technical, STAR behavioral, System Design architecture trade-offs, or Coding implementation exercises. Calibrate depth to role, experience, and difficulty.\n\n"
                 + "Respond with a JSON object containing a 'questions' array. Each item must have:\n"
                 + "- questionOrder (integer, starting at 1)\n"
                 + "- questionText (string, the complete interview question)\n"
@@ -414,155 +415,58 @@ public class AiService {
     // ==========================================
 
     private List<InterviewQuestion> generateFallbackQuestions(CreateInterviewRequest request, int count) {
-        String role = request.getJobRole() != null ? request.getJobRole() : "Software Engineer";
-        String type = request.getInterviewType() != null ? request.getInterviewType() : "Technical";
-        String diff = request.getDifficulty() != null ? request.getDifficulty() : "Medium";
-        List<String> skills = (request.getSkills() != null && !request.getSkills().isEmpty())
-                ? request.getSkills() : List.of("Problem Solving", "System Architecture", "Best Practices");
-
-        List<InterviewQuestion> bank = new ArrayList<>();
-
-        if (role.toLowerCase().contains("frontend")) {
-            bank.add(InterviewQuestion.builder()
-                    .questionText("Explain the difference between useState and useEffect in React. When would you use useLayoutEffect instead?")
-                    .category("Technical")
-                    .targetSkill("React")
-                    .expectedKeyPoints("useState triggers re-renders on state mutation; useEffect runs asynchronously after DOM paint; useLayoutEffect runs synchronously before paint to avoid visual flickers.")
-                    .modelAnswer("useState declares a state variable and setter. useEffect executes side-effects (fetching, subscriptions) post-render asynchronously. useLayoutEffect fires synchronously immediately after DOM mutations, ideal for DOM layout measurements before paint.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("How does the Virtual DOM work in modern React, and how does reconciliation optimize rendering performance?")
-                    .category("Technical")
-                    .targetSkill("React")
-                    .expectedKeyPoints("Fiber tree diffing, heuristic O(n) complexity, key reconciliation, batching updates.")
-                    .modelAnswer("React maintains a lightweight in-memory representation of the UI. When state changes, a new Virtual DOM tree is generated, diffed with the previous tree using the Fiber reconciliation algorithm, and minimal necessary batch mutations are applied to the real DOM.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("Describe the Event Loop in JavaScript. How do microtasks (Promises) and macrotasks (setTimeout) differ in execution priority?")
-                    .category("Technical")
-                    .targetSkill("JavaScript")
-                    .expectedKeyPoints("Call stack, Web APIs, Microtask queue, Task/Callback queue, tick order.")
-                    .modelAnswer("JavaScript is single-threaded. Synchronous code executes in the call stack. Asynchronous tasks offload to the runtime. The event loop prioritizes draining the entire microtask queue (Promises, queueMicrotask) after each stack frame before picking the next macrotask (setTimeout, setInterval).")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("What strategies do you employ to optimize Core Web Vitals (LCP, FID/INP, CLS) in a large-scale React single-page application?")
-                    .category("Technical")
-                    .targetSkill("Performance")
-                    .expectedKeyPoints("Code splitting with React.lazy, image optimization (WebP/AVIF, lazy loading), layout reserve dimensions, tree-shaking, CDN caching.")
-                    .modelAnswer("For LCP: Preload critical assets, SSR/SSG, code-split non-critical bundles. For INP: Web workers for heavy computation, debouncing handlers, useTransition. For CLS: Specify explicit width/height dimensions on images, skeleton placeholders, and avoid dynamic unreserved layout injection.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("Tell me about a time you encountered a severe frontend bug or state synchronization issue in production. How did you diagnose and resolve it?")
-                    .category("Behavioral")
-                    .targetSkill("Communication")
-                    .expectedKeyPoints("STAR method, root cause analysis, instrumentation/telemetry, prevention.")
-                    .modelAnswer("In our payment checkout flow, users experienced duplicate submissions due to unhandled async state during network timeouts. I reproduced the issue using network throttling, implemented idempotent request keys with optimistic locking, and added robust automated regression tests.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("How do you manage global state across a complex application? Compare Redux Toolkit, Context API, and Zustand.")
-                    .category("System Design")
-                    .targetSkill("State Management")
-                    .expectedKeyPoints("Re-render triggers with Context, boilerplate comparison, selector subscriptions in Zustand/RTK.")
-                    .modelAnswer("React Context is ideal for low-frequency updates (themes, auth) because consumers re-render whenever the context value changes. For high-frequency updates, Zustand or Redux Toolkit provide fine-grained selector-based subscriptions without excessive re-renders.")
-                    .build());
-        } else if (role.toLowerCase().contains("backend") || role.toLowerCase().contains("java")) {
-            bank.add(InterviewQuestion.builder()
-                    .questionText("Explain the internal working of HashMap in Java. How are hash collisions resolved in Java 8 and beyond?")
-                    .category("Technical")
-                    .targetSkill("Java")
-                    .expectedKeyPoints("Array of Node/Entry, hashcode calculation, index masking, linked list to red-black tree conversion at TREEIFY_THRESHOLD (8).")
-                    .modelAnswer("Java's HashMap uses an array of buckets. Keys are hashed, bit-shifted, and placed in bucket indices. When collisions occur, entries form a linked list. In Java 8+, if a bucket exceeds 8 nodes and total capacity is at least 64, it converts to a Red-Black Tree, improving lookup from O(n) to O(log n).")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("What is the difference between Spring Bean scopes (Singleton, Prototype, Request, Session), and how is thread-safety handled?")
-                    .category("Technical")
-                    .targetSkill("Spring Boot")
-                    .expectedKeyPoints("Singleton creates one instance per ApplicationContext; Prototype creates a new instance on injection; Singleton beans must remain stateless for thread safety.")
-                    .modelAnswer("By default, Spring beans are Singletons—one shared instance per ApplicationContext. Prototype produces a new instance upon each injection. Because Singletons are shared across concurrent HTTP request threads, they should be stateless or use thread-safe data structures to prevent race conditions.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("How does Spring's @Transactional annotation work under the hood, and under what circumstances might transactions fail to roll back?")
-                    .category("Technical")
-                    .targetSkill("Spring Data JPA")
-                    .expectedKeyPoints("AOP dynamic proxies, self-invocation bypasses proxy, checked exceptions do not trigger rollback by default without rollbackFor=Exception.class.")
-                    .modelAnswer("@Transactional relies on Spring AOP proxies wrapping the target method. If called from within the same class (self-invocation), the proxy is bypassed and transactions fail. Additionally, Spring only rolls back unchecked (RuntimeException/Error) exceptions by default unless explicitly configured.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("Design a scalable Rate Limiter service for a public REST API. What algorithms would you evaluate, and how would you store token counts?")
-                    .category("System Design")
-                    .targetSkill("System Design")
-                    .expectedKeyPoints("Token bucket, Leaking bucket, Sliding window counter; Redis for distributed atomic counters; 429 Too Many Requests response.")
-                    .modelAnswer("I would evaluate Token Bucket or Sliding Window Log/Counter. Using Redis with Lua scripts enables atomic token checks and decrement operations across distributed gateway nodes, returning HTTP 429 with Retry-After headers when thresholds are breached.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("Describe how database indexing works (B-Trees vs Hash indexes) and how you identify and eliminate slow queries in SQL.")
-                    .category("Technical")
-                    .targetSkill("SQL")
-                    .expectedKeyPoints("B+ Tree structure, range scans, EXPLAIN ANALYZE, index selectivity, avoiding table scans.")
-                    .modelAnswer("B-Tree indexes maintain a balanced tree hierarchy, ideal for equality and range comparisons. Hash indexes offer O(1) equality lookups but no range support. I use EXPLAIN ANALYZE to identify sequential table scans, examine cardinalities, and add composite or covering indexes.")
-                    .build());
-        } else {
-            // General Full Stack / Software Engineer bank
-            bank.add(InterviewQuestion.builder()
-                    .questionText("Explain the architectural principles of RESTful APIs. How do you design idempotent and backward-compatible endpoints?")
-                    .category("Technical")
-                    .targetSkill("REST APIs")
-                    .expectedKeyPoints("Statelessness, URI nouns, HTTP methods (GET/PUT/DELETE idempotent, POST non-idempotent), API versioning, non-breaking schema evolution.")
-                    .modelAnswer("REST emphasizes stateless client-server communication using standard HTTP verbs. GET, PUT, and DELETE must be idempotent. Backward compatibility is maintained by additive schema changes, URI or header versioning (/api/v1), and deprecation cycles.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("How do you design an authentication and authorization system using JWT? What are the key security pitfalls and mitigation strategies?")
-                    .category("Technical")
-                    .targetSkill("Security")
-                    .expectedKeyPoints("Access token + Refresh token rotation, HTTP-only cookies, short TTL, revocation strategies (Redis blocklist), signing algorithms.")
-                    .modelAnswer("A robust architecture pairs short-lived access tokens (15 mins) with rotating refresh tokens stored in secure, HttpOnly, SameSite cookies. Revocation is handled via Redis blocklists or versioned user secrets, preventing replay attacks if tokens leak.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("Walk me through how you would handle an incident where a microservice begins experiencing cascading latency failures.")
-                    .category("Behavioral")
-                    .targetSkill("Problem Solving")
-                    .expectedKeyPoints("Circuit breakers (Resilience4j), timeouts, fallback mechanisms, bulkhead isolation, distributed tracing (Zipkin/OpenTelemetry).")
-                    .modelAnswer("I would immediately inspect distributed traces to locate the offending downstream dependency. To prevent cascade, I ensure circuit breakers open early, requests fail-fast or return cached fallbacks, and thread pools are segregated using the Bulkhead pattern.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("What is the difference between horizontal and vertical scaling, and how does database sharding differ from read replicas?")
-                    .category("System Design")
-                    .targetSkill("System Design")
-                    .expectedKeyPoints("Vertical = beefier machine, Horizontal = more instances; Replicas offload reads, Sharding partitions data horizontally across nodes.")
-                    .modelAnswer("Vertical scaling increases CPU/RAM on a single node, hitting hardware ceilings. Horizontal scaling adds distributed nodes behind load balancers. Read replicas scale read throughput asynchronously, whereas sharding partitions table rows across distinct database nodes by shard key.")
-                    .build());
-            bank.add(InterviewQuestion.builder()
-                    .questionText("Describe your experience with CI/CD pipelines and automated testing pyramids (Unit, Integration, E2E).")
-                    .category("Technical")
-                    .targetSkill("DevOps")
-                    .expectedKeyPoints("High ratio of fast unit tests, mocked integration tests, smoke E2E tests, automated staging deployments, zero-downtime blue/green rollouts.")
-                    .modelAnswer("A resilient CI/CD pipeline enforces the testing pyramid: 70% unit tests for business logic, 20% integration tests verifying persistence and APIs, and 10% end-to-end tests for critical user journeys, executing automated checks before rolling out through blue-green or canary deployments.")
-                    .build());
+        String type = request.getInterviewType() == null ? "Technical" : request.getInterviewType();
+        List<String> skills = request.getSkills() == null || request.getSkills().isEmpty()
+                ? List.of("Problem Solving") : request.getSkills();
+        String normalizedType = type.toLowerCase(Locale.ROOT);
+        String category = normalizedType.contains("hr") || normalizedType.contains("behavior") ? "Behavioral"
+                : normalizedType.contains("system") ? "System Design"
+                : normalizedType.contains("coding") || normalizedType.contains("problem") ? "Coding" : "Technical";
+        List<InterviewQuestion> questions = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            String skill = skills.get(i % skills.size());
+            String text;
+            String keyPoints;
+            String modelAnswer;
+            if (category.equals("Behavioral")) {
+                text = "Tell me about a time you used " + skill + " to solve a difficult problem in your " + request.getJobRole() + " work. What was the situation, your action, and the measurable result?";
+                keyPoints = "STAR structure, specific ownership, a decision involving " + skill + ", measurable outcome, and learning.";
+                modelAnswer = "A strong response briefly explains the Situation and Task, the candidate's specific Action using " + skill + ", and a measurable Result with a lesson learned.";
+            } else if (category.equals("System Design")) {
+                text = "Design a production solution for a " + request.getJobRole() + " use case centered on " + skill + ". Explain components, data flow, scaling, failure handling, and trade-offs.";
+                keyPoints = "Requirements, architecture, data flow, scaling, reliability, security, observability, and trade-offs specific to " + skill + ".";
+                modelAnswer = "Clarify requirements, propose components using " + skill + ", explain data flow and scaling, then cover failure modes, security, monitoring, and trade-offs.";
+            } else if (category.equals("Coding")) {
+                text = "Using " + skill + ", solve a realistic " + request.getJobRole() + " problem. Explain your approach, edge cases, complexity, and how you would test it.";
+                keyPoints = "A workable approach in " + skill + ", edge cases, complexity or resource costs, and tests.";
+                modelAnswer = "Clarify constraints, outline an implementation using " + skill + ", discuss complexity and edge cases, and validate with representative tests.";
+            } else {
+                text = "For a " + request.getJobRole() + " role, " + technicalQuestionFor(skill);
+                keyPoints = "Accurate explanation of " + skill + ", implementation detail, trade-offs, edge cases, and a practical example.";
+                modelAnswer = "Explain how " + skill + " works, give a role-relevant implementation example, and discuss trade-offs and production considerations.";
+            }
+            questions.add(InterviewQuestion.builder().questionOrder(i + 1).questionText(text).category(category)
+                    .targetSkill(skill).expectedKeyPoints(keyPoints).modelAnswer(modelAnswer).build());
         }
+        return questions;
+    }
 
-        // Return up to requested count
-        List<InterviewQuestion> result = new ArrayList<>();
-        for (int i = 0; i < Math.min(count, bank.size()); i++) {
-            InterviewQuestion q = bank.get(i);
-            q.setQuestionOrder(i + 1);
-            result.add(q);
-        }
-
-        // If count exceeds bank size, generate procedural questions based on selected skills
-        while (result.size() < count) {
-            int idx = result.size() + 1;
-            String skill = skills.get((idx - 1) % skills.size());
-            result.add(InterviewQuestion.builder()
-                    .questionOrder(idx)
-                    .questionText("In a production application utilizing " + skill + ", what are the most critical architectural trade-offs and performance pitfalls you must account for?")
-                    .category(type)
-                    .targetSkill(skill)
-                    .expectedKeyPoints("Concurrency, memory footprint, maintainability, scalability, and telemetry.")
-                    .modelAnswer("When scaling " + skill + ", developers must balance simplicity against operational complexity, ensuring proper connection pooling, asynchronous processing where suitable, and observability through metrics and structured logging.")
-                    .build());
-        }
-
-        return result;
+    private String technicalQuestionFor(String skill) {
+        String key = skill.toLowerCase(Locale.ROOT);
+        if (key.contains("react")) return "how would you manage state and effects in React, and prevent unnecessary renders as the UI grows?";
+        if (key.contains("javascript") || key.contains("typescript")) return "explain asynchronous work in " + skill + " and how you prevent request failures and race conditions in a UI.";
+        if (key.contains("spring")) return "how would you build a reliable service with " + skill + ", including dependency injection, transactions, and error handling?";
+        if (key.contains("java")) return "how would you use Java collections and concurrency features to implement a thread-safe service?";
+        if (key.contains("sql") || key.contains("postgres") || key.contains("mongo")) return "how would you model data and diagnose a slow query in " + skill + "? Discuss indexes and consistency.";
+        if (key.contains("docker") || key.contains("kubernetes") || key.contains("terraform") || key.contains("ci/cd")) return "how would you use " + skill + " to deploy safely, and handle rollback, configuration, and health checks?";
+        if (key.contains("aws")) return "which AWS services would you choose for a resilient workload, and how would you handle IAM, scaling, and cost?";
+        if (key.contains("kafka")) return "how would you use Kafka for reliable event processing while handling ordering, retries, and duplicate delivery?";
+        if (key.contains("spark")) return "how would you tune a distributed data pipeline with " + skill + " to handle partitioning, skew, and recovery?";
+        if (key.contains("python")) return "how would you structure and test a maintainable Python application, including typing, errors, and performance?";
+        if (key.contains("pytorch") || key.contains("tensorflow") || key.contains("scikit") || key.contains("mlops")) return "how would you train, evaluate, and deploy a model with " + skill + " while preventing leakage and monitoring drift?";
+        if (key.contains("algorithm") || key.contains("data structure")) return "choose a suitable " + skill + " approach for a real problem; explain complexity, edge cases, and alternatives.";
+        if (key.contains("rest api")) return "how would you design a REST API endpoint that is secure, versionable, and safe to retry?";
+        return "describe a real implementation using " + skill + ". How does it work, what trade-offs did you consider, and how would you test and monitor it?";
     }
 
     private FeedbackDto evaluateFallback(String question, String skill, String answer, String role, String difficulty) {
