@@ -10,7 +10,7 @@ export default function LiveAudioWave({ isActive, isAiSpeaking }) {
           ? {
               height: `${Math.max(15, (height * (Math.sin(Date.now() / 200 + idx) + 1.2)) / 2.2)}%`,
               animation: `bounceWave ${0.8 + (idx % 5) * 0.2}s ease-in-out infinite alternate`,
-              backgroundColor: isAiSpeaking ? '#818cf8' : '#4ade80'
+              backgroundColor: isAiSpeaking ? '#818cf8' : '#c084fc'
             }
           : {
               height: '15%',

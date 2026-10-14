@@ -163,7 +163,7 @@ export default function AnalyticsPage() {
                 <Tooltip
                   contentStyle={{ backgroundColor: '#0d1322', borderColor: '#1f293d', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                 />
-                <Bar dataKey="score" fill="#4ade80" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="score" fill="#a855f7" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
