@@ -6,27 +6,22 @@ export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     try {
       const savedTheme = localStorage.getItem('app-theme');
-      if (savedTheme) return savedTheme;
+      if (['dark', 'light', 'aurora'].includes(savedTheme)) return savedTheme;
     } catch {}
     return 'dark'; // default theme
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'light') {
-      root.classList.remove('dark');
-      root.classList.add('light');
-    } else {
-      root.classList.remove('light');
-      root.classList.add('dark');
-    }
+    root.classList.remove('dark', 'light', 'aurora');
+    root.classList.add(theme);
     try {
       localStorage.setItem('app-theme', theme);
     } catch {}
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    setTheme((prev) => ({ dark: 'light', light: 'aurora', aurora: 'dark' })[prev] || 'dark');
   };
 
   return (

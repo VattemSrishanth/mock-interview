@@ -20,6 +20,50 @@
       radial-gradient(at 50% 50%, rgba(14, 165, 233, 0.03) 0px, transparent 60%);
     background-attachment: fixed;
   }
+
+  html.aurora body {
+    @apply bg-[#071715] text-teal-50;
+    background-image:
+      radial-gradient(at 15% 15%, rgba(20, 184, 166, 0.16) 0px, transparent 50%),
+      radial-gradient(at 85% 85%, rgba(16, 185, 129, 0.11) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(45, 212, 191, 0.05) 0px, transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+html.aurora .bg-\[\#080c15\],
+html.aurora .bg-\[\#090d16\],
+html.aurora .bg-\[\#070b14\],
+html.aurora .bg-\[\#070a12\] {
+  background-color: #071715 !important;
+}
+
+html.aurora .bg-\[\#0d1322\],
+html.aurora .bg-\[\#111827\],
+html.aurora .bg-\[\#151f33\] {
+  background-color: #102a28 !important;
+  border-color: rgba(153, 246, 228, 0.14) !important;
+}
+
+html.aurora .text-white { color: #ecfdf5 !important; }
+html.aurora .text-slate-300 { color: #cbd5d1 !important; }
+html.aurora .text-slate-400 { color: #94aaa5 !important; }
+html.aurora .border-white\/5,
+html.aurora .border-white\/10 { border-color: rgba(153, 246, 228, 0.14) !important; }
+html.aurora aside {
+  background-color: rgba(5, 20, 18, 0.96) !important;
+  border-right-color: rgba(153, 246, 228, 0.14) !important;
+}
+html.aurora footer {
+  background-color: #0b211f !important;
+  border-top-color: rgba(153, 246, 228, 0.14) !important;
+}
+html.aurora textarea,
+html.aurora input,
+html.aurora select {
+  background-color: #102a28 !important;
+  color: #ecfdf5 !important;
+  border-color: rgba(153, 246, 228, 0.2) !important;
 }
 
 /* Glassmorphism utilities with Light Mode Support */

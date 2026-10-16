@@ -24,7 +24,7 @@ import ProfilePage from './pages/ProfilePage';
 export default function App() {
   const [isCoachOpen, setIsCoachOpen] = useState(false);
   const { isAuthenticated } = useAuth();
-  const { toggleTheme, isLight } = useTheme();
+  const { theme, toggleTheme, isLight } = useTheme();
 
   return (
     <div className="min-h-screen bg-[#080c15] text-slate-100 selection:bg-brand-500/30 selection:text-brand-400">
@@ -32,8 +32,8 @@ export default function App() {
       <button
         onClick={toggleTheme}
         className="fixed right-4 top-20 z-30 rounded-full border border-white/10 bg-slate-900/80 p-2 text-slate-300 shadow-lg backdrop-blur transition hover:bg-slate-800 hover:text-white"
-        title={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
-        aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
+        title={`Change theme (current: ${theme})`}
+        aria-label={`Change theme (current: ${theme})`}
       >
         {isLight ? <Moon className="h-4 w-4 text-indigo-400" /> : <Sun className="h-4 w-4 text-amber-400" />}
       </button>
