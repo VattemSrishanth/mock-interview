@@ -5,6 +5,8 @@ import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import AiCoachDrawer from './components/AiCoachDrawer';
 import { useAuth } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -22,10 +24,19 @@ import ProfilePage from './pages/ProfilePage';
 export default function App() {
   const [isCoachOpen, setIsCoachOpen] = useState(false);
   const { isAuthenticated } = useAuth();
+  const { toggleTheme, isLight } = useTheme();
 
   return (
     <div className="min-h-screen bg-[#080c15] text-slate-100 selection:bg-brand-500/30 selection:text-brand-400">
       <Sidebar onOpenCoach={() => setIsCoachOpen(true)} />
+      <button
+        onClick={toggleTheme}
+        className="fixed right-4 top-20 z-30 rounded-full border border-white/10 bg-slate-900/80 p-2 text-slate-300 shadow-lg backdrop-blur transition hover:bg-slate-800 hover:text-white"
+        title={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
+        aria-label={isLight ? 'Switch to dark mode' : 'Switch to light mode'}
+      >
+        {isLight ? <Moon className="h-4 w-4 text-indigo-400" /> : <Sun className="h-4 w-4 text-amber-400" />}
+      </button>
 
       {/* Main Content Area: adjusts margin when authenticated user views with sidebar */}
       <div className={`flex flex-col min-h-screen ${isAuthenticated ? 'md:pl-64 transition-all duration-300' : ''}`}>
