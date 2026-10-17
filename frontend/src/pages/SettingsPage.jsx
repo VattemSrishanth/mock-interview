@@ -17,6 +17,16 @@ const roles = [
 ];
 
 const experienceLevels = ['Fresher', 'Junior (1-2 years)', 'Mid-Level (3-5 years)', 'Senior (5+ years)'];
+const difficultyLevels = ['Easy', 'Medium', 'Hard'];
+
+const getSavedDifficulty = () => {
+  try {
+    const saved = localStorage.getItem('default-interview-difficulty');
+    return difficultyLevels.includes(saved) ? saved : 'Medium';
+  } catch {
+    return 'Medium';
+  }
+};
 
 export default function SettingsPage() {
   const { user, updateUserProfile, logout } = useAuth();
@@ -24,6 +34,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [targetRole, setTargetRole] = useState(user?.targetRole || 'Frontend Developer');
   const [experience, setExperience] = useState(user?.experience || 'Fresher');
+  const [defaultDifficulty, setDefaultDifficulty] = useState(getSavedDifficulty);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [saveError, setSaveError] = useState(false);
@@ -43,6 +54,9 @@ export default function SettingsPage() {
         skills: user?.skills || []
       });
       updateUserProfile(updatedUser);
+      try {
+        localStorage.setItem('default-interview-difficulty', defaultDifficulty);
+      } catch {}
       setMessage('Interview defaults saved. New practice sessions will use them.');
     } catch (error) {
       setMessage(error.response?.data?.message || 'Could not save your interview defaults.');
@@ -117,6 +131,12 @@ export default function SettingsPage() {
               Experience level
               <select value={experience} onChange={(event) => setExperience(event.target.value)} className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#151f33] px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none">
                 {experienceLevels.map((level) => <option key={level}>{level}</option>)}
+              </select>
+            </label>
+            <label className="block text-xs font-semibold text-slate-300">
+              Default difficulty
+              <select value={defaultDifficulty} onChange={(event) => setDefaultDifficulty(event.target.value)} className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#151f33] px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none">
+                {difficultyLevels.map((level) => <option key={level}>{level}</option>)}
               </select>
             </label>
           </div>

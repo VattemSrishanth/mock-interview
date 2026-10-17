@@ -15,6 +15,15 @@ import {
   Cpu
 } from 'lucide-react';
 
+const getDefaultDifficulty = () => {
+  try {
+    const saved = localStorage.getItem('default-interview-difficulty');
+    return ['Easy', 'Medium', 'Hard'].includes(saved) ? saved : 'Medium';
+  } catch {
+    return 'Medium';
+  }
+};
+
 const ROLE_SKILLS = {
   'Frontend Developer': ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'Web Performance'],
   'Backend Developer': ['Java', 'Spring Boot', 'REST APIs', 'SQL', 'PostgreSQL', 'Redis'],
@@ -36,7 +45,7 @@ export default function CreateInterviewPage() {
     jobRole: preset.role || user?.targetRole || 'Frontend Developer',
     experience: user?.experience || 'Fresher',
     interviewType: preset.type || 'Technical',
-    difficulty: preset.diff || 'Medium',
+    difficulty: preset.diff || getDefaultDifficulty(),
     questionCount: 5,
     mode: 'AUDIO_AND_TEXT',
     skills: user?.skills?.length && !preset.role ? user.skills : ROLE_SKILLS[preset.role || user?.targetRole || 'Frontend Developer']
