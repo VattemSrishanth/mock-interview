@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { interviewApi } from '../api/interview';
+import { useAuth } from '../context/AuthContext';
 import { 
   Sparkles, 
   BrainCircuit, 
@@ -28,16 +29,17 @@ const ROLE_SKILLS = {
 export default function CreateInterviewPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const preset = location.state || {};
 
   const [formData, setFormData] = useState({
-    jobRole: preset.role || 'Frontend Developer',
-    experience: 'Fresher',
+    jobRole: preset.role || user?.targetRole || 'Frontend Developer',
+    experience: user?.experience || 'Fresher',
     interviewType: preset.type || 'Technical',
     difficulty: preset.diff || 'Medium',
     questionCount: 5,
     mode: 'AUDIO_AND_TEXT',
-    skills: ROLE_SKILLS[preset.role || 'Frontend Developer']
+    skills: user?.skills?.length && !preset.role ? user.skills : ROLE_SKILLS[preset.role || user?.targetRole || 'Frontend Developer']
   });
 
   const [isGenerating, setIsGenerating] = useState(false);

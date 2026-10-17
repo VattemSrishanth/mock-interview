@@ -16,11 +16,9 @@ import {
   Layers,
   Search
 } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
 
 export default function ProfilePage() {
   const { user, updateUserProfile } = useAuth();
-  const { theme, setTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'leaderboard'
   const [formData, setFormData] = useState({
@@ -169,37 +167,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-
-      <section className="p-6 rounded-2xl bg-[#0d1322] border border-white/10 shadow-xl" aria-labelledby="appearance-heading">
-        <div className="mb-4">
-          <h2 id="appearance-heading" className="text-base font-bold text-white">Appearance</h2>
-          <p className="mt-1 text-xs text-slate-400">Choose the color mood that feels right for your workspace.</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { id: 'dark', label: 'Midnight', detail: 'Deep indigo', swatches: ['#080c15', '#151f33', '#a855f7'] },
-            { id: 'light', label: 'Daylight', detail: 'Clean and bright', swatches: ['#f8fafc', '#ffffff', '#6366f1'] },
-            { id: 'aurora', label: 'Aurora', detail: 'Teal twilight', swatches: ['#071715', '#102a28', '#2dd4bf'] }
-          ].map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setTheme(option.id)}
-              aria-pressed={theme === option.id}
-              className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${theme === option.id ? 'border-brand-400 bg-brand-500/10 ring-1 ring-brand-400/40' : 'border-white/10 bg-white/[0.02] hover:border-white/20'}`}
-            >
-              <span className="flex h-10 w-12 shrink-0 overflow-hidden rounded-lg border border-white/15">
-                {option.swatches.map((color) => <span key={color} className="flex-1" style={{ backgroundColor: color }} />)}
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold text-white">{option.label}</span>
-                <span className="block text-[11px] text-slate-400">{option.detail}</span>
-              </span>
-              {theme === option.id && <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-brand-400" />}
-            </button>
-          ))}
-        </div>
-      </section>
 
       {/* Tabs Switcher */}
       <div className="flex items-center gap-2 border-b border-white/10 pb-2">

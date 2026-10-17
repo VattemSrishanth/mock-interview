@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   Compass,
+  Settings,
 } from 'lucide-react';
 
 export default function Sidebar({ onOpenCoach }) {
@@ -37,6 +38,7 @@ export default function Sidebar({ onOpenCoach }) {
     { name: 'Analytics', path: '/analytics', icon: BarChart3 },
     { name: 'History', path: '/history', icon: History },
     { name: 'Profile', path: '/profile', icon: User },
+    { name: 'Settings', path: '/settings', icon: Settings },
   ];
 
   if (isAdmin) {

@@ -20,6 +20,7 @@ import HistoryPage from './pages/HistoryPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AdminPage from './pages/AdminPage';
 import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
 
 export default function App() {
   const [isCoachOpen, setIsCoachOpen] = useState(false);
@@ -124,7 +125,7 @@ export default function App() {
             path="/settings"
             element={
               <ProtectedRoute>
-                <ProfilePage />
+                <SettingsPage />
               </ProtectedRoute>
             }
           />
