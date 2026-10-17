@@ -6,14 +6,15 @@ export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     try {
       const savedTheme = localStorage.getItem('app-theme');
-      if (['dark', 'light', 'aurora'].includes(savedTheme)) return savedTheme;
+      if (savedTheme === 'aurora') return 'cyberpunk';
+      if (['dark', 'light', 'cyberpunk'].includes(savedTheme)) return savedTheme;
     } catch {}
     return 'dark'; // default theme
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove('dark', 'light', 'aurora');
+    root.classList.remove('dark', 'light', 'aurora', 'cyberpunk');
     root.classList.add(theme);
     try {
       localStorage.setItem('app-theme', theme);
@@ -21,7 +22,7 @@ export const ThemeProvider = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => ({ dark: 'light', light: 'aurora', aurora: 'dark' })[prev] || 'dark');
+    setTheme((prev) => ({ dark: 'light', light: 'cyberpunk', cyberpunk: 'dark' })[prev] || 'dark');
   };
 
   return (

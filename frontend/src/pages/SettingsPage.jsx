@@ -8,7 +8,7 @@ import { authApi } from '../api/auth';
 const themes = [
   { id: 'dark', label: 'Midnight', detail: 'Deep indigo', colors: ['#080c15', '#151f33', '#a855f7'] },
   { id: 'light', label: 'Daylight', detail: 'Clean and bright', colors: ['#f8fafc', '#ffffff', '#6366f1'] },
-  { id: 'aurora', label: 'Aurora', detail: 'Teal twilight', colors: ['#071715', '#102a28', '#2dd4bf'] }
+  { id: 'cyberpunk', label: 'Cyberpunk', detail: 'Neon hacker console', colors: ['#050711', '#101426', '#22d3ee', '#f472b6'] }
 ];
 
 const roles = [

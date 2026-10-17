@@ -21,50 +21,91 @@
     background-attachment: fixed;
   }
 
-  html.aurora body {
-    @apply bg-[#071715] text-teal-50;
+  html.cyberpunk body {
+    @apply bg-[#050711] text-cyan-50;
     background-image:
-      radial-gradient(at 15% 15%, rgba(20, 184, 166, 0.16) 0px, transparent 50%),
-      radial-gradient(at 85% 85%, rgba(16, 185, 129, 0.11) 0px, transparent 50%),
-      radial-gradient(at 50% 50%, rgba(45, 212, 191, 0.05) 0px, transparent 60%);
+      radial-gradient(at 12% 12%, rgba(34, 211, 238, 0.15) 0px, transparent 42%),
+      radial-gradient(at 88% 18%, rgba(244, 114, 182, 0.12) 0px, transparent 40%),
+      radial-gradient(at 75% 90%, rgba(99, 102, 241, 0.12) 0px, transparent 48%),
+      linear-gradient(rgba(34, 211, 238, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 211, 238, 0.035) 1px, transparent 1px);
+    background-size: auto, auto, auto, 36px 36px, 36px 36px;
     background-attachment: fixed;
   }
 }
 
-html.aurora .bg-\[\#080c15\],
-html.aurora .bg-\[\#090d16\],
-html.aurora .bg-\[\#070b14\],
-html.aurora .bg-\[\#070a12\] {
-  background-color: #071715 !important;
+html.cyberpunk .bg-\[\#080c15\],
+html.cyberpunk .bg-\[\#090d16\],
+html.cyberpunk .bg-\[\#070b14\],
+html.cyberpunk .bg-\[\#070a12\] {
+  background-color: #050711 !important;
 }
 
-html.aurora .bg-\[\#0d1322\],
-html.aurora .bg-\[\#111827\],
-html.aurora .bg-\[\#151f33\] {
-  background-color: #102a28 !important;
-  border-color: rgba(153, 246, 228, 0.14) !important;
+html.cyberpunk .bg-\[\#0d1322\],
+html.cyberpunk .bg-\[\#111827\],
+html.cyberpunk .bg-\[\#151f33\],
+html.cyberpunk .bg-\[\#11192e\] {
+  background-color: #101426 !important;
+  border-color: rgba(34, 211, 238, 0.2) !important;
 }
 
-html.aurora .text-white { color: #ecfdf5 !important; }
-html.aurora .text-slate-300 { color: #cbd5d1 !important; }
-html.aurora .text-slate-400 { color: #94aaa5 !important; }
-html.aurora .border-white\/5,
-html.aurora .border-white\/10 { border-color: rgba(153, 246, 228, 0.14) !important; }
-html.aurora aside {
-  background-color: rgba(5, 20, 18, 0.96) !important;
-  border-right-color: rgba(153, 246, 228, 0.14) !important;
+html.cyberpunk .bg-slate-900 { background-color: #101426 !important; }
+html.cyberpunk .bg-slate-800 { background-color: #141a30 !important; }
+html.cyberpunk .text-white { color: #f0f9ff !important; }
+html.cyberpunk .text-slate-200 { color: #dbeafe !important; }
+html.cyberpunk .text-slate-300 { color: #cbd5e1 !important; }
+html.cyberpunk .text-slate-400 { color: #94a3b8 !important; }
+html.cyberpunk .text-brand-200,
+html.cyberpunk .text-brand-300,
+html.cyberpunk .text-brand-400 { color: #22d3ee !important; }
+html.cyberpunk .bg-brand-500 { background-color: #22d3ee !important; }
+html.cyberpunk .hover\:bg-brand-600:hover { background-color: #0891b2 !important; }
+html.cyberpunk .from-brand-500 {
+  --tw-gradient-from: rgb(34 211 238 / var(--tw-gradient-from-opacity, 1)) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(34 211 238 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
-html.aurora footer {
-  background-color: #0b211f !important;
-  border-top-color: rgba(153, 246, 228, 0.14) !important;
+html.cyberpunk .to-indigo-600 {
+  --tw-gradient-to: rgb(244 114 182 / var(--tw-gradient-to-opacity, 1)) var(--tw-gradient-to-position);
 }
-html.aurora textarea,
-html.aurora input,
-html.aurora select {
-  background-color: #102a28 !important;
-  color: #ecfdf5 !important;
-  border-color: rgba(153, 246, 228, 0.2) !important;
+html.cyberpunk .text-indigo-300,
+html.cyberpunk .text-indigo-400,
+html.cyberpunk .text-purple-300,
+html.cyberpunk .text-purple-400 { color: #f472b6 !important; }
+html.cyberpunk .bg-brand-500\/10,
+html.cyberpunk .bg-brand-500\/15 { background-color: rgba(34, 211, 238, 0.1) !important; }
+html.cyberpunk .bg-indigo-500\/10,
+html.cyberpunk .bg-purple-500\/10 { background-color: rgba(244, 114, 182, 0.1) !important; }
+html.cyberpunk .border-brand-500\/20,
+html.cyberpunk .border-brand-500\/30,
+html.cyberpunk .border-brand-400\/20 { border-color: rgba(34, 211, 238, 0.32) !important; }
+html.cyberpunk .border-white\/5,
+html.cyberpunk .border-white\/10 { border-color: rgba(148, 163, 184, 0.18) !important; }
+html.cyberpunk aside {
+  background-color: rgba(5, 7, 17, 0.97) !important;
+  border-right-color: rgba(34, 211, 238, 0.22) !important;
+  box-shadow: 8px 0 36px rgba(34, 211, 238, 0.06);
 }
+html.cyberpunk footer {
+  background-color: #080b17 !important;
+  border-top-color: rgba(34, 211, 238, 0.2) !important;
+}
+html.cyberpunk textarea,
+html.cyberpunk input,
+html.cyberpunk select {
+  background-color: #101426 !important;
+  color: #f0f9ff !important;
+  border-color: rgba(34, 211, 238, 0.22) !important;
+}
+html.cyberpunk textarea:focus,
+html.cyberpunk input:focus,
+html.cyberpunk select:focus { box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.12); }
+html.cyberpunk button:focus-visible,
+html.cyberpunk a:focus-visible { outline: 2px solid #22d3ee; outline-offset: 3px; }
+html.cyberpunk ::selection { background: rgba(244, 114, 182, 0.4); color: #fff; }
+html.cyberpunk ::-webkit-scrollbar-track { background: #080b17; }
+html.cyberpunk ::-webkit-scrollbar-thumb { background: #164e63; }
+html.cyberpunk ::-webkit-scrollbar-thumb:hover { background: #22d3ee; }
 
 /* Glassmorphism utilities with Light Mode Support */
 .glass-panel {
