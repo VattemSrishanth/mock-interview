@@ -5,6 +5,7 @@ import com.intervai.entity.*;
 import com.intervai.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,15 @@ public class DataInitializer implements CommandLineRunner {
     private final PerformanceRepository performanceRepository;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
+
+    @Value("${app.seed-demo-data:false}")
+    private boolean seedDemoData;
+
+    @Value("${app.admin.email:}")
+    private String bootstrapAdminEmail;
+
+    @Value("${app.admin.password:}")
+    private String bootstrapAdminPassword;
 
     @Override
     public void run(String... args) throws Exception {
@@ -52,6 +62,11 @@ public class DataInitializer implements CommandLineRunner {
             Skill s = skillRepository.findByNameIgnoreCase(skillName)
                     .orElseGet(() -> skillRepository.save(Skill.builder().name(skillName).category("General").build()));
             skillMap.put(skillName, s);
+        }
+
+        if (!seedDemoData) {
+            seedConfiguredAdmin(studentRole, adminRole);
+            return;
         }
 
         // 3. Demo Student User: V Srishanth
@@ -131,6 +146,35 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(admin);
             log.info("Default admin user seeded: admin@intervai.com / admin123");
         }
+    }
+
+    private void seedConfiguredAdmin(Role studentRole, Role adminRole) {
+        boolean hasEmail = bootstrapAdminEmail != null && !bootstrapAdminEmail.isBlank();
+        boolean hasPassword = bootstrapAdminPassword != null && !bootstrapAdminPassword.isBlank();
+        if (!hasEmail && !hasPassword) return;
+        if (!hasEmail || !hasPassword) {
+            throw new IllegalStateException("Set both ADMIN_EMAIL and ADMIN_PASSWORD to bootstrap a production administrator");
+        }
+        if (bootstrapAdminPassword.length() < 16) {
+            throw new IllegalStateException("ADMIN_PASSWORD must be at least 16 characters for production admin bootstrap");
+        }
+
+        String email = bootstrapAdminEmail.trim().toLowerCase(Locale.ROOT);
+        if (userRepository.existsByEmail(email)) return;
+
+        User admin = User.builder()
+                .name("Platform Admin")
+                .email(email)
+                .password(passwordEncoder.encode(bootstrapAdminPassword))
+                .targetRole("Site Administrator")
+                .experience("5+ years")
+                .careerGoal("Platform Governance")
+                .avatarUrl("https://api.dicebear.com/7.x/bottts/svg?seed=Admin")
+                .interviewStreak(0)
+                .roles(Set.of(adminRole, studentRole))
+                .build();
+        userRepository.save(admin);
+        log.info("Configured bootstrap administrator created: {}", email);
     }
 
     private void seedPerformance(User user, String skillName, int score, int count) {

@@ -23,9 +23,9 @@ An enterprise-grade, full-stack AI interview preparation platform designed for s
 
 ---
 
-## 🔑 Pre-Seeded Demo Credentials
+## Local Development Demo Credentials
 
-The platform automatically seeds demo accounts with realistic mock interview history and performance metrics on first startup:
+The `dev` profile seeds these demo accounts with mock interview history. Production never creates these fixed-password accounts:
 
 | Role | Email | Password | Pre-seeded Features |
 |------|-------|----------|---------------------|
@@ -39,9 +39,11 @@ The platform automatically seeds demo accounts with realistic mock interview his
 ## 🏃 Running the Application Locally
 
 ### 1. Start the Backend (Spring Boot)
-```bash
+```powershell
 cd backend
-./mvnw.cmd spring-boot:run
+$env:SPRING_PROFILES_ACTIVE="dev"
+$env:JWT_SECRET=(openssl rand -base64 32)
+.\mvnw.cmd spring-boot:run
 ```
 - The backend will start on **`http://localhost:8080`**.
 - H2 Console (optional debugging): `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:file:./data/intervaidb`)
@@ -91,7 +93,10 @@ npm run dev
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `JWT_SECRET` | 512-bit HMAC signing key | Pre-configured secure hex |
+| `JWT_SECRET` | Required canonical Base64 encoding of 32 random bytes (`openssl rand -base64 32`) | None; required for every profile |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated exact frontend origins; production must use the deployed frontend origin | `http://localhost:5173,http://127.0.0.1:5173` in the `dev` profile |
+| `ADMIN_EMAIL` | Optional initial production administrator email | None |
+| `ADMIN_PASSWORD` | Optional initial production administrator password (at least 16 characters) | None |
 | `GEMINI_API_KEY` | Google Gemini API Key | Optional (Heuristic fallback active) |
 | `OPENAI_API_KEY` | OpenAI API Key | Optional |
 | `SPRING_DATASOURCE_URL` | Database connection URL | `jdbc:h2:file:./data/intervaidb` |

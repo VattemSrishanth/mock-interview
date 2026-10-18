@@ -8,8 +8,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.HashSet;
 import java.util.Date;
+import java.util.Set;
 
 @Component
 @Slf4j
@@ -21,8 +23,35 @@ public class JwtTokenProvider {
     public JwtTokenProvider(
             @Value("${app.jwt.secret}") String jwtSecret,
             @Value("${app.jwt.expiration-ms}") long jwtExpirationInMs) {
-        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET must be configured before the application can start");
+        }
+
+        this.key = Keys.hmacShaKeyFor(decodeSecret(jwtSecret));
         this.jwtExpirationInMs = jwtExpirationInMs;
+    }
+
+    static byte[] decodeSecret(String secret) {
+        final byte[] keyBytes;
+        try {
+            keyBytes = Base64.getDecoder().decode(secret);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalStateException("JWT_SECRET must be Base64 encoding of 32 random bytes", ex);
+        }
+
+        if (keyBytes.length != 32 || !Base64.getEncoder().encodeToString(keyBytes).equals(secret)) {
+            throw new IllegalStateException("JWT_SECRET must be canonical Base64 encoding of exactly 32 bytes");
+        }
+
+        Set<Byte> distinctBytes = new HashSet<>();
+        for (byte keyByte : keyBytes) {
+            distinctBytes.add(keyByte);
+        }
+        if (distinctBytes.size() < 16) {
+            throw new IllegalStateException("JWT_SECRET does not contain enough key variation");
+        }
+
+        return keyBytes;
     }
 
     public String generateToken(Authentication authentication) {
