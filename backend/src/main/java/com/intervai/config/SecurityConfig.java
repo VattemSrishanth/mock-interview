@@ -63,6 +63,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/ai/coach").authenticated()
                         .requestMatchers(
                                 "/",
                                 "/api/auth/**",

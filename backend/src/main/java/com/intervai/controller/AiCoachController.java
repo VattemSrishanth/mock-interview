@@ -3,8 +3,11 @@ package com.intervai.controller;
 import com.intervai.dto.AiCoachRequest;
 import com.intervai.dto.AiCoachResponse;
 import com.intervai.dto.UserDto;
+import com.intervai.exception.AiRateLimitExceededException;
+import com.intervai.exception.UnauthorizedException;
 import com.intervai.security.UserPrincipal;
 import com.intervai.service.AiService;
+import com.intervai.service.AiRateLimiter;
 import com.intervai.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,21 +24,22 @@ public class AiCoachController {
 
     private final AiService aiService;
     private final UserService userService;
+    private final AiRateLimiter aiRateLimiter;
 
     @PostMapping("/coach")
     public ResponseEntity<AiCoachResponse> chatWithCoach(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
             @Valid @RequestBody AiCoachRequest request) {
 
-        String context = "User: Anonymous";
-        if (userPrincipal != null) {
-            UserDto profile = userService.getUserProfile(userPrincipal.getId());
-            context = "Name: " + profile.getName()
-                    + ", Target Role: " + profile.getTargetRole()
-                    + ", Experience: " + profile.getExperience()
-                    + ", Average Score: " + profile.getAverageScore()
-                    + ", Skills: " + String.join(", ", profile.getSkills());
-        }
+        if (userPrincipal == null) throw new UnauthorizedException("Authentication is required");
+        if (!aiRateLimiter.tryAcquire(userPrincipal.getId())) throw new AiRateLimitExceededException();
+
+        UserDto profile = userService.getUserProfile(userPrincipal.getId());
+        String context = "Name: " + profile.getName()
+                + ", Target Role: " + profile.getTargetRole()
+                + ", Experience: " + profile.getExperience()
+                + ", Average Score: " + profile.getAverageScore()
+                + ", Skills: " + String.join(", ", profile.getSkills());
 
         AiCoachResponse response = aiService.chatWithCoach(request.getMessage(), context);
         return ResponseEntity.ok(response);

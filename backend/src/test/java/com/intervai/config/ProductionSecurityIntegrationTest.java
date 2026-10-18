@@ -33,6 +33,8 @@ class ProductionSecurityIntegrationTest {
         registry.add("CORS_ALLOWED_ORIGINS", () -> ORIGINS);
         registry.add("ADMIN_EMAIL", () -> "configured-admin@example.com");
         registry.add("ADMIN_PASSWORD", () -> "Configured-Admin-Password-2026");
+        registry.add("app.ai.rate-limit.max-requests", () -> "2");
+        registry.add("app.ai.rate-limit.window-seconds", () -> "60");
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:production-security-tests;DB_CLOSE_DELAY=-1");
         registry.add("spring.datasource.driver-class-name", () -> "org.h2.Driver");
         registry.add("spring.datasource.username", () -> "sa");
@@ -81,5 +83,41 @@ class ProductionSecurityIntegrationTest {
         String adminToken = new com.fasterxml.jackson.databind.ObjectMapper().readTree(adminLogin).get("token").asText();
         mvc.perform(get("/api/admin/stats").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void coachRejectsInvalidMessagesWithoutSpendingQuotaThenReturns429() throws Exception {
+        String login = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"configured-admin@example.com\",\"password\":\"Configured-Admin-Password-2026\"}"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String token = new com.fasterxml.jackson.databind.ObjectMapper().readTree(login).get("token").asText();
+
+        mvc.perform(post("/api/ai/coach").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"  \"}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/ai/coach").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"" + "x".repeat(2001) + "\"}"))
+                .andExpect(status().isBadRequest());
+
+        String valid = "{\"message\":\"Help me prepare for a Java interview\"}";
+        mvc.perform(post("/api/ai/coach").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content(valid))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/ai/coach").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content(valid))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/ai/coach").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content(valid))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void unauthenticatedRequestsCannotUseProtectedAiEndpoints() throws Exception {
+        mvc.perform(post("/api/ai/coach").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"message\":\"Help me prepare\"}"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/interviews/1/answer").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"questionId\":1,\"answerText\":\"An answer\"}"))
+                .andExpect(status().isUnauthorized());
     }
 }

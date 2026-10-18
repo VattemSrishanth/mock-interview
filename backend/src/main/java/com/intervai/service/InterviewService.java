@@ -30,6 +30,7 @@ public class InterviewService {
     private final UserRepository userRepository;
     private final PerformanceRepository performanceRepository;
     private final AiService aiService;
+    private final AiRateLimiter aiRateLimiter;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -92,6 +93,9 @@ public class InterviewService {
             throw new BadRequestException("Question does not belong to this interview session");
         }
 
+        boolean skipped = Boolean.TRUE.equals(request.getIsSkipped());
+        if (!skipped && !aiRateLimiter.tryAcquire(userId)) throw new com.intervai.exception.AiRateLimitExceededException();
+
         // Check if answer already exists
         Answer answer = answerRepository.findByQuestionId(question.getId())
                 .orElseGet(() -> Answer.builder().question(question).build());
@@ -111,7 +115,7 @@ public class InterviewService {
                 request.getAnswerText(),
                 interview.getJobRole(),
                 interview.getDifficulty(),
-                Boolean.TRUE.equals(request.getIsSkipped())
+                skipped
         );
 
         Feedback feedback = feedbackRepository.findByAnswerId(savedAnswer.getId())
