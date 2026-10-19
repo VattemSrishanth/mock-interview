@@ -325,7 +325,7 @@ export default function ProfilePage() {
                 Top Candidate Standings
               </h2>
               <p className="text-xs text-slate-400">
-                Ranked by 5-dimensional calibrated average score across mock simulations
+                Ranked by average provider score across completed mock simulations
               </p>
             </div>
 

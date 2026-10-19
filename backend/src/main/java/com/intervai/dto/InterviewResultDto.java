@@ -23,6 +23,7 @@ public class InterviewResultDto {
     private Integer relevanceScore;
     private Integer clarityScore;
     private Integer confidenceScore;
+    private String evaluationSource;
     private String summaryFeedback;
     private List<String> strengths;
     private List<String> weaknesses;

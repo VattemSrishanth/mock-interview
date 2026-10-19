@@ -63,7 +63,7 @@ export default function LandingPage() {
     {
       icon: BarChart3,
       title: "5-Dimensional Evaluation",
-      desc: "Instant breakdown across Technical Depth, STAR Structure, Communication Clarity, Problem Solving, and Executive Delivery.",
+      desc: "Provider evaluations use technical knowledge, communication, relevance, clarity, and confidence.",
       color: "from-purple-500/20 to-pink-500/20",
       accent: "text-purple-400"
     },
@@ -207,14 +207,14 @@ export default function LandingPage() {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Instant AI Evaluation
+                    Example Provider Evaluation
                   </span>
                   <span className="text-base font-bold text-brand-400">88 / 100</span>
                 </div>
                 <div className="space-y-3 text-xs">
                   <div>
                     <div className="flex justify-between text-slate-300 mb-1">
-                      <span>Technical Accuracy</span>
+                      <span>Technical Knowledge</span>
                       <span className="text-brand-400">92%</span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -223,7 +223,7 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <div className="flex justify-between text-slate-300 mb-1">
-                      <span>STAR Clarity & Delivery</span>
+                      <span>Communication</span>
                       <span className="text-indigo-400">85%</span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -232,11 +232,29 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <div className="flex justify-between text-slate-300 mb-1">
-                      <span>Edge Case Reasoning</span>
+                      <span>Relevance</span>
                       <span className="text-cyan-400">86%</span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
                       <div className="w-[86%] h-full bg-cyan-400 rounded-full" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-slate-300 mb-1">
+                      <span>Clarity</span>
+                      <span className="text-purple-400">89%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-[89%] h-full bg-purple-400 rounded-full" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-slate-300 mb-1">
+                      <span>Confidence</span>
+                      <span className="text-amber-400">83%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-[83%] h-full bg-amber-400 rounded-full" />
                     </div>
                   </div>
                 </div>

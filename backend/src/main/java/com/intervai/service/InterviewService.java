@@ -133,6 +133,7 @@ public class InterviewService {
         feedback.setRelevanceScore(evaluation.getRelevance());
         feedback.setClarityScore(evaluation.getClarity());
         feedback.setConfidenceScore(evaluation.getConfidence());
+        feedback.setEvaluationSource(evaluation.getEvaluationSource());
 
         try {
             feedback.setStrengthsJson(objectMapper.writeValueAsString(evaluation.getStrengths()));
@@ -178,6 +179,7 @@ public class InterviewService {
         int rel = 0;
         int clar = 0;
         int conf = 0;
+        int scoredCount = 0;
 
         List<String> aggregatedStrengths = new ArrayList<>();
         List<String> aggregatedWeaknesses = new ArrayList<>();
@@ -185,12 +187,15 @@ public class InterviewService {
 
         if (!feedbacks.isEmpty()) {
             for (Feedback fb : feedbacks) {
-                overall += fb.getScore() != null ? fb.getScore() : 0;
-                tech += fb.getTechnicalKnowledgeScore() != null ? fb.getTechnicalKnowledgeScore() : 0;
-                comm += fb.getCommunicationScore() != null ? fb.getCommunicationScore() : 0;
-                rel += fb.getRelevanceScore() != null ? fb.getRelevanceScore() : 0;
-                clar += fb.getClarityScore() != null ? fb.getClarityScore() : 0;
-                conf += fb.getConfidenceScore() != null ? fb.getConfidenceScore() : 0;
+                if (fb.getScore() != null) {
+                    overall += fb.getScore();
+                    tech += fb.getTechnicalKnowledgeScore() != null ? fb.getTechnicalKnowledgeScore() : 0;
+                    comm += fb.getCommunicationScore() != null ? fb.getCommunicationScore() : 0;
+                    rel += fb.getRelevanceScore() != null ? fb.getRelevanceScore() : 0;
+                    clar += fb.getClarityScore() != null ? fb.getClarityScore() : 0;
+                    conf += fb.getConfidenceScore() != null ? fb.getConfidenceScore() : 0;
+                    scoredCount++;
+                }
 
                 try {
                     if (fb.getStrengthsJson() != null) {
@@ -208,13 +213,14 @@ public class InterviewService {
                 } catch (Exception ignored) {}
             }
 
-            int n = feedbacks.size();
-            overall = Math.round((float) overall / n);
-            tech = Math.round((float) tech / n);
-            comm = Math.round((float) comm / n);
-            rel = Math.round((float) rel / n);
-            clar = Math.round((float) clar / n);
-            conf = Math.round((float) conf / n);
+            if (scoredCount > 0) {
+                overall = Math.round((float) overall / scoredCount);
+                tech = Math.round((float) tech / scoredCount);
+                comm = Math.round((float) comm / scoredCount);
+                rel = Math.round((float) rel / scoredCount);
+                clar = Math.round((float) clar / scoredCount);
+                conf = Math.round((float) conf / scoredCount);
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -239,7 +245,9 @@ public class InterviewService {
             interview.setRecommendationsJson(objectMapper.writeValueAsString(deduplicateTop(aggregatedSuggestions, 4)));
         } catch (Exception ignored) {}
 
-        interview.setSummaryFeedback(buildSummaryText(overall, interview.getJobRole(), tech, comm));
+        interview.setSummaryFeedback(scoredCount == 0
+                ? "No provider score was available for this practice session. Review the question-level heuristic guidance and model answers."
+                : buildSummaryText(overall, interview.getJobRole(), tech, comm));
         Interview saved = interviewRepository.saveAndFlush(interview);
 
         // Serialize streak updates per user and derive the streak from distinct completion dates.
@@ -269,11 +277,20 @@ public class InterviewService {
         List<String> recommendations = parseJsonList(interview.getRecommendationsJson());
 
         Map<String, Integer> skillBreakdown = new HashMap<>();
+        boolean hasProviderEvaluation = false;
+        boolean hasHeuristicEvaluation = false;
+        boolean hasUnattributedScore = false;
         for (InterviewQuestion q : questions) {
             String skill = q.getTargetSkill() != null ? q.getTargetSkill() : "Core Knowledge";
             Answer a = answerRepository.findByQuestionId(q.getId()).orElse(null);
             if (a != null) {
                 Feedback fb = feedbackRepository.findByAnswerId(a.getId()).orElse(null);
+                if (fb != null && "HEURISTIC".equals(fb.getEvaluationSource())) hasHeuristicEvaluation = true;
+                if (fb != null && fb.getScore() != null) {
+                    if ("AI_PROVIDER".equals(fb.getEvaluationSource())) hasProviderEvaluation = true;
+                    else if ("HEURISTIC".equals(fb.getEvaluationSource())) hasHeuristicEvaluation = true;
+                    else hasUnattributedScore = true;
+                }
                 if (fb != null && fb.getScore() != null) {
                     skillBreakdown.put(skill, fb.getScore());
                 }
@@ -297,6 +314,7 @@ public class InterviewService {
                 .relevanceScore(interview.getRelevanceScore() != null ? interview.getRelevanceScore() : 0)
                 .clarityScore(interview.getClarityScore() != null ? interview.getClarityScore() : 0)
                 .confidenceScore(interview.getConfidenceScore() != null ? interview.getConfidenceScore() : 0)
+                .evaluationSource(hasProviderEvaluation ? "AI_PROVIDER" : hasHeuristicEvaluation ? "HEURISTIC" : hasUnattributedScore ? "UNSPECIFIED" : null)
                 .summaryFeedback(interview.getSummaryFeedback())
                 .strengths(strengths)
                 .weaknesses(weaknesses)
@@ -487,6 +505,7 @@ public class InterviewService {
                     .weaknesses(parseJsonList(fb.getWeaknessesJson()))
                     .suggestions(parseJsonList(fb.getSuggestionsJson()))
                     .modelAnswer(fb.getModelAnswer())
+                    .evaluationSource(fb.getEvaluationSource())
                     .build();
         }
 

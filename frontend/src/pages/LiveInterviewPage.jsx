@@ -417,7 +417,7 @@ export default function LiveInterviewPage() {
                   Interview AI Senior Evaluator
                 </h3>
                 <p className="text-[11px] text-slate-400">
-                  {isAiSpeaking ? 'Narrating question...' : isEvaluating ? 'Evaluating technical depth...' : 'Listening actively'}
+                  {isAiSpeaking ? 'Narrating question...' : isEvaluating ? 'Evaluating your answer...' : 'Listening actively'}
                 </p>
               </div>
 
@@ -581,11 +581,8 @@ export default function LiveInterviewPage() {
           {/* Instant AI Evaluation Result Card */}
           {currentEvaluation && (() => {
             const feedbackObj = currentEvaluation.feedback || {};
-            const evalScore = feedbackObj.score ?? currentEvaluation.score ?? 80;
-            const techScore = feedbackObj.technicalKnowledge ?? evalScore;
-            const commScore = feedbackObj.communication ?? Math.max(60, evalScore - 5);
-            const relScore = feedbackObj.relevance ?? Math.min(100, evalScore + 4);
-            const clarityScore = feedbackObj.clarity ?? evalScore;
+            const isProviderEvaluation = feedbackObj.evaluationSource === 'AI_PROVIDER';
+            const evalScore = feedbackObj.score ?? currentEvaluation.score;
             const strengthsList = Array.isArray(feedbackObj.strengths) ? feedbackObj.strengths : [];
             const weaknessesList = Array.isArray(feedbackObj.weaknesses) ? feedbackObj.weaknesses : [];
             const suggestionsList = Array.isArray(feedbackObj.suggestions) ? feedbackObj.suggestions : [];
@@ -596,32 +593,38 @@ export default function LiveInterviewPage() {
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                   <div className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-brand-400" />
-                    <span className="text-sm font-bold text-white">AI Evaluation Scorecard</span>
+                    <span className="text-sm font-bold text-white">{isProviderEvaluation ? 'AI Provider Evaluation' : 'Practice Guidance'}</span>
                   </div>
-                  <div className="text-lg font-extrabold text-brand-400 bg-brand-500/10 px-3 py-1 rounded-xl border border-brand-500/20">
-                    {evalScore} / 100
-                  </div>
+                  {isProviderEvaluation && evalScore != null
+                    ? <div className="text-lg font-extrabold text-brand-400 bg-brand-500/10 px-3 py-1 rounded-xl border border-brand-500/20">{evalScore} / 100</div>
+                    : <span className="text-xs text-amber-300">No quality score generated</span>}
                 </div>
 
+                {!isProviderEvaluation && <p className="text-xs text-amber-200">An AI provider was unavailable. This is qualitative practice guidance, not an AI assessment.</p>}
+
                 {/* Dimensional Metrics */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+                {isProviderEvaluation && <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-center text-xs">
                   <div className="p-2.5 rounded-lg bg-black/30 border border-white/5">
-                    <div className="text-[10px] text-slate-400">Technical Depth</div>
-                    <div className="text-sm font-bold text-white mt-1">{techScore}%</div>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-black/30 border border-white/5">
-                    <div className="text-[10px] text-slate-400">Clarity & STAR</div>
-                    <div className="text-sm font-bold text-indigo-300 mt-1">{clarityScore}%</div>
-                  </div>
-                  <div className="p-2.5 rounded-lg bg-black/30 border border-white/5">
-                    <div className="text-[10px] text-slate-400">Relevance</div>
-                    <div className="text-sm font-bold text-cyan-300 mt-1">{relScore}%</div>
+                    <div className="text-[10px] text-slate-400">Technical Knowledge</div>
+                    <div className="text-sm font-bold text-white mt-1">{feedbackObj.technicalKnowledge}%</div>
                   </div>
                   <div className="p-2.5 rounded-lg bg-black/30 border border-white/5">
                     <div className="text-[10px] text-slate-400">Communication</div>
-                    <div className="text-sm font-bold text-brand-400 mt-1">{commScore}%</div>
+                    <div className="text-sm font-bold text-indigo-300 mt-1">{feedbackObj.communication}%</div>
                   </div>
-                </div>
+                  <div className="p-2.5 rounded-lg bg-black/30 border border-white/5">
+                    <div className="text-[10px] text-slate-400">Relevance</div>
+                    <div className="text-sm font-bold text-cyan-300 mt-1">{feedbackObj.relevance}%</div>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-black/30 border border-white/5">
+                    <div className="text-[10px] text-slate-400">Clarity</div>
+                    <div className="text-sm font-bold text-brand-400 mt-1">{feedbackObj.clarity}%</div>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-black/30 border border-white/5">
+                    <div className="text-[10px] text-slate-400">Confidence</div>
+                    <div className="text-sm font-bold text-amber-300 mt-1">{feedbackObj.confidence}%</div>
+                  </div>
+                </div>}
 
                 {/* Strengths & Improvements */}
                 <div className="space-y-3 text-xs leading-relaxed">

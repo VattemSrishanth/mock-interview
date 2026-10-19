@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
           </div>
           <h2 className="text-lg font-bold text-white">No Completed Mock Interviews Yet</h2>
           <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-            Complete your first AI mock interview simulation to unlock calibrated 5-dimensional scores, skill competency charts, and trajectory analytics.
+            Complete a mock interview to see available provider-backed scores across five dimensions, skill charts, and progress over time.
           </p>
           <div className="pt-2">
             <Link

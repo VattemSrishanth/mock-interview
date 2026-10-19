@@ -20,4 +20,6 @@ public class FeedbackDto {
     private List<String> weaknesses;
     private List<String> suggestions;
     private String modelAnswer;
+    /** AI_PROVIDER, HEURISTIC, or SKIPPED. Null is reserved for legacy records. */
+    private String evaluationSource;
 }

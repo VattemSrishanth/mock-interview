@@ -178,7 +178,7 @@ export default function DashboardPage({ onOpenCoach }) {
                 <PlayCircle className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                 <h4 className="text-sm font-semibold text-white">No interviews conducted yet</h4>
                 <p className="text-xs text-slate-400 mt-1 mb-4 max-w-sm mx-auto">
-                  Take your first simulation to calibrate your baseline across technical depth and STAR communication.
+                  Take your first simulation to review technical knowledge, communication, relevance, clarity, and confidence.
                 </p>
                 <Link
                   to="/create"

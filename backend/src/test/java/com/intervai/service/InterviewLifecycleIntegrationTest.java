@@ -113,7 +113,7 @@ class InterviewLifecycleIntegrationTest {
     }
 
     @Test
-    void resubmittingAQuestionUpdatesSavedAnswerWithoutIncreasingEvaluationCount() {
+    void resubmittingAQuestionUpdatesSavedAnswerWithoutCreatingHeuristicScores() {
         Interview interview = createInterview("IN_PROGRESS", LocalDateTime.now().minusMinutes(1), null);
         InterviewQuestion first = createQuestion(interview, "Java");
         InterviewQuestion second = createQuestion(interview, "Java");
@@ -129,14 +129,15 @@ class InterviewLifecycleIntegrationTest {
         Answer updated = answerRepository.findByQuestionId(first.getId()).orElseThrow();
         assertEquals(answerId, updated.getId());
         assertEquals("Updated response", updated.getAnswerText());
-        assertEquals(feedbackId, feedbackRepository.findByAnswerId(answerId).orElseThrow().getId());
+        var firstFeedback = feedbackRepository.findByAnswerId(answerId).orElseThrow();
+        assertEquals(feedbackId, firstFeedback.getId());
+        assertNull(firstFeedback.getScore());
+        assertEquals("HEURISTIC", firstFeedback.getEvaluationSource());
 
-        Performance performance = performanceRepository.findByUserIdAndSkillNameIgnoreCase(user.getId(), "Java").orElseThrow();
-        List<Integer> scores = List.of(
-                feedbackRepository.findByAnswerId(answerId).orElseThrow().getScore(),
-                feedbackRepository.findByAnswerId(answerRepository.findByQuestionId(second.getId()).orElseThrow().getId()).orElseThrow().getScore());
-        assertEquals(2, performance.getTotalQuestionsEvaluated());
-        assertEquals((int) Math.round(scores.stream().mapToInt(Integer::intValue).average().orElseThrow()), performance.getScore());
+        var secondAnswer = answerRepository.findByQuestionId(second.getId()).orElseThrow();
+        var secondFeedback = feedbackRepository.findByAnswerId(secondAnswer.getId()).orElseThrow();
+        assertNull(secondFeedback.getScore());
+        assertTrue(performanceRepository.findByUserIdAndSkillNameIgnoreCase(user.getId(), "Java").isEmpty());
     }
 
     @Test

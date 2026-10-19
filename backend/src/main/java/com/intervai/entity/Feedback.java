@@ -30,6 +30,9 @@ public class Feedback {
     private Integer clarityScore;
     private Integer confidenceScore;
 
+    @Column(length = 24)
+    private String evaluationSource;
+
     @Column(columnDefinition = "TEXT")
     private String strengthsJson;
 

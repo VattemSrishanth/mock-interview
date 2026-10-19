@@ -76,7 +76,8 @@ export default function InterviewResultPage({ onOpenCoach }) {
     );
   }
 
-  const score = result.overallScore || 75;
+  const hasProviderScore = result.evaluationSource === 'AI_PROVIDER';
+  const score = hasProviderScore ? result.overallScore : null;
   const getRatingBadge = (val) => {
     if (val >= 85) return { text: 'Strong Hire / Top Tier', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' };
     if (val >= 75) return { text: 'Solid Hire / Offer Ready', color: 'bg-brand-500/10 text-brand-400 border-brand-500/30' };
@@ -84,7 +85,7 @@ export default function InterviewResultPage({ onOpenCoach }) {
     return { text: 'Developing / Needs Targeted Prep', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30' };
   };
 
-  const badge = getRatingBadge(score);
+  const badge = hasProviderScore ? getRatingBadge(score) : { text: 'Practice guidance', color: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30' };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
@@ -100,11 +101,18 @@ export default function InterviewResultPage({ onOpenCoach }) {
               <span>{badge.text}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              {result.jobRole} Performance Scorecard
+              {result.jobRole} {hasProviderScore ? 'Performance Scorecard' : 'Practice Review'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
-              Completed simulation across {result.interviewType} track &bull; Evaluated using strict senior engineering hiring rubrics.
+              Completed simulation across {result.interviewType} track. Scores use technical knowledge, communication, relevance, clarity, and confidence.
             </p>
+            {!hasProviderScore && (
+              <p className="text-xs text-amber-300 max-w-xl">
+                {result.evaluationSource === 'HEURISTIC'
+                  ? 'Provider evaluation was unavailable. This session has qualitative practice guidance only; no quality score was generated.'
+                  : 'A provider score is unavailable for this session. Question-level practice guidance may still be available.'}
+              </p>
+            )}
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
               <Link
@@ -125,10 +133,10 @@ export default function InterviewResultPage({ onOpenCoach }) {
           {/* Right big score circle */}
           <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-black/40 border border-white/10 min-w-[200px]">
             <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-emerald-300">
-              {score}%
+              {hasProviderScore ? `${score}%` : '—'}
             </div>
             <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider mt-1">
-              Overall Calibrated Score
+              {hasProviderScore ? 'Provider Evaluation Score' : 'No Provider Score'}
             </div>
             <div className="text-[11px] text-slate-400 mt-1 font-mono">
               Status: {result.status || 'COMPLETED'}
@@ -139,13 +147,13 @@ export default function InterviewResultPage({ onOpenCoach }) {
       </div>
 
       {/* 5-Dimensional Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      {hasProviderScore && <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: 'Technical Depth', val: result.technicalKnowledgeScore || result.technicalAccuracyScore || 85, color: 'text-brand-400' },
-          { label: 'Communication & STAR', val: result.communicationScore || 78, color: 'text-indigo-400' },
-          { label: 'Clarity & Structure', val: result.clarityScore || result.problemSolvingScore || 82, color: 'text-cyan-400' },
-          { label: 'Relevance & Breadth', val: result.relevanceScore || 80, color: 'text-purple-400' },
-          { label: 'Delivery & Poise', val: result.confidenceScore || 75, color: 'text-amber-400' },
+          { label: 'Technical Knowledge', val: result.technicalKnowledgeScore, color: 'text-brand-400' },
+          { label: 'Communication', val: result.communicationScore, color: 'text-indigo-400' },
+          { label: 'Relevance', val: result.relevanceScore, color: 'text-purple-400' },
+          { label: 'Clarity', val: result.clarityScore, color: 'text-cyan-400' },
+          { label: 'Confidence', val: result.confidenceScore, color: 'text-amber-400' },
         ].map((item, idx) => (
           <div key={idx} className="p-4 rounded-xl bg-[#0d1322] border border-white/5 text-center flex flex-col justify-between">
             <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{item.label}</span>
@@ -155,7 +163,7 @@ export default function InterviewResultPage({ onOpenCoach }) {
             </div>
           </div>
         ))}
-      </div>
+      </div>}
 
       {/* Strengths & Improvements */}
       <div className="grid md:grid-cols-2 gap-6">
@@ -167,15 +175,13 @@ export default function InterviewResultPage({ onOpenCoach }) {
             Key Evaluator Strengths
           </h3>
           <ul className="space-y-2.5">
-            {(result.strengths && result.strengths.length > 0
-              ? result.strengths
-              : ["Clear explanations of core technology concepts", "Direct relevance to prompt requirements"]
-            ).map((str, idx) => (
+            {(result.strengths || []).map((str, idx) => (
               <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
                 <span>{str}</span>
               </li>
             ))}
+            {(!result.strengths || result.strengths.length === 0) && <li className="text-xs text-slate-400">No evaluator strengths were recorded.</li>}
           </ul>
         </div>
 
@@ -186,15 +192,13 @@ export default function InterviewResultPage({ onOpenCoach }) {
             Areas for Refinement
           </h3>
           <ul className="space-y-2.5">
-            {((result.weaknesses || result.improvements) && (result.weaknesses || result.improvements).length > 0
-              ? (result.weaknesses || result.improvements)
-              : ["Provide deeper real-world failure mode trade-offs", "Structure answers with explicit measurable outcomes"]
-            ).map((imp, idx) => (
+            {((result.weaknesses || result.improvements) || []).map((imp, idx) => (
               <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
                 <span>{imp}</span>
               </li>
             ))}
+            {(!(result.weaknesses || result.improvements) || (result.weaknesses || result.improvements).length === 0) && <li className="text-xs text-slate-400">No evaluator improvement notes were recorded.</li>}
           </ul>
         </div>
 
@@ -205,7 +209,7 @@ export default function InterviewResultPage({ onOpenCoach }) {
         <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950/40 to-slate-900 border border-indigo-500/30 space-y-4">
           <div className="flex items-center gap-2 text-indigo-300 text-xs font-bold uppercase tracking-wider">
             <BookOpen className="w-4 h-4" />
-            <span>AI Recommended Study Roadmap</span>
+            <span>{hasProviderScore ? 'Provider Evaluation Recommendations' : 'Practice Recommendations'}</span>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {(result.suggestions || result.recommendations).map((rec, idx) => (
@@ -228,7 +232,8 @@ export default function InterviewResultPage({ onOpenCoach }) {
         <div className="space-y-3 pt-2">
           {(result.questions || []).map((q, idx) => {
             const isExpanded = expandedQuestion === idx;
-            const qScore = q.feedback?.score ?? q.score ?? 80;
+            const hasQuestionScore = q.feedback?.evaluationSource === 'AI_PROVIDER' && q.feedback?.score != null;
+            const qScore = hasQuestionScore ? q.feedback.score : null;
             const userAnswerText = q.userAnswer || q.candidateAnswer || 'No response recorded';
             const feedbackText = typeof q.feedback === 'string'
               ? q.feedback
@@ -255,7 +260,7 @@ export default function InterviewResultPage({ onOpenCoach }) {
 
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-xs font-extrabold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-lg">
-                      {qScore}%
+                      {hasQuestionScore ? `${qScore}%` : q.feedback?.evaluationSource === 'HEURISTIC' ? 'Guidance' : '—'}
                     </span>
                     {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                   </div>
@@ -274,7 +279,7 @@ export default function InterviewResultPage({ onOpenCoach }) {
 
                     <div>
                       <div className="text-[10px] font-bold text-brand-400 uppercase tracking-wider mb-1">
-                        AI Evaluator Feedback:
+                        {q.feedback?.evaluationSource === 'AI_PROVIDER' ? 'Provider Evaluation:' : q.feedback?.evaluationSource === 'HEURISTIC' ? 'Practice Guidance (No AI Score):' : 'Evaluation Feedback:'}
                       </div>
                       <p className="text-slate-300 leading-relaxed">
                         {feedbackText}
