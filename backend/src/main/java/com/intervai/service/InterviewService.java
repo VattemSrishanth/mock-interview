@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -67,11 +68,13 @@ public class InterviewService {
 
     @Transactional
     public InterviewDto startInterview(Long userId, Long interviewId) {
-        Interview interview = getAuthorizedInterview(userId, interviewId);
+        Interview interview = getAuthorizedInterviewForUpdate(userId, interviewId);
         if ("CREATED".equals(interview.getStatus())) {
             interview.setStatus("IN_PROGRESS");
             interview.setStartedAt(LocalDateTime.now());
             interview = interviewRepository.save(interview);
+        } else if (!"IN_PROGRESS".equals(interview.getStatus())) {
+            throw new BadRequestException("Only a created interview can be started");
         }
         return mapToDto(interview);
     }
@@ -84,7 +87,10 @@ public class InterviewService {
 
     @Transactional
     public InterviewQuestionDto submitAnswer(Long userId, Long interviewId, SubmitAnswerRequest request) {
-        Interview interview = getAuthorizedInterview(userId, interviewId);
+        Interview interview = getAuthorizedInterviewForUpdate(userId, interviewId);
+        if (!"IN_PROGRESS".equals(interview.getStatus())) {
+            throw new BadRequestException("Answers can only be submitted while the interview is in progress");
+        }
 
         InterviewQuestion question = questionRepository.findById(request.getQuestionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Question not found with id: " + request.getQuestionId()));
@@ -137,7 +143,7 @@ public class InterviewService {
         }
 
         feedback.setModelAnswer(evaluation.getModelAnswer() != null ? evaluation.getModelAnswer() : question.getModelAnswer());
-        feedbackRepository.save(feedback);
+        feedbackRepository.saveAndFlush(feedback);
 
         // Update skill performance
         updateSkillPerformance(interview.getUser(), question.getTargetSkill(), evaluation.getScore());
@@ -147,7 +153,13 @@ public class InterviewService {
 
     @Transactional
     public InterviewResultDto completeInterview(Long userId, Long interviewId) {
-        Interview interview = getAuthorizedInterview(userId, interviewId);
+        Interview interview = getAuthorizedInterviewForUpdate(userId, interviewId);
+        if ("COMPLETED".equals(interview.getStatus())) {
+            return getInterviewResult(userId, interviewId);
+        }
+        if (!"IN_PROGRESS".equals(interview.getStatus())) {
+            throw new BadRequestException("Only an in-progress interview can be completed");
+        }
 
         List<InterviewQuestion> questions = questionRepository.findByInterviewIdOrderByQuestionOrderAsc(interviewId);
         List<Answer> answers = questions.stream()
@@ -228,11 +240,12 @@ public class InterviewService {
         } catch (Exception ignored) {}
 
         interview.setSummaryFeedback(buildSummaryText(overall, interview.getJobRole(), tech, comm));
-        Interview saved = interviewRepository.save(interview);
+        Interview saved = interviewRepository.saveAndFlush(interview);
 
-        // Update streak
-        User user = interview.getUser();
-        user.setInterviewStreak((user.getInterviewStreak() != null ? user.getInterviewStreak() : 0) + 1);
+        // Serialize streak updates per user and derive the streak from distinct completion dates.
+        User user = userRepository.findByIdForUpdate(interview.getUser().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setInterviewStreak(calculatePracticeStreak(interviewRepository.findCompletedAtByUserId(user.getId())));
         userRepository.save(user);
 
         return getInterviewResult(userId, saved.getId());
@@ -319,6 +332,17 @@ public class InterviewService {
         Interview interview = interviewRepository.findById(interviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Interview not found with id: " + interviewId));
 
+        return authorizeInterview(userId, interview);
+    }
+
+    private Interview getAuthorizedInterviewForUpdate(Long userId, Long interviewId) {
+        Interview interview = interviewRepository.findByIdForUpdate(interviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Interview not found with id: " + interviewId));
+
+        return authorizeInterview(userId, interview);
+    }
+
+    private Interview authorizeInterview(Long userId, Interview interview) {
         if (!interview.getUser().getId().equals(userId)) {
             User requestingUser = userRepository.findById(userId)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
@@ -333,21 +357,39 @@ public class InterviewService {
 
     private void updateSkillPerformance(User user, String skillName, Integer score) {
         if (skillName == null || score == null) return;
+
+        userRepository.findByIdForUpdate(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        List<Integer> scores = performanceRepository.findScoresByUserIdAndSkillNameIgnoreCase(user.getId(), skillName.trim());
+        if (scores.isEmpty()) return;
+
         Performance perf = performanceRepository.findByUserIdAndSkillNameIgnoreCase(user.getId(), skillName.trim())
                 .orElseGet(() -> Performance.builder()
                         .user(user)
                         .skillName(skillName.trim())
-                        .score(score)
+                        .score(0)
                         .totalQuestionsEvaluated(0)
                         .build());
 
-        int currentTotal = perf.getTotalQuestionsEvaluated() != null ? perf.getTotalQuestionsEvaluated() : 0;
-        int currentScore = perf.getScore() != null ? perf.getScore() : score;
-        int updatedScore = (int) Math.round((currentScore * currentTotal + score) / (double) (currentTotal + 1));
-
-        perf.setScore(updatedScore);
-        perf.setTotalQuestionsEvaluated(currentTotal + 1);
+        int scoreTotal = scores.stream().mapToInt(Integer::intValue).sum();
+        perf.setScore((int) Math.round(scoreTotal / (double) scores.size()));
+        perf.setTotalQuestionsEvaluated(scores.size());
         performanceRepository.save(perf);
+    }
+
+    private int calculatePracticeStreak(List<LocalDateTime> completedAtDates) {
+        Set<LocalDate> practiceDays = completedAtDates.stream()
+                .map(LocalDateTime::toLocalDate)
+                .collect(Collectors.toSet());
+        if (practiceDays.isEmpty()) return 0;
+
+        LocalDate day = Collections.max(practiceDays);
+        int streak = 0;
+        while (practiceDays.contains(day)) {
+            streak++;
+            day = day.minusDays(1);
+        }
+        return streak;
     }
 
     private List<String> deduplicateTop(List<String> list, int max) {
