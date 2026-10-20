@@ -83,6 +83,11 @@ class ProductionSecurityIntegrationTest {
         String adminToken = new com.fasterxml.jackson.databind.ObjectMapper().readTree(adminLogin).get("token").asText();
         mvc.perform(get("/api/admin/stats").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk());
+
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"security-test@example.com\",\"password\":\"wrong-password\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid email or password"));
     }
 
     @Test

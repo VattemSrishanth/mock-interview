@@ -11,9 +11,9 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B || true
 
-# Copy source and package executable artifact
+# Copy source and run tests as part of the production build stage
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn -B clean verify
 
 # --- Stage 2: Minimal Production JRE Runtime ---
 FROM eclipse-temurin:21-jre-jammy

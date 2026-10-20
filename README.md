@@ -121,3 +121,23 @@ Use the database's **internal** connection details for a Render-hosted backend i
 Hibernate uses the project's existing `ddl-auto=update` setting to create/update mapped tables without dropping existing tables. Back up a production database before deploying schema changes. There is no Flyway/Liquibase migration history in this repository. Existing data in a local H2 file is not copied to PostgreSQL; migrating it requires a separate, planned export/import with backups and validation.
 
 Render Postgres provides separate internal and external connection URLs; prefer the internal URL for same-region Render services. See [Render's PostgreSQL connection guide](https://render.com/docs/postgresql-creating-connecting) for database setup and connection details.
+
+## Automated verification
+
+Run the backend regression suite and package build from the repository root:
+
+```powershell
+cd backend
+.\mvnw.cmd clean verify
+```
+
+Run the frontend regression tests and production build:
+
+```powershell
+cd frontend
+npm ci
+npm test
+npm run build
+```
+
+The GitHub Actions workflow runs these backend and frontend checks on pushes and pull requests. The backend Docker build also runs Maven verification before producing the runtime image.

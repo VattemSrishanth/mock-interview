@@ -4,11 +4,13 @@ import com.intervai.dto.InterviewDto;
 import com.intervai.dto.InterviewResultDto;
 import com.intervai.dto.SubmitAnswerRequest;
 import com.intervai.entity.Answer;
+import com.intervai.entity.Feedback;
 import com.intervai.entity.Interview;
 import com.intervai.entity.InterviewQuestion;
 import com.intervai.entity.Performance;
 import com.intervai.entity.User;
 import com.intervai.exception.BadRequestException;
+import com.intervai.exception.UnauthorizedException;
 import com.intervai.repository.AnswerRepository;
 import com.intervai.repository.FeedbackRepository;
 import com.intervai.repository.InterviewQuestionRepository;
@@ -88,6 +90,22 @@ class InterviewLifecycleIntegrationTest {
     }
 
     @Test
+    void interviewDataIsRestrictedToItsOwner() {
+        Interview interview = createInterview("IN_PROGRESS", LocalDateTime.now().minusMinutes(1), null);
+        User otherUser = userRepository.saveAndFlush(User.builder()
+                .name("Other Candidate")
+                .email("other-" + UUID.randomUUID() + "@example.com")
+                .password("test-password")
+                .roles(user.getRoles())
+                .build());
+
+        assertThrows(UnauthorizedException.class,
+                () -> interviewService.getInterview(otherUser.getId(), interview.getId()));
+        assertThrows(UnauthorizedException.class,
+                () -> interviewService.startInterview(otherUser.getId(), interview.getId()));
+    }
+
+    @Test
     void repeatedCompletionPreservesResultsAndDoesNotChangeStreak() {
         Interview interview = createInterview("IN_PROGRESS", LocalDateTime.now().minusMinutes(4), null);
         InterviewQuestion question = createQuestion(interview, "Java");
@@ -138,6 +156,43 @@ class InterviewLifecycleIntegrationTest {
         var secondFeedback = feedbackRepository.findByAnswerId(secondAnswer.getId()).orElseThrow();
         assertNull(secondFeedback.getScore());
         assertTrue(performanceRepository.findByUserIdAndSkillNameIgnoreCase(user.getId(), "Java").isEmpty());
+    }
+
+    @Test
+    void completionAggregatesPersistedFeedbackDimensionsAndStrengths() throws Exception {
+        Interview interview = createInterview("IN_PROGRESS", LocalDateTime.now().minusMinutes(3), null);
+        InterviewQuestion first = createQuestion(interview, "Java");
+        InterviewQuestion second = createQuestion(interview, "Java");
+        Answer firstAnswer = answerRepository.saveAndFlush(Answer.builder()
+                .question(first).answerText("First response").isSkipped(false).timeSpentSeconds(20).build());
+        Answer secondAnswer = answerRepository.saveAndFlush(Answer.builder()
+                .question(second).answerText("Second response").isSkipped(false).timeSpentSeconds(25).build());
+        feedbackRepository.saveAndFlush(Feedback.builder().answer(firstAnswer)
+                .score(80).technicalKnowledgeScore(70).communicationScore(80).relevanceScore(90)
+                .clarityScore(75).confidenceScore(85).evaluationSource("AI_PROVIDER")
+                .strengthsJson("[\"Explains the core idea\"]")
+                .weaknessesJson("[\"Needs an example\"]")
+                .suggestionsJson("[\"Add a concrete example\"]").build());
+        feedbackRepository.saveAndFlush(Feedback.builder().answer(secondAnswer)
+                .score(100).technicalKnowledgeScore(90).communicationScore(100).relevanceScore(80)
+                .clarityScore(95).confidenceScore(95).evaluationSource("AI_PROVIDER")
+                .strengthsJson("[\"Covers trade-offs\"]")
+                .weaknessesJson("[\"Could be more concise\"]")
+                .suggestionsJson("[\"Summarize the conclusion\"]").build());
+
+        InterviewResultDto result = interviewService.completeInterview(user.getId(), interview.getId());
+
+        assertEquals(90, result.getOverallScore());
+        assertEquals(80, result.getTechnicalKnowledgeScore());
+        assertEquals(90, result.getCommunicationScore());
+        assertEquals(85, result.getRelevanceScore());
+        assertEquals(85, result.getClarityScore());
+        assertEquals(90, result.getConfidenceScore());
+        assertEquals("AI_PROVIDER", result.getEvaluationSource());
+        assertEquals(List.of("Explains the core idea", "Covers trade-offs"), result.getStrengths());
+        assertEquals(2, result.getQuestions().size());
+        assertEquals(80, result.getQuestions().get(0).getFeedback().getScore());
+        assertEquals(100, result.getQuestions().get(1).getFeedback().getScore());
     }
 
     @Test
