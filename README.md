@@ -17,7 +17,7 @@ An enterprise-grade, full-stack AI interview preparation platform designed for s
 ### Backend (`/backend`)
 - **Framework**: Java 21, Spring Boot 3.3.4
 - **Security**: Spring Security 6, Stateless JWT Authentication, Password Hashing (BCrypt)
-- **Data Persistence**: Spring Data JPA / Hibernate, H2 persistent file storage (Zero-config) with PostgreSQL compatibility
+- **Data Persistence**: Spring Data JPA / Hibernate, H2 persistent file storage for local development, PostgreSQL for production
 - **Validation**: Jakarta Bean Validation (`@Valid`)
 - **AI Core**: Dual AI engine supporting Google Gemini (`gemini-1.5-flash`), OpenAI (`gpt-4o-mini`), and an intelligent built-in heuristic evaluation generator for offline/free testing.
 
@@ -99,4 +99,25 @@ npm run dev
 | `ADMIN_PASSWORD` | Optional initial production administrator password (at least 16 characters) | None |
 | `GEMINI_API_KEY` | Google Gemini API Key | Optional (Heuristic fallback active) |
 | `OPENAI_API_KEY` | OpenAI API Key | Optional |
-| `SPRING_DATASOURCE_URL` | Database connection URL | `jdbc:h2:file:./data/intervaidb` |
+| `SPRING_DATASOURCE_URL` | JDBC database URL; required in `prod` | H2 file URL in `dev` |
+| `SPRING_DATASOURCE_USERNAME` | Database username; required in `prod` | `sa` in `dev` |
+| `SPRING_DATASOURCE_PASSWORD` | Database password; required in `prod` | Empty in `dev` |
+| `SPRING_DATASOURCE_DRIVER` | JDBC driver class; required in `prod` | H2 driver in `dev` |
+
+### Render PostgreSQL setup
+
+The Render Blueprint configures the backend web service only; it does not create a PostgreSQL instance or incur database charges. Create or select a PostgreSQL database in the Render Dashboard, preferably in the same region as the backend, then add the database settings to the backend service's Environment page:
+
+| Variable | Value |
+|----------|-------|
+| `SPRING_PROFILES_ACTIVE` | `prod` |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://<internal-host>:5432/<database-name>` |
+| `SPRING_DATASOURCE_USERNAME` | Database username from Render |
+| `SPRING_DATASOURCE_PASSWORD` | Database password from Render |
+| `SPRING_DATASOURCE_DRIVER` | `org.postgresql.Driver` |
+
+Use the database's **internal** connection details for a Render-hosted backend in the same region. Build the JDBC URL from the internal host, port, and database name; put the username and password in their separate environment variables. Do not commit connection values or put credentials in the URL. The `prod` profile requires these settings and will not fall back to H2. Set the existing `JWT_SECRET` and `CORS_ALLOWED_ORIGINS` values as well, then save and deploy the backend service.
+
+Hibernate uses the project's existing `ddl-auto=update` setting to create/update mapped tables without dropping existing tables. Back up a production database before deploying schema changes. There is no Flyway/Liquibase migration history in this repository. Existing data in a local H2 file is not copied to PostgreSQL; migrating it requires a separate, planned export/import with backups and validation.
+
+Render Postgres provides separate internal and external connection URLs; prefer the internal URL for same-region Render services. See [Render's PostgreSQL connection guide](https://render.com/docs/postgresql-creating-connecting) for database setup and connection details.

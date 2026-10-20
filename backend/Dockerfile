@@ -22,9 +22,6 @@ WORKDIR /app
 # Create unprivileged application user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# Prepare writable storage directory for H2 database fallback
-RUN mkdir -p /app/data && chown -R appuser:appuser /app
-
 # Copy artifact from build stage
 COPY --from=build --chown=appuser:appuser /app/target/*.jar app.jar
 
@@ -32,6 +29,7 @@ USER appuser
 
 # Render dynamically injects the PORT environment variable (default fallback 8080)
 ENV PORT=8080
+ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE ${PORT}
 
 # Container-aware memory tuning to prevent OOM kills on 512MB RAM instances
