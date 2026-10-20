@@ -19,6 +19,7 @@ import {
   LogOut
 } from 'lucide-react';
 import LiveAudioWave from '../components/LiveAudioWave';
+import { collectFinalizedResults, combineAnswerParts } from '../utils/voiceTranscript';
 
 export default function LiveInterviewPage() {
   const { id } = useParams();
@@ -26,7 +27,10 @@ export default function LiveInterviewPage() {
 
   const [interview, setInterview] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answerText, setAnswerText] = useState('');
+  const [typedAnswer, setTypedAnswer] = useState('');
+  const [spokenAnswer, setSpokenAnswer] = useState('');
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [speechStatus, setSpeechStatus] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
@@ -40,6 +44,33 @@ export default function LiveInterviewPage() {
   const [loadAttempt, setLoadAttempt] = useState(0);
 
   const recognitionRef = useRef(null);
+  const typedAnswerRef = useRef('');
+  const spokenAnswerRef = useRef('');
+  const recordingRef = useRef(false);
+  const stopRequestedRef = useRef(false);
+  const speechErrorRef = useRef('');
+  const finalizedResultsRef = useRef(new Map());
+  const sessionSpeechBaseRef = useRef('');
+  const stopResolverRef = useRef(null);
+  const answerText = combineAnswerParts(typedAnswer, spokenAnswer);
+
+  const updateTypedAnswer = (value) => {
+    typedAnswerRef.current = value;
+    setTypedAnswer(value);
+  };
+
+  const updateSpokenAnswer = (value) => {
+    spokenAnswerRef.current = value;
+    setSpokenAnswer(value);
+  };
+
+  const clearAnswerParts = () => {
+    updateTypedAnswer('');
+    updateSpokenAnswer('');
+    setInterimTranscript('');
+    finalizedResultsRef.current.clear();
+    sessionSpeechBaseRef.current = '';
+  };
 
   // Fetch interview session
   useEffect(() => {
@@ -102,6 +133,7 @@ export default function LiveInterviewPage() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setSpeechSupported(false);
+      setSpeechStatus('Speech recognition is unavailable in this browser. You can type your answer.');
       return;
     }
 
@@ -109,30 +141,56 @@ export default function LiveInterviewPage() {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    recognition.onstart = () => setSpeechStatus('Listening. Your existing typed and spoken answers are preserved.');
 
     recognition.onresult = (event) => {
-      let currentTranscript = '';
-      for (let i = 0; i < event.results.length; i++) {
-        currentTranscript += event.results[i][0].transcript + ' ';
-      }
-      setAnswerText((prev) => {
-        // Append or replace smoothly
-        return currentTranscript.trim();
-      });
+      const { finalizedTranscript, interimTranscript: interim } = collectFinalizedResults(
+        event.results,
+        finalizedResultsRef.current
+      );
+      const sessionTranscript = combineAnswerParts(sessionSpeechBaseRef.current, finalizedTranscript);
+      updateSpokenAnswer(sessionTranscript);
+      setInterimTranscript(interim);
     };
 
     recognition.onerror = (event) => {
+      const messages = {
+        'not-allowed': 'Microphone permission was denied. Allow microphone access or type your answer.',
+        'service-not-allowed': 'Microphone access is blocked. Allow access or type your answer.',
+        'audio-capture': 'No microphone was found. You can type your answer.',
+        'no-speech': 'No speech was detected. Your saved transcript is unchanged; try again or type.',
+        network: 'Speech recognition could not connect. Your saved transcript is unchanged; retry or type.'
+      };
+      const message = messages[event.error] || 'Speech recognition stopped unexpectedly. Your saved transcript is unchanged; retry or type.';
       console.warn('Speech recognition error:', event.error);
+      speechErrorRef.current = message;
+      setSpeechStatus(message);
+      setInterimTranscript('');
+      stopRequestedRef.current = false;
+      recordingRef.current = false;
       setIsRecording(false);
     };
 
     recognition.onend = () => {
+      const wasExpected = stopRequestedRef.current;
+      stopRequestedRef.current = false;
+      recordingRef.current = false;
       setIsRecording(false);
+      setInterimTranscript('');
+      setSpeechStatus(speechErrorRef.current || (wasExpected
+        ? 'Voice input stopped. Your transcript is saved.'
+        : 'Voice input ended. Your transcript is saved; restart the microphone to continue.'));
+      stopResolverRef.current?.();
+      stopResolverRef.current = null;
     };
 
     recognitionRef.current = recognition;
 
     return () => {
+      recognition.onresult = null;
+      recognition.onstart = null;
+      recognition.onerror = null;
+      recognition.onend = null;
       try {
         recognition.stop();
       } catch {}
@@ -170,33 +228,70 @@ export default function LiveInterviewPage() {
     }
   };
 
+  const stopRecording = (waitForEnd = false) => {
+    const recognition = recognitionRef.current;
+    if (!recognition || !recordingRef.current) return Promise.resolve();
+
+    stopRequestedRef.current = true;
+    setSpeechStatus('Finishing voice input…');
+    if (!waitForEnd) {
+      try { recognition.stop(); } catch { /* Already stopped. */ }
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        resolve();
+      };
+      const timeout = window.setTimeout(finish, 1000);
+      stopResolverRef.current = finish;
+      try {
+        recognition.stop();
+      } catch {
+        finish();
+      }
+    });
+  };
+
   const toggleRecording = () => {
     if (!recognitionRef.current) {
-      alert("Speech recognition isn't supported in this browser. You can type your response!");
+      setSpeechStatus(speechSupported
+        ? 'Speech recognition is unavailable. You can type your answer.'
+        : 'Speech recognition is unavailable in this browser. You can type your answer.');
       return;
     }
 
-    if (isRecording) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
+    if (recordingRef.current) {
+      stopRecording();
     } else {
       stopSpeaking();
       try {
+        finalizedResultsRef.current = new Map();
+        sessionSpeechBaseRef.current = spokenAnswerRef.current;
+        stopRequestedRef.current = false;
+        speechErrorRef.current = '';
+        setSpeechStatus('Starting microphone…');
         recognitionRef.current.start();
+        recordingRef.current = true;
         setIsRecording(true);
-      } catch (e) {
-        console.error("Speech recognition start failed:", e);
+      } catch {
+        recordingRef.current = false;
+        setIsRecording(false);
+        setSpeechStatus('Could not start the microphone. Check its permission or type your answer.');
       }
     }
   };
 
   const handleSubmitAnswer = async () => {
-    if (!answerText.trim() || isEvaluating) return;
+    if (isEvaluating) return;
 
-    if (isRecording && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
-    }
+    if (recordingRef.current) await stopRecording(true);
+    const finalAnswer = combineAnswerParts(typedAnswerRef.current, spokenAnswerRef.current);
+    if (!finalAnswer.trim()) return;
     stopSpeaking();
 
     setIsEvaluating(true);
@@ -205,7 +300,7 @@ export default function LiveInterviewPage() {
     try {
       const result = await interviewApi.submitAnswer(id, {
         questionId: currentQuestion.id,
-        answerText: answerText.trim(),
+        answerText: finalAnswer.trim(),
         isSkipped: false
       });
 
@@ -230,10 +325,7 @@ export default function LiveInterviewPage() {
       return;
     }
 
-    if (isRecording && recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
-    }
+    if (recordingRef.current) await stopRecording(true);
     stopSpeaking();
 
     setIsEvaluating(true);
@@ -262,7 +354,7 @@ export default function LiveInterviewPage() {
 
   const handleNextQuestion = () => {
     setCurrentEvaluation(null);
-    setAnswerText('');
+    clearAnswerParts();
     setShowHint(false);
 
     if (currentQuestionIndex + 1 < (interview?.questions?.length || 0)) {
@@ -525,9 +617,9 @@ export default function LiveInterviewPage() {
             <div className="relative">
               <textarea
                 rows={9}
-                value={answerText}
-                onChange={(e) => setAnswerText(e.target.value)}
-                placeholder="Speak naturally using your microphone, or type your response here... Tip: Structure your answer clearly with concrete examples."
+                value={typedAnswer}
+                onChange={(e) => updateTypedAnswer(e.target.value)}
+                placeholder="Type your response here. Use the microphone to add a separate speech transcript. Tip: Structure your answer clearly with concrete examples."
                 className="w-full bg-[#151f33] border border-white/10 rounded-xl p-4 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition resize-none leading-relaxed"
               />
               <div className="absolute right-3 bottom-3 text-[11px] text-slate-500 font-mono">
@@ -535,13 +627,32 @@ export default function LiveInterviewPage() {
               </div>
             </div>
 
+            {(speechStatus || spokenAnswer || interimTranscript) && (
+              <div className="rounded-xl bg-black/20 border border-white/5 p-3 space-y-2" aria-live="polite">
+                {speechStatus && <p className="text-xs text-slate-400">{speechStatus}</p>}
+                {spokenAnswer && (
+                  <p className="text-xs text-slate-300 whitespace-pre-wrap">
+                    <span className="text-indigo-300 font-semibold">Recognized speech: </span>{spokenAnswer}
+                  </p>
+                )}
+                {interimTranscript && (
+                  <p className="text-xs text-slate-500 italic">Hearing: {interimTranscript}</p>
+                )}
+                {answerText && spokenAnswer && typedAnswer && (
+                  <p className="text-xs text-slate-400 whitespace-pre-wrap border-t border-white/5 pt-2">
+                    <span className="text-slate-300 font-semibold">Combined answer preview: </span>{answerText}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Submit / Action Bar */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setAnswerText('')}
-                  disabled={!answerText || isEvaluating}
+                  onClick={clearAnswerParts}
+                  disabled={!answerText || isEvaluating || isRecording}
                   className="text-xs text-slate-400 hover:text-white disabled:opacity-30 transition px-2 py-1"
                 >
                   Clear input
