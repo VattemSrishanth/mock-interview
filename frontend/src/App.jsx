@@ -39,7 +39,7 @@ export default function App() {
 
       {/* Main Content Area: adjusts margin when authenticated user views with sidebar */}
       <div className={`flex min-h-screen flex-col ${isAuthenticated ? (sidebarCollapsed ? 'md:pl-[76px]' : 'md:pl-64') : ''}`}>
-        <main className="flex-grow">
+        <main className="app-main flex-grow">
         <Suspense fallback={<RouteFallback />}>
         <Routes>
           {/* Public Routes */}
