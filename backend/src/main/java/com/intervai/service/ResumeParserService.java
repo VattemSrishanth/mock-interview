@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intervai.dto.ResumeParseResponse;
 import com.intervai.exception.BadRequestException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -17,12 +16,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ResumeParserService {
 
     private final ObjectMapper objectMapper;
     private final AiService aiService;
+
+    public ResumeParserService(ObjectMapper objectMapper, AiService aiService) {
+        this.objectMapper = objectMapper;
+        this.aiService = aiService;
+    }
 
     private static final List<String> COMMON_SKILLS = List.of(
             // Languages & Frameworks
