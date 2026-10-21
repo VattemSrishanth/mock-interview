@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { analyticsApi } from '../api/analytics';
 import { 
@@ -23,6 +23,31 @@ import {
   PlayCircle 
 } from 'lucide-react';
 
+const SkillChart = React.memo(function SkillChart({ data }) {
+  return <ResponsiveContainer width="100%" height="100%">
+    <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+      <CartesianGrid strokeDasharray="3 3" stroke="#1f293d" vertical={false} />
+      <XAxis dataKey="skill" stroke="#64748b" fontSize={11} tickLine={false} />
+      <YAxis stroke="#64748b" domain={[0, 100]} fontSize={11} tickLine={false} />
+      <Tooltip contentStyle={{ backgroundColor: '#0d1322', borderColor: '#1f293d', borderRadius: '8px', color: '#fff', fontSize: '12px' }} />
+      <Bar dataKey="score" fill="#a855f7" radius={[6, 6, 0, 0]} />
+    </BarChart>
+  </ResponsiveContainer>;
+});
+
+const TrendChart = React.memo(function TrendChart({ data }) {
+  return <ResponsiveContainer width="100%" height="100%">
+    <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+      <defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} /><stop offset="95%" stopColor="#6366f1" stopOpacity={0} /></linearGradient></defs>
+      <CartesianGrid strokeDasharray="3 3" stroke="#1f293d" vertical={false} />
+      <XAxis dataKey="session" stroke="#64748b" fontSize={11} tickLine={false} />
+      <YAxis stroke="#64748b" domain={[40, 100]} fontSize={11} tickLine={false} />
+      <Tooltip contentStyle={{ backgroundColor: '#0d1322', borderColor: '#1f293d', borderRadius: '8px', color: '#fff', fontSize: '12px' }} />
+      <Area type="monotone" dataKey="score" stroke="#6366f1" strokeWidth={2.5} fillOpacity={1} fill="url(#scoreGrad)" />
+    </AreaChart>
+  </ResponsiveContainer>;
+});
+
 export default function AnalyticsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,6 +59,24 @@ export default function AnalyticsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const totalInterviews = data?.totalInterviews || 0;
+  const completedInterviews = data?.completedInterviews || 0;
+  const avgScore = data?.averageScore ? Math.round(data.averageScore) : 0;
+  const totalQuestions = data?.skillWisePerformance?.reduce((acc, s) => acc + (s.evaluated || 0), 0) || (completedInterviews * 5);
+  const skillChartData = useMemo(() => (data?.skillWisePerformance || []).map((item) => ({
+    skill: item.skill || item.name || 'Skill', score: Math.round(item.score ?? 0),
+  })), [data?.skillWisePerformance]);
+  const trendData = useMemo(() => (data?.performanceOverTime || []).map((item, idx) => ({
+    session: item.date || `S${idx + 1}`, score: Math.round(item.score ?? 0),
+    technical: Math.round(item.technical ?? 0), communication: Math.round(item.communication ?? 0),
+  })), [data?.performanceOverTime]);
+  const topStrengths = useMemo(() => (data?.topStrengths?.length
+    ? data.topStrengths
+    : (data?.skillWisePerformance || []).filter((s) => (s.score || 0) >= 75).slice(0, 3)
+      .map((s) => `Demonstrated technical strength in ${s.skill} (${s.score}% competency score)`)), [data]);
+  const weakestAreas = useMemo(() => data?.weakestAreas?.length
+    ? data.weakestAreas : data?.recommendedPractice?.length ? data.recommendedPractice : [], [data]);
+
   if (loading) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4">
@@ -42,40 +85,6 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-
-  const totalInterviews = data?.totalInterviews || 0;
-  const completedInterviews = data?.completedInterviews || 0;
-  const avgScore = data?.averageScore ? Math.round(data.averageScore) : 0;
-  const totalQuestions = data?.skillWisePerformance?.reduce((acc, s) => acc + (s.evaluated || 0), 0) || (completedInterviews * 5);
-
-  const skillChartData = (data?.skillWisePerformance && data.skillWisePerformance.length > 0)
-    ? data.skillWisePerformance.map((item) => ({
-        skill: item.skill || item.name || 'Skill',
-        score: Math.round(item.score ?? 0)
-      }))
-    : [];
-
-  const trendData = (data?.performanceOverTime && data.performanceOverTime.length > 0)
-    ? data.performanceOverTime.map((item, idx) => ({
-        session: item.date || `S${idx + 1}`,
-        score: Math.round(item.score ?? 0),
-        technical: Math.round(item.technical ?? 0),
-        communication: Math.round(item.communication ?? 0)
-      }))
-    : [];
-
-  const topStrengths = (data?.topStrengths && data.topStrengths.length > 0)
-    ? data.topStrengths
-    : (data?.skillWisePerformance || [])
-        .filter((s) => (s.score || 0) >= 75)
-        .slice(0, 3)
-        .map((s) => `Demonstrated technical strength in ${s.skill} (${s.score}% competency score)`);
-
-  const weakestAreas = (data?.weakestAreas && data.weakestAreas.length > 0)
-    ? data.weakestAreas
-    : (data?.recommendedPractice && data.recommendedPractice.length > 0)
-        ? data.recommendedPractice
-        : [];
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -155,17 +164,7 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="h-64 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={skillChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f293d" vertical={false} />
-                <XAxis dataKey="skill" stroke="#64748b" fontSize={11} tickLine={false} />
-                <YAxis stroke="#64748b" domain={[0, 100]} fontSize={11} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0d1322', borderColor: '#1f293d', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                />
-                <Bar dataKey="score" fill="#a855f7" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <SkillChart data={skillChartData} />
           </div>
         </div>
 
@@ -180,23 +179,7 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="h-64 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f293d" vertical={false} />
-                <XAxis dataKey="session" stroke="#64748b" fontSize={11} tickLine={false} />
-                <YAxis stroke="#64748b" domain={[40, 100]} fontSize={11} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0d1322', borderColor: '#1f293d', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                />
-                <Area type="monotone" dataKey="score" stroke="#6366f1" strokeWidth={2.5} fillOpacity={1} fill="url(#scoreGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            <TrendChart data={trendData} />
           </div>
         </div>
 

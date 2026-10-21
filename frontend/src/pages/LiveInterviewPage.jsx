@@ -488,8 +488,8 @@ export default function LiveInterviewPage() {
           </div>
           <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-orange-500 transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
+              className="h-full origin-left bg-orange-500 transition-transform duration-300"
+              style={{ width: '100%', transform: `scaleX(${progressPercent / 100})` }}
             />
           </div>
         </div>
@@ -529,7 +529,7 @@ export default function LiveInterviewPage() {
                   isAiSpeaking 
                     ? 'from-orange-500 via-brand-400 to-zinc-700 animate-pulse'
                     : 'from-slate-700 to-slate-800'
-                } mx-auto transition-all duration-300`}>
+                } mx-auto transition-colors duration-300`}>
                   <div className="w-full h-full bg-[#111827] rounded-[14px] flex items-center justify-center">
                     <Bot className={`w-10 h-10 ${isAiSpeaking ? 'text-brand-400 scale-105' : 'text-slate-400'} transition`} />
                   </div>
@@ -760,7 +760,7 @@ export default function LiveInterviewPage() {
             const modelAnswer = feedbackObj.modelAnswer || currentEvaluation.modelAnswer;
 
             return (
-              <div className="p-6 rounded-xl bg-zinc-900 border border-zinc-800 space-y-5 animate-in fade-in duration-300">
+              <div className="p-6 rounded-xl bg-zinc-900 border border-zinc-800 space-y-5 fade-enter">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                   <div className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-brand-400" />

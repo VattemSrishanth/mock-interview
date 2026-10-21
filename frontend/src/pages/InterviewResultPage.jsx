@@ -13,6 +13,19 @@ const dimensions = [
   ['Confidence', 'confidenceScore'],
 ];
 
+const CompetencyRadar = React.memo(function CompetencyRadar({ data }) {
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <RadarChart data={data} outerRadius="70%">
+        <PolarGrid stroke="currentColor" className="text-zinc-800" />
+        <PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 10 }} />
+        <PolarRadiusAxis domain={[0, 100]} tick={{ fill: '#71717a', fontSize: 9 }} axisLine={false} tickCount={5} />
+        <Radar dataKey="score" stroke="#ff5c00" fill="#ff5c00" fillOpacity={0.16} strokeWidth={2} />
+      </RadarChart>
+    </ResponsiveContainer>
+  );
+});
+
 export default function InterviewResultPage({ onOpenCoach }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -57,7 +70,7 @@ export default function InterviewResultPage({ onOpenCoach }) {
     {!providerScored && <div className="mt-3 border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-xs leading-5 text-zinc-300"><span className="font-mono text-orange-400">Guidance only</span><span className="ml-2">{result.evaluationSource === 'HEURISTIC' ? 'A provider evaluation was unavailable. This session has qualitative practice guidance and no answer quality score.' : 'No provider evaluation score was saved for this session.'}</span></div>}
 
     {providerScored && <section className="mt-4 grid gap-4 lg:grid-cols-[.9fr_1.1fr]">
-      <article className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4"><div className="flex items-center justify-between"><div><p className={mono + ' text-zinc-500'}>Competency map</p><h2 className="mt-1 text-base font-medium text-white">Saved rubric scores</h2></div><span className={mono + ' text-orange-400'}>5 dimensions</span></div><div className="mt-2 h-[270px] w-full"><ResponsiveContainer width="100%" height="100%"><RadarChart data={chartData} outerRadius="70%"><PolarGrid stroke="currentColor" className="text-zinc-800" /><PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 10 }} /><PolarRadiusAxis domain={[0, 100]} tick={{ fill: '#71717a', fontSize: 9 }} axisLine={false} tickCount={5} /><Radar dataKey="score" stroke="#ff5c00" fill="#ff5c00" fillOpacity={0.16} strokeWidth={2} /></RadarChart></ResponsiveContainer></div></article>
+      <article className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4"><div className="flex items-center justify-between"><div><p className={mono + ' text-zinc-500'}>Competency map</p><h2 className="mt-1 text-base font-medium text-white">Saved rubric scores</h2></div><span className={mono + ' text-orange-400'}>5 dimensions</span></div><div className="mt-2 h-[270px] w-full"><CompetencyRadar data={chartData} /></div></article>
       <article className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4"><p className={mono + ' text-zinc-500'}>Dimension detail</p><h2 className="mt-1 text-base font-medium text-white">Evaluation breakdown</h2><div className="mt-5 space-y-4">{dimensions.map(([label, key]) => { const score = Number(result[key]) || 0; return <div key={key}><div className="mb-1.5 flex items-center justify-between text-xs"><span className="text-zinc-300">{label}</span><span className="font-mono tabular-nums text-orange-400">{score}</span></div><div className="h-1 bg-zinc-800"><div className="h-full bg-orange-500" style={{ width: `${Math.max(0, Math.min(100, score))}%` }} /></div></div>; })}</div></article>
     </section>}
 

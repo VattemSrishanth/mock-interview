@@ -61,7 +61,7 @@ export default function LoginPage() {
         </div>
 
         {/* Quick Demo Credentials Card */}
-        <div className="mb-6 p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30 backdrop-blur-md">
+        <div className="mb-6 p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30">
           <div className="flex items-center gap-2 text-indigo-300 text-xs font-semibold mb-2">
             <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
             <span>One-Click Demo Credentials:</span>

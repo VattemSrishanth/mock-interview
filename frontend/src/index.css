@@ -56,6 +56,29 @@ html.light [class*="border-emerald-"], html.light [class*="border-cyan-"], html.
 ::-webkit-scrollbar-thumb:hover { background: #71717a; }
 html.light ::-webkit-scrollbar-track { background: #fafafa; }
 
+@keyframes audio-meter {
+  from { transform: scaleY(calc(var(--meter-scale) * .3)); }
+  to { transform: scaleY(var(--meter-scale)); }
+}
+.audio-meter-bar { animation-name: audio-meter; animation-direction: alternate; animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+
+@keyframes panel-enter {
+  from { transform: translateX(1rem); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.panel-enter { animation: panel-enter 180ms ease-out both; }
+
+@keyframes fade-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-enter { animation: fade-enter 180ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
 @media print {
   body { color: #18181b !important; background: #fff !important; background-image: none !important; }
   aside, header.sticky, button, a[href], .print\:hidden { display: none !important; }

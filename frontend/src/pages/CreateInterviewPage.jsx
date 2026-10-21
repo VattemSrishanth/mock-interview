@@ -376,7 +376,7 @@ export default function CreateInterviewPage() {
         {/* Action Button */}
         <div className="pt-2">
           {isGenerating ? (
-            <div className="p-6 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-center space-y-3 backdrop-blur-md">
+            <div className="p-6 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-center space-y-3">
               <div className="w-8 h-8 rounded-full border-2 border-brand-500/20 border-t-brand-400 animate-spin mx-auto" />
               <div className="text-sm font-semibold text-white">
                 {generationStep === 1 && "Synthesizing job requirements and difficulty curve..."}

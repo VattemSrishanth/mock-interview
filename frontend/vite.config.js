@@ -22,9 +22,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (/node_modules\/(recharts|d3-[^/]+|victory-vendor|internmap|decimal\.js-light)\//.test(id)) return 'charts';
-          if (/node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(id)) return 'motion';
-          if (/node_modules\/(react|react-dom|react-router-dom|scheduler)\//.test(id)) return 'framework';
+          if (!id.includes('/node_modules/')) return;
+          if (/node_modules\/(recharts|d3-[^/]+|victory-vendor|internmap|decimal\.js-light)\//.test(id)) return 'vendor-charts';
+          if (/node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(id)) return 'vendor-motion';
+          if (/node_modules\/(react|react-dom|react-router-dom|scheduler)\//.test(id)) return 'vendor-react';
+          if (/node_modules\/lucide-react\//.test(id)) return 'vendor-icons';
         }
       }
     }

@@ -41,7 +41,7 @@ export default function Navbar({ onOpenCoach }) {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#090d16]/80 backdrop-blur-xl">
+    <nav className="sticky top-0 z-40 w-full border-b border-white/5 bg-zinc-950/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -71,7 +71,7 @@ export default function Navbar({ onOpenCoach }) {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       active
                         ? 'bg-brand-500/15 text-brand-400 border border-brand-500/30 shadow-sm shadow-brand-500/10'
                         : 'text-slate-300 hover:text-white hover:bg-white/5'
@@ -170,7 +170,7 @@ export default function Navbar({ onOpenCoach }) {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-white/5 bg-[#0d1322]/95 backdrop-blur-xl px-4 pt-2 pb-4 space-y-2">
+        <div className="md:hidden border-b border-white/5 bg-zinc-950 px-4 pt-2 pb-4 space-y-2">
           {isAuthenticated ? (
             <>
               <div className="flex items-center gap-3 pb-3 mb-2 border-b border-white/10">

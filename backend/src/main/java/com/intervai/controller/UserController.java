@@ -7,10 +7,12 @@ import com.intervai.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api")
@@ -40,6 +42,8 @@ public class UserController {
 
     @GetMapping("/skills/public")
     public ResponseEntity<List<String>> getAllSkills() {
-        return ResponseEntity.ok(userService.getAllSkills());
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES).cachePublic())
+                .body(userService.getAllSkills());
     }
 }

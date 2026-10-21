@@ -43,7 +43,9 @@ export default function DashboardPage({ onOpenCoach }) {
   const completed = analytics?.completedInterviews ?? interviews.filter((item) => item.status === 'COMPLETED').length;
   const average = Number(analytics?.averageScore || 0);
   const streak = analytics?.currentStreak ?? user?.interviewStreak ?? 0;
-  const sessions = [...interviews].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 6);
+  const sessions = useMemo(() => [...interviews]
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, 6), [interviews]);
 
   const metrics = [
     { label: 'Completed sessions', value: completed, unit: 'sessions', Icon: Layers3, note: `${analytics?.totalInterviews ?? interviews.length} total recorded` },

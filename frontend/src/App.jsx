@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
@@ -6,19 +6,28 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AiCoachDrawer from './components/AiCoachDrawer';
 import { useAuth } from './context/AuthContext';
 
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
-import CreateInterviewPage from './pages/CreateInterviewPage';
-import InterviewLobbyPage from './pages/InterviewLobbyPage';
-import LiveInterviewPage from './pages/LiveInterviewPage';
-import InterviewResultPage from './pages/InterviewResultPage';
-import HistoryPage from './pages/HistoryPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import AdminPage from './pages/AdminPage';
-import ProfilePage from './pages/ProfilePage';
-import SettingsPage from './pages/SettingsPage';
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const CreateInterviewPage = lazy(() => import('./pages/CreateInterviewPage'));
+const InterviewLobbyPage = lazy(() => import('./pages/InterviewLobbyPage'));
+const LiveInterviewPage = lazy(() => import('./pages/LiveInterviewPage'));
+const InterviewResultPage = lazy(() => import('./pages/InterviewResultPage'));
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center" role="status" aria-live="polite">
+      <span className="sr-only">Loading page</span>
+      <span className="h-5 w-5 animate-spin border-2 border-zinc-700 border-t-orange-500" />
+    </div>
+  );
+}
 
 export default function App() {
   const [isCoachOpen, setIsCoachOpen] = useState(false);
@@ -29,8 +38,9 @@ export default function App() {
       <Sidebar onOpenCoach={() => setIsCoachOpen(true)} onCollapsedChange={setSidebarCollapsed} />
 
       {/* Main Content Area: adjusts margin when authenticated user views with sidebar */}
-      <div className={`flex flex-col min-h-screen ${isAuthenticated ? `${sidebarCollapsed ? 'md:pl-[76px]' : 'md:pl-64'} transition-all duration-300` : ''}`}>
+      <div className={`flex min-h-screen flex-col ${isAuthenticated ? (sidebarCollapsed ? 'md:pl-[76px]' : 'md:pl-64') : ''}`}>
         <main className="flex-grow">
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
@@ -132,6 +142,7 @@ export default function App() {
           {/* Catch-all redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </main>
 
       <Footer />

@@ -112,8 +112,8 @@ export default function AiCoachDrawer({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity">
-      <div className="w-full max-w-md bg-[#0d1322] border-l border-white/10 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/70 transition-opacity">
+      <div className="w-full max-w-md bg-[#0d1322] border-l border-white/10 h-full flex flex-col shadow-2xl panel-enter">
         
         {/* Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between bg-[#111827]">

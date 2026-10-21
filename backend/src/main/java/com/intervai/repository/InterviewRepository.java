@@ -1,6 +1,7 @@
 package com.intervai.repository;
 
 import com.intervai.entity.Interview;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -18,10 +19,20 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     @Query("SELECT i FROM Interview i WHERE i.id = :interviewId")
     Optional<Interview> findByIdForUpdate(@Param("interviewId") Long interviewId);
 
+    @EntityGraph(attributePaths = {"user", "questions", "questions.answer", "questions.answer.feedback"})
+    @Query("SELECT DISTINCT i FROM Interview i WHERE i.id = :interviewId")
+    Optional<Interview> findByIdWithDetails(@Param("interviewId") Long interviewId);
+
     @Query("SELECT i.completedAt FROM Interview i WHERE i.user.id = :userId AND i.status = 'COMPLETED' AND i.completedAt IS NOT NULL")
     List<LocalDateTime> findCompletedAtByUserId(@Param("userId") Long userId);
 
     List<Interview> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    @EntityGraph(attributePaths = {"user", "questions", "questions.answer", "questions.answer.feedback"})
+    @Query("SELECT DISTINCT i FROM Interview i WHERE i.user.id = :userId ORDER BY i.createdAt DESC")
+    List<Interview> findByUserIdWithDetailsOrderByCreatedAtDesc(@Param("userId") Long userId);
+
+    @EntityGraph(attributePaths = {"user", "questions", "questions.answer", "questions.answer.feedback"})
     List<Interview> findTop5ByUserIdOrderByCreatedAtDesc(Long userId);
     Long countByUserId(Long userId);
     Long countByUserIdAndStatus(Long userId, String status);

@@ -10,6 +10,7 @@ import com.intervai.exception.UnauthorizedException;
 import com.intervai.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,7 +82,7 @@ public class InterviewService {
 
     @Transactional(readOnly = true)
     public InterviewDto getInterview(Long userId, Long interviewId) {
-        Interview interview = getAuthorizedInterview(userId, interviewId);
+        Interview interview = getAuthorizedInterviewWithDetails(userId, interviewId);
         return mapToDto(interview);
     }
 
@@ -163,13 +164,10 @@ public class InterviewService {
         }
 
         List<InterviewQuestion> questions = questionRepository.findByInterviewIdOrderByQuestionOrderAsc(interviewId);
-        List<Answer> answers = questions.stream()
-                .map(q -> answerRepository.findByQuestionId(q.getId()).orElse(null))
+        List<Feedback> feedbacks = questions.stream()
+                .map(InterviewQuestion::getAnswer)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        List<Feedback> feedbacks = answers.stream()
-                .map(a -> feedbackRepository.findByAnswerId(a.getId()).orElse(null))
+                .map(Answer::getFeedback)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
@@ -266,8 +264,8 @@ public class InterviewService {
         List<InterviewQuestion> questions = questionRepository.findByInterviewIdOrderByQuestionOrderAsc(interviewId);
         List<InterviewQuestionDto> questionDtos = questions.stream()
                 .map(q -> {
-                    Answer a = answerRepository.findByQuestionId(q.getId()).orElse(null);
-                    Feedback fb = a != null ? feedbackRepository.findByAnswerId(a.getId()).orElse(null) : null;
+                    Answer a = q.getAnswer();
+                    Feedback fb = a != null ? a.getFeedback() : null;
                     return mapQuestionToDto(q, a, fb);
                 })
                 .collect(Collectors.toList());
@@ -282,9 +280,9 @@ public class InterviewService {
         boolean hasUnattributedScore = false;
         for (InterviewQuestion q : questions) {
             String skill = q.getTargetSkill() != null ? q.getTargetSkill() : "Core Knowledge";
-            Answer a = answerRepository.findByQuestionId(q.getId()).orElse(null);
+            Answer a = q.getAnswer();
             if (a != null) {
-                Feedback fb = feedbackRepository.findByAnswerId(a.getId()).orElse(null);
+                Feedback fb = a.getFeedback();
                 if (fb != null && "HEURISTIC".equals(fb.getEvaluationSource())) hasHeuristicEvaluation = true;
                 if (fb != null && fb.getScore() != null) {
                     if ("AI_PROVIDER".equals(fb.getEvaluationSource())) hasProviderEvaluation = true;
@@ -328,7 +326,7 @@ public class InterviewService {
 
     @Transactional(readOnly = true)
     public List<InterviewDto> getUserInterviews(Long userId) {
-        return interviewRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+        return interviewRepository.findByUserIdWithDetailsOrderByCreatedAtDesc(userId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
@@ -350,6 +348,12 @@ public class InterviewService {
         Interview interview = interviewRepository.findById(interviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Interview not found with id: " + interviewId));
 
+        return authorizeInterview(userId, interview);
+    }
+
+    private Interview getAuthorizedInterviewWithDetails(Long userId, Long interviewId) {
+        Interview interview = interviewRepository.findByIdWithDetails(interviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Interview not found with id: " + interviewId));
         return authorizeInterview(userId, interview);
     }
 
@@ -434,11 +438,13 @@ public class InterviewService {
     }
 
     public InterviewDto mapToDto(Interview interview) {
-        List<InterviewQuestion> questions = questionRepository.findByInterviewIdOrderByQuestionOrderAsc(interview.getId());
+        List<InterviewQuestion> questions = Hibernate.isInitialized(interview.getQuestions())
+                ? interview.getQuestions()
+                : questionRepository.findByInterviewIdOrderByQuestionOrderAsc(interview.getId());
         List<InterviewQuestionDto> questionDtos = questions.stream()
                 .map(q -> {
-                    Answer a = answerRepository.findByQuestionId(q.getId()).orElse(null);
-                    Feedback fb = a != null ? feedbackRepository.findByAnswerId(a.getId()).orElse(null) : null;
+                    Answer a = q.getAnswer();
+                    Feedback fb = a != null ? a.getFeedback() : null;
                     return mapQuestionToDto(q, a, fb);
                 })
                 .collect(Collectors.toList());

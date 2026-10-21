@@ -135,7 +135,7 @@ export default function ProfilePage() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Profile Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[#0d1322] via-[#111827] to-[#151f33] border border-white/10 relative overflow-hidden backdrop-blur-xl">
+      <div className="p-6 sm:p-8 rounded-xl bg-[#0d1322] border border-white/10 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
           <img
             src={user?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${user?.name || 'Candidate'}`}

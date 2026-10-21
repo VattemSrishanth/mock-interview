@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { authApi } from '../api/auth';
 
 const AuthContext = createContext(null);
@@ -14,6 +14,41 @@ export const AuthProvider = ({ children }) => {
   });
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
+
+  const login = useCallback(async (credentials) => {
+    const data = await authApi.login(credentials);
+    const { token: jwtToken, ...userData } = data;
+    localStorage.setItem('token', jwtToken);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setToken(jwtToken);
+    setUser(userData);
+    return userData;
+  }, []);
+
+  const register = useCallback(async (formData) => {
+    const data = await authApi.register(formData);
+    const { token: jwtToken, ...userData } = data;
+    localStorage.setItem('token', jwtToken);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setToken(jwtToken);
+    setUser(userData);
+    return userData;
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  const updateUserProfile = useCallback((updatedData) => {
+    setUser((prev) => {
+      const next = { ...prev, ...updatedData };
+      localStorage.setItem('user', JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -35,62 +70,22 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
-
-  const login = async (credentials) => {
-    const data = await authApi.login(credentials);
-    const { token: jwtToken, ...userData } = data;
-    localStorage.setItem('token', jwtToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setToken(jwtToken);
-    setUser(userData);
-    return userData;
-  };
-
-  const register = async (formData) => {
-    const data = await authApi.register(formData);
-    const { token: jwtToken, ...userData } = data;
-    localStorage.setItem('token', jwtToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setToken(jwtToken);
-    setUser(userData);
-    return userData;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
-  };
-
-  const updateUserProfile = (updatedData) => {
-    setUser((prev) => {
-      const next = { ...prev, ...updatedData };
-      localStorage.setItem('user', JSON.stringify(next));
-      return next;
-    });
-  };
+  }, [logout]);
 
   const isAdmin = user?.roles?.includes('ROLE_ADMIN') || false;
+  const value = useMemo(() => ({
+    user,
+    token,
+    loading,
+    isAuthenticated: !!token && !!user,
+    isAdmin,
+    login,
+    register,
+    logout,
+    updateUserProfile,
+  }), [user, token, loading, isAdmin, login, register, logout, updateUserProfile]);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        loading,
-        isAuthenticated: !!token && !!user,
-        isAdmin,
-        login,
-        register,
-        logout,
-        updateUserProfile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
