@@ -14,6 +14,7 @@ public class InterviewResultDto {
     private Long interviewId;
     private String jobRole;
     private String interviewType;
+    private String interviewSource;
     private String difficulty;
     private String experience;
     private List<String> skills;

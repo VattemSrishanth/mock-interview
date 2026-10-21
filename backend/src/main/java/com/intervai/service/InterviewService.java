@@ -51,6 +51,9 @@ public class InterviewService {
                 .difficulty(request.getDifficulty())
                 .numberOfQuestions(request.getNumberOfQuestions())
                 .interviewMode(request.getInterviewMode())
+                .resumeText(request.getResumeText())
+                .jobDescription(request.getJobDescription())
+                .interviewSource(request.getInterviewSource() != null ? request.getInterviewSource() : "PRESET")
                 .status("CREATED")
                 .build();
 
@@ -303,6 +306,7 @@ public class InterviewService {
                 .interviewId(interview.getId())
                 .jobRole(interview.getJobRole())
                 .interviewType(interview.getInterviewType())
+                .interviewSource(interview.getInterviewSource() != null ? interview.getInterviewSource() : "PRESET")
                 .difficulty(interview.getDifficulty())
                 .experience(interview.getExperience())
                 .skills(skills)
@@ -476,6 +480,9 @@ public class InterviewService {
                 .difficulty(interview.getDifficulty())
                 .numberOfQuestions(interview.getNumberOfQuestions())
                 .interviewMode(interview.getInterviewMode())
+                .interviewSource(interview.getInterviewSource() != null ? interview.getInterviewSource() : "PRESET")
+                .resumeText(interview.getResumeText())
+                .jobDescription(interview.getJobDescription())
                 .status(interview.getStatus())
                 .overallScore(interview.getOverallScore())
                 .technicalKnowledgeScore(interview.getTechnicalKnowledgeScore())

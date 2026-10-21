@@ -20,6 +20,9 @@ public class InterviewDto {
     private String difficulty;
     private Integer numberOfQuestions;
     private String interviewMode;
+    private String interviewSource;
+    private String resumeText;
+    private String jobDescription;
     private String status;
     private Integer overallScore;
     private Integer technicalKnowledgeScore;

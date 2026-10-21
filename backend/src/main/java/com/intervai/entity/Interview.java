@@ -54,6 +54,16 @@ public class Interview {
     @Builder.Default
     private String status = "CREATED"; // CREATED, IN_PROGRESS, COMPLETED, CANCELLED
 
+    @Column(columnDefinition = "TEXT")
+    private String resumeText;
+
+    @Column(columnDefinition = "TEXT")
+    private String jobDescription;
+
+    @Column(length = 40)
+    @Builder.Default
+    private String interviewSource = "PRESET"; // PRESET, RESUME, JOB_DESCRIPTION, RESUME_AND_JD
+
     private Integer overallScore;
     private Integer technicalKnowledgeScore;
     private Integer communicationScore;

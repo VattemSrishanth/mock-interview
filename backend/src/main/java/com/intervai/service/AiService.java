@@ -69,6 +69,44 @@ public class AiService {
     }
 
     /**
+     * Reusable LLM executor for structured prompts, resume parsing, and coaching.
+     */
+    public String executePrompt(String prompt, boolean jsonFormat) throws Exception {
+        if (StringUtils.hasText(geminiApiKey)) {
+            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + geminiModel + ":generateContent?key=" + geminiApiKey;
+            Map<String, Object> part = Map.of("text", prompt);
+            Map<String, Object> content = Map.of("parts", List.of(part));
+            Map<String, Object> body = jsonFormat
+                    ? Map.of("contents", List.of(content), "generationConfig", Map.of("temperature", 0.3, "responseMimeType", "application/json"))
+                    : Map.of("contents", List.of(content), "generationConfig", Map.of("temperature", 0.7));
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+            return extractGeminiResponseText(response.getBody());
+        } else if (StringUtils.hasText(openAiApiKey)) {
+            String url = "https://api.openai.com/v1/chat/completions";
+            Map<String, Object> body = jsonFormat
+                    ? Map.of("model", openAiModel, "response_format", Map.of("type", "json_object"),
+                            "messages", List.of(Map.of("role", "system", "content", "Return JSON strictly."), Map.of("role", "user", "content", prompt)))
+                    : Map.of("model", openAiModel,
+                            "messages", List.of(Map.of("role", "user", "content", prompt)));
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(openAiApiKey);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+            JsonNode root = objectMapper.readTree(response.getBody());
+            return root.path("choices").get(0).path("message").path("content").asText();
+        }
+        throw new IllegalStateException("No active AI provider configured");
+    }
+
+    /**
      * Generate interview questions tailored to Job Role, Experience, Skills, Type, Difficulty.
      */
     public List<InterviewQuestion> generateQuestions(CreateInterviewRequest request) {
@@ -319,20 +357,43 @@ public class AiService {
     // ==========================================
 
     private String buildQuestionGenerationPrompt(CreateInterviewRequest request, int count) {
-        return "Act as a specialist interviewer. Generate exactly " + count + " realistic questions.\n"
-                + "Target Job Role: " + request.getJobRole() + "\n"
-                + "Experience Level: " + request.getExperience() + "\n"
-                + "Candidate-selected technologies and focus skills (mandatory question coverage): " + (request.getSkills() != null ? String.join(", ", request.getSkills()) : "General") + "\n"
-                + "Interview Type: " + request.getInterviewType() + "\n"
-                + "Difficulty: " + request.getDifficulty() + "\n"
-                + "Every question must test at least one selected skill and explicitly name its technology/concept. Distribute questions across selected skills; do not use generic unrelated questions. Match the requested track: Technical, STAR behavioral, System Design architecture trade-offs, or Coding implementation exercises. Calibrate depth to role, experience, and difficulty.\n\n"
-                + "Respond with a JSON object containing a 'questions' array. Each item must have:\n"
-                + "- questionOrder (integer, starting at 1)\n"
-                + "- questionText (string, the complete interview question)\n"
-                + "- category (string, e.g. Technical, Behavioral, System Design)\n"
-                + "- targetSkill (string, relevant skill tested)\n"
-                + "- expectedKeyPoints (string, key points expected in candidate response)\n"
-                + "- modelAnswer (string, a concise exemplary answer)\n";
+        StringBuilder sb = new StringBuilder();
+        sb.append("Act as a specialist technical and hiring interviewer. Generate exactly ").append(count).append(" realistic, highly tailored interview questions.\n");
+        sb.append("Target Job Role: ").append(request.getJobRole()).append("\n");
+        sb.append("Experience Level: ").append(request.getExperience()).append("\n");
+        sb.append("Candidate-selected technologies and focus skills (mandatory question coverage): ")
+                .append(request.getSkills() != null ? String.join(", ", request.getSkills()) : "General").append("\n");
+        sb.append("Interview Type: ").append(request.getInterviewType()).append("\n");
+        sb.append("Difficulty: ").append(request.getDifficulty()).append("\n");
+
+        if (StringUtils.hasText(request.getResumeText())) {
+            sb.append("\n=== CANDIDATE RESUME PROFILE ===\n")
+              .append("The candidate has submitted their resume below. You MUST tailor questions directly to their actual past projects, mentioned tools, architectural decisions, and career background. Probe their real-world contributions (e.g., 'In your resume you worked on [Project X]. How did you design...'):\n")
+              .append(request.getResumeText().length() > 6000 ? request.getResumeText().substring(0, 6000) : request.getResumeText())
+              .append("\n================================\n\n");
+        }
+
+        if (StringUtils.hasText(request.getJobDescription())) {
+            sb.append("\n=== TARGET JOB DESCRIPTION (JD) ===\n")
+              .append("The candidate is interviewing for the specific job posting described below. Formulate questions that directly test their ability to succeed in the core responsibilities, key qualifications, and tech stack specified in this JD:\n")
+              .append(request.getJobDescription().length() > 4000 ? request.getJobDescription().substring(0, 4000) : request.getJobDescription())
+              .append("\n===================================\n\n");
+        }
+
+        if (StringUtils.hasText(request.getResumeText()) && StringUtils.hasText(request.getJobDescription())) {
+            sb.append("IMPORTANT: Cross-examine the candidate by evaluating how their past experience in the resume maps to the requirements of the job description. Address any critical competencies or transition challenges.\n\n");
+        }
+
+        sb.append("Every question must test at least one selected skill and explicitly name its technology/concept. Distribute questions across selected skills; do not use generic unrelated questions. Match the requested track: Technical, STAR behavioral, System Design architecture trade-offs, or Coding implementation exercises. Calibrate depth to role, experience, and difficulty.\n\n")
+          .append("Respond with a JSON object containing a 'questions' array. Each item must have:\n")
+          .append("- questionOrder (integer, starting at 1)\n")
+          .append("- questionText (string, the complete interview question)\n")
+          .append("- category (string, e.g. Technical, Behavioral, System Design, Resume Deep-Dive)\n")
+          .append("- targetSkill (string, relevant skill tested)\n")
+          .append("- expectedKeyPoints (string, key points expected in candidate response)\n")
+          .append("- modelAnswer (string, a concise exemplary answer)\n");
+
+        return sb.toString();
     }
 
     String buildEvaluationPrompt(String question, String skill, String answer, String role, String difficulty) {
@@ -475,13 +536,29 @@ public class AiService {
         String category = normalizedType.contains("hr") || normalizedType.contains("behavior") ? "Behavioral"
                 : normalizedType.contains("system") ? "System Design"
                 : normalizedType.contains("coding") || normalizedType.contains("problem") ? "Coding" : "Technical";
+        
+        boolean hasResume = StringUtils.hasText(request.getResumeText());
+        boolean hasJd = StringUtils.hasText(request.getJobDescription());
+
         List<InterviewQuestion> questions = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String skill = skills.get(i % skills.size());
             String text;
             String keyPoints;
             String modelAnswer;
-            if (category.equals("Behavioral")) {
+            String qCategory = category;
+
+            if (i == 0 && hasResume) {
+                qCategory = "Resume Deep-Dive";
+                text = "Based on your resume profile for " + request.getJobRole() + ", walk me through the technical architecture of a key project you led or built with " + skill + ". What were the most demanding technical challenges, and how did you resolve them?";
+                keyPoints = "Project context, architecture decisions involving " + skill + ", trade-offs, metrics of success, and candidate ownership.";
+                modelAnswer = "Provide a structured breakdown: Project goal, architectural role of " + skill + ", specific challenges overcome (e.g. latency, state management, or concurrency), and measurable impact.";
+            } else if (i == 1 && hasJd) {
+                qCategory = "Job Alignment";
+                text = "Reviewing the target job description requirements, how does your background with " + skill + " prepare you to hit the ground running and solve the core responsibilities outlined in this role?";
+                keyPoints = "Direct alignment between candidate experience and JD responsibilities, production familiarity with " + skill + ", and proactive problem solving.";
+                modelAnswer = "Articulate concrete experience with " + skill + " directly mapped to the JD's key deliverables, showing immediate domain competence and adaptability.";
+            } else if (category.equals("Behavioral")) {
                 text = "Tell me about a time you used " + skill + " to solve a difficult problem in your " + request.getJobRole() + " work. What was the situation, your action, and the measurable result?";
                 keyPoints = "STAR structure, specific ownership, a decision involving " + skill + ", measurable outcome, and learning.";
                 modelAnswer = "A strong response briefly explains the Situation and Task, the candidate's specific Action using " + skill + ", and a measurable Result with a lesson learned.";
@@ -498,7 +575,7 @@ public class AiService {
                 keyPoints = "Accurate explanation of " + skill + ", implementation detail, trade-offs, edge cases, and a practical example.";
                 modelAnswer = "Explain how " + skill + " works, give a role-relevant implementation example, and discuss trade-offs and production considerations.";
             }
-            questions.add(InterviewQuestion.builder().questionOrder(i + 1).questionText(text).category(category)
+            questions.add(InterviewQuestion.builder().questionOrder(i + 1).questionText(text).category(qCategory)
                     .targetSkill(skill).expectedKeyPoints(keyPoints).modelAnswer(modelAnswer).build());
         }
         return questions;

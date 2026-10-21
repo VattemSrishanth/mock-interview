@@ -35,4 +35,10 @@ public class CreateInterviewRequest {
     @NotBlank(message = "Interview mode is required")
     @Builder.Default
     private String interviewMode = "Text"; // Text, Voice
+
+    // Step 1: Resume & Job Description (JD) Based Interviews
+    private String resumeText;
+    private String jobDescription;
+    @Builder.Default
+    private String interviewSource = "PRESET"; // PRESET, RESUME, JOB_DESCRIPTION, RESUME_AND_JD
 }

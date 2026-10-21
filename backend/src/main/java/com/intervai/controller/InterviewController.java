@@ -3,12 +3,15 @@ package com.intervai.controller;
 import com.intervai.dto.*;
 import com.intervai.security.UserPrincipal;
 import com.intervai.service.InterviewService;
+import com.intervai.service.ResumeParserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -19,6 +22,24 @@ import java.util.Map;
 public class InterviewController {
 
     private final InterviewService interviewService;
+    private final ResumeParserService resumeParserService;
+
+    @PostMapping(value = "/parse-resume", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResumeParseResponse> parseResume(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam("file") MultipartFile file) {
+        ResumeParseResponse response = resumeParserService.parseResumeFile(file);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/analyze-text")
+    public ResponseEntity<ResumeParseResponse> analyzeText(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestBody Map<String, String> body) {
+        String text = body.getOrDefault("text", "");
+        ResumeParseResponse response = resumeParserService.analyzeResumeText(text);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping
     public ResponseEntity<InterviewDto> createInterview(
