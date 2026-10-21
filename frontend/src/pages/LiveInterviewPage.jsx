@@ -9,7 +9,6 @@ import {
   VolumeX, 
   Clock, 
   Send, 
-  CheckCircle2, 
   HelpCircle, 
   ArrowRight, 
   Award,

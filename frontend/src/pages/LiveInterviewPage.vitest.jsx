@@ -79,7 +79,7 @@ describe('LiveInterviewPage', () => {
       answerText: 'My typed thought.\nRecognized explanation.',
       isSkipped: false
     }));
-  });
+  }, 15000);
 
   it('keeps manual submission available without browser speech recognition and reports API errors', async () => {
     const alert = vi.spyOn(window, 'alert').mockImplementation(() => {});

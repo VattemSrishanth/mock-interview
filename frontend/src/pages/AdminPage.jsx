@@ -6,10 +6,7 @@ import {
   Layers, 
   Award, 
   Activity, 
-  Search, 
-  CheckCircle2, 
-  Clock,
-  ChevronRight
+  Search
 } from 'lucide-react';
 
 export default function AdminPage() {

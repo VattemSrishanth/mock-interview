@@ -3,16 +3,12 @@ import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/auth';
 import { 
   User, 
-  Briefcase, 
   GraduationCap, 
-  Target, 
   Save, 
   CheckCircle2, 
   AlertCircle, 
   Trophy, 
   Flame, 
-  Award, 
-  Layers,
   Search
 } from 'lucide-react';
 

@@ -17,8 +17,6 @@ import {
   TrendingUp, 
   CheckCircle2, 
   AlertTriangle, 
-  Target, 
-  Award, 
   Zap,
   PlayCircle 
 } from 'lucide-react';

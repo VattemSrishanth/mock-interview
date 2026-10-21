@@ -6,10 +6,6 @@ import com.intervai.dto.ResumeParseResponse;
 import com.intervai.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
-import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -101,16 +97,31 @@ public class ResumeParserService {
 
     private String extractTextFromPdf(MultipartFile file) throws Exception {
         byte[] bytes = file.getBytes();
-        try (PDDocument document = Loader.loadPDF(bytes)) {
-            if (document.isEncrypted()) {
-                AccessPermission ap = document.getCurrentAccessPermission();
-                if (!ap.canExtractContent()) {
+        Object document = null;
+        try {
+            Class<?> loaderClass = Class.forName("org.apache.pdfbox.Loader");
+            document = loaderClass.getMethod("loadPDF", byte[].class).invoke(null, (Object) bytes);
+
+            if ((Boolean) document.getClass().getMethod("isEncrypted").invoke(document)) {
+                Object permission = document.getClass().getMethod("getCurrentAccessPermission").invoke(document);
+                if (!(Boolean) permission.getClass().getMethod("canExtractContent").invoke(permission)) {
                     throw new BadRequestException("This PDF is encrypted and content extraction is restricted. Please upload an unprotected copy or paste the text.");
                 }
             }
-            PDFTextStripper stripper = new PDFTextStripper();
-            stripper.setSortByPosition(true);
-            return stripper.getText(document);
+            Class<?> stripperClass = Class.forName("org.apache.pdfbox.text.PDFTextStripper");
+            Object stripper = stripperClass.getConstructor().newInstance();
+            stripperClass.getMethod("setSortByPosition", boolean.class).invoke(stripper, true);
+            return (String) stripperClass.getMethod("getText", document.getClass()).invoke(stripper, document);
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof Exception exception) {
+                throw exception;
+            }
+            throw e;
+        } finally {
+            if (document != null) {
+                document.getClass().getMethod("close").invoke(document);
+            }
         }
     }
 

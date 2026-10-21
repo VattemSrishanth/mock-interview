@@ -62,8 +62,6 @@ class InterviewCreationTest {
             return interview;
         });
         when(questionRepository.save(generatedQuestion)).thenReturn(generatedQuestion);
-        when(questionRepository.findByInterviewIdOrderByQuestionOrderAsc(12L)).thenReturn(List.of(generatedQuestion));
-        when(answerRepository.findByQuestionId(18L)).thenReturn(Optional.empty());
 
         var created = new InterviewService(interviewRepository, questionRepository, answerRepository,
                 feedbackRepository, userRepository, performanceRepository, aiService, aiRateLimiter,

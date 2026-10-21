@@ -3,9 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { interviewApi } from '../api/interview';
 import { useAuth } from '../context/AuthContext';
 import { 
-  BrainCircuit, 
   Layers, 
-  Gauge, 
   Check, 
   Volume2, 
   FileText, 

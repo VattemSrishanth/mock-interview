@@ -2,14 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interview';
 import { 
-  Bot, 
   Mic, 
   Volume2, 
-  CheckCircle2, 
   ArrowRight, 
   ShieldCheck, 
-  Clock, 
-  HelpCircle,
   AlertCircle
 } from 'lucide-react';
 import LiveAudioWave from '../components/LiveAudioWave';

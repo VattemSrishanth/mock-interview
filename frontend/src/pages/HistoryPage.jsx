@@ -6,11 +6,8 @@ import {
   Search, 
   Filter, 
   Trash2, 
-  ExternalLink, 
   PlayCircle, 
   Clock, 
-  Award,
-  Layers,
   ChevronRight
 } from 'lucide-react';
 

@@ -8,7 +8,6 @@ import {
   AlertCircle, 
   Cpu, 
   MessageSquare,
-  HelpCircle,
   ChevronRight
 } from 'lucide-react';
 import { coachApi } from '../api/coach';
