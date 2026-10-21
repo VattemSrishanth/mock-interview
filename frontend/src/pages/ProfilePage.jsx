@@ -12,7 +12,6 @@ import {
   Trophy, 
   Flame, 
   Award, 
-  Sparkles,
   Layers,
   Search
 } from 'lucide-react';

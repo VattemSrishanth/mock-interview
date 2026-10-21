@@ -1,434 +1,121 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
-  Sparkles, 
-  ArrowRight, 
-  Bot, 
-  Mic, 
-  CheckCircle2, 
-  BarChart3, 
-  BrainCircuit, 
-  Award, 
-  ShieldCheck, 
-  Cpu, 
-  Terminal,
-  Zap,
-  Users,
-  MessageSquareText,
-  ClipboardCheck,
-  TrendingUp,
-  ChevronDown,
-  CircleCheck
-} from 'lucide-react';
+import { ArrowRight, AudioLines, ChartNoAxesCombined, Check, ChevronRight, CircleDot, Copy, Gauge, ShieldCheck, Terminal, TimerReset } from 'lucide-react';
+
+const prompts = {
+  'Staff Backend': 'How would you evolve a single-region order service to support multi-region writes while preserving consistency guarantees?',
+  'System Design': 'Design a rate limiter for a global API. How would you handle bursts, clock skew, and regional failover?',
+  'Distributed Systems': 'A consumer processes the same event twice after a retry. How do you make the workflow safe and observable?'
+};
+const demoCredentials = { student: ['srishanth@intervai.com', 'password123'], studentFallback: ['revanth@intervai.com', 'password123'], admin: ['admin@intervai.com', 'admin123'] };
+const mono = 'font-mono text-[11px] uppercase tracking-wider';
 
 export default function LandingPage() {
   const { isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
+  const [track, setTrack] = useState('Staff Backend');
+  const [visiblePrompt, setVisiblePrompt] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setVisiblePrompt('');
+    let i = 0;
+    const timer = window.setInterval(() => {
+      i += 2;
+      setVisiblePrompt(prompts[track].slice(0, i));
+      if (i >= prompts[track].length) window.clearInterval(timer);
+    }, 18);
+    return () => window.clearInterval(timer);
+  }, [track]);
 
   const handleQuickDemo = async (role) => {
+    const credentials = role === 'admin' ? [demoCredentials.admin] : [demoCredentials.student, demoCredentials.studentFallback];
     try {
-      if (role === 'student') {
-        try {
-          await login({ email: 'srishanth@intervai.com', password: 'password123' });
-        } catch {
-          await login({ email: 'revanth@intervai.com', password: 'password123' });
-        }
-        navigate('/dashboard');
-      } else {
-        await login({ email: 'admin@intervai.com', password: 'admin123' });
-        navigate('/admin');
+      let lastError;
+      for (const [email, password] of credentials) {
+        try { await login({ email, password }); lastError = null; break; } catch (error) { lastError = error; }
       }
-    } catch (err) {
-      console.error(err);
+      if (lastError) throw lastError;
+      navigate(role === 'admin' ? '/admin' : '/dashboard');
+    } catch {
       navigate('/login');
     }
   };
 
-  const featureCards = [
-    {
-      icon: BrainCircuit,
-      title: "Adaptive AI Questioning",
-      desc: "Dynamically formulates contextual follow-up questions tailored to your responses, just like an experienced engineering interviewer.",
-      color: "from-brand-500/20 to-emerald-500/20",
-      accent: "text-brand-400"
-    },
-    {
-      icon: Mic,
-      title: "Speech & Audio Interaction",
-      desc: "Practice with realistic verbal communication using browser speech-to-text recognition and natural AI voice synthesis.",
-      color: "from-indigo-500/20 to-blue-500/20",
-      accent: "text-indigo-400"
-    },
-    {
-      icon: BarChart3,
-      title: "5-Dimensional Evaluation",
-      desc: "Provider evaluations use technical knowledge, communication, relevance, clarity, and confidence.",
-      color: "from-purple-500/20 to-pink-500/20",
-      accent: "text-purple-400"
-    },
-    {
-      icon: Award,
-      title: "Tailored Skill Roadmaps",
-      desc: "Receive actionable personalized study topics, documentation references, and concrete tips to close your technical gaps.",
-      color: "from-amber-500/20 to-orange-500/20",
-      accent: "text-amber-400"
-    }
-  ];
-
-  const popularRoles = [
-    { name: "Frontend Developer", skills: "React, TypeScript, CSS, System Design", diff: "Medium" },
-    { name: "Backend Engineer", skills: "Java, Spring Boot, PostgreSQL, Microservices", diff: "Hard" },
-    { name: "Full Stack Engineer", skills: "React, Node.js, REST APIs, Docker", diff: "Hard" },
-    { name: "DevOps & Cloud", skills: "Kubernetes, CI/CD, AWS, Terraform", diff: "Medium" }
-  ];
+  const copyPrompt = async () => {
+    await navigator.clipboard?.writeText(prompts[track]);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1400);
+  };
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-20 md:pt-20 md:pb-28">
-        {/* Glow ambient background lights */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-brand-500/15 via-indigo-500/15 to-purple-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-md">
-            <Sparkles className="w-4 h-4 text-brand-400" />
-            <span className="text-xs font-medium text-slate-300">
-              Next-Gen AI Mock Interview Platform 2.0
-            </span>
-          </div>
-
-          {/* Heading */}
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-[1.15]" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
-            Interview smarter. Show up{' '}
-            <span className="bg-gradient-to-r from-brand-300 via-fuchsia-300 to-indigo-300 bg-clip-text text-transparent">
-              ready.
-            </span>
-          </h1>
-
-          <p className="mt-6 text-base sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
-            Your AI interview partner asks the next question, listens to your answer, and turns every practice session into a clear plan for getting better.
-          </p>
-
-          {/* Call to Actions */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            {isAuthenticated ? (
-              <Link
-                to="/dashboard"
-                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-xl shadow-brand-500/25 transition active:scale-95"
-              >
-                Go to Candidate Dashboard
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-            ) : (
-              <>
-                <Link
-                  to="/register"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-xl shadow-brand-500/25 transition active:scale-95"
-                >
-                  Start Practicing for Free
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-                <Link
-                  to="/login"
-                  className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium text-sm sm:text-base border border-white/10 flex items-center justify-center gap-2 transition"
-                >
-                  Sign In to Account
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Quick Demo Instant Access Bar */}
-          <div className="mt-8 max-w-xl mx-auto p-3 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 text-indigo-300">
-              <Zap className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0" />
-              <span className="font-semibold">Instant Demo Access:</span>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <button
-                onClick={() => handleQuickDemo('student')}
-                className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 font-medium transition"
-              >
-                Demo Student (V Srishanth)
-              </button>
-              <button
-                onClick={() => handleQuickDemo('admin')}
-                className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 font-medium transition"
-              >
-                Demo Admin
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Interactive Mock Platform Terminal Preview */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
-        <div className="rounded-2xl border border-white/10 bg-[#0d1322] shadow-2xl shadow-indigo-500/5 overflow-hidden">
-          {/* Mock Window Top Bar */}
-          <div className="px-4 py-3 bg-[#111827] border-b border-white/10 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500/80" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-              <div className="w-3 h-3 rounded-full bg-green-500/80" />
-              <span className="ml-3 text-xs font-mono text-slate-400">
-                intervai-session://live-technical-eval-react-fresher
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              AI Evaluator Connected
-            </div>
-          </div>
-
-          {/* Mock Window Content */}
-          <div className="p-6 md:p-8 grid md:grid-cols-12 gap-6 bg-gradient-to-b from-[#0d1322] to-[#090d16]">
-            {/* Left: AI Question */}
-            <div className="md:col-span-7 space-y-4">
-              <div className="flex items-center gap-2 text-xs font-semibold text-brand-400 uppercase tracking-wider">
-                <Bot className="w-4 h-4" />
-                Interview AI Technical Question 02 / 05 &bull; React Internal Architecture
-              </div>
-              <h3 className="text-lg md:text-xl font-semibold text-white leading-snug">
-                "Explain how React's reconciliation algorithm works with the Virtual DOM, and why key props are crucial when rendering dynamic lists?"
-              </h3>
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-white/5 text-xs text-slate-300 font-mono space-y-1">
-                <div className="text-slate-500">// Expected core competencies</div>
-                <div>&bull; Diffing heuristic O(n) assumption</div>
-                <div>&bull; Fiber node tree traversal & work loops</div>
-                <div>&bull; Key stability preventing index re-mounting bugs</div>
-              </div>
-            </div>
-
-            {/* Right: Instant AI Scoring breakdown preview */}
-            <div className="md:col-span-5 p-5 rounded-xl bg-[#151f33]/90 border border-white/10 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                    Example Provider Evaluation
-                  </span>
-                  <span className="text-base font-bold text-brand-400">88 / 100</span>
-                </div>
-                <div className="space-y-3 text-xs">
-                  <div>
-                    <div className="flex justify-between text-slate-300 mb-1">
-                      <span>Technical Knowledge</span>
-                      <span className="text-brand-400">92%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="w-[92%] h-full bg-brand-400 rounded-full" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-slate-300 mb-1">
-                      <span>Communication</span>
-                      <span className="text-indigo-400">85%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="w-[85%] h-full bg-indigo-400 rounded-full" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-slate-300 mb-1">
-                      <span>Relevance</span>
-                      <span className="text-cyan-400">86%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="w-[86%] h-full bg-cyan-400 rounded-full" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-slate-300 mb-1">
-                      <span>Clarity</span>
-                      <span className="text-purple-400">89%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="w-[89%] h-full bg-purple-400 rounded-full" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-slate-300 mb-1">
-                      <span>Confidence</span>
-                      <span className="text-amber-400">83%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                      <div className="w-[83%] h-full bg-amber-400 rounded-full" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-white/10 text-[11px] text-slate-400 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-brand-400 shrink-0" />
-                <span>Personalized follow-up question automatically queued</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Product trust strip */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-5 rounded-2xl border border-white/10 bg-white/[0.025]">
-          {[
-            ['Adaptive practice', 'Questions follow your answers'],
-            ['Voice enabled', 'Speak naturally in-session'],
-            ['5 score dimensions', 'Feedback beyond a single grade'],
-            ['Progress history', 'See how your readiness grows']
-          ].map(([title, subtitle]) => (
-            <div key={title} className="text-center px-2 py-1">
-              <div className="text-sm font-bold text-white">{title}</div>
-              <div className="text-[11px] text-slate-400 mt-1">{subtitle}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Feature Pillars */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-white/5">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-2xl sm:text-4xl font-bold text-white">
-            Designed for Real High-Stakes Career Growth
-          </h2>
-          <p className="mt-4 text-slate-400 text-sm sm:text-base">
-            Everything you need to transform interview anxiety into confident, offer-winning technical delivery.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featureCards.map((feat, idx) => {
-            const Icon = feat.icon;
-            return (
-              <div
-                key={idx}
-                className="p-6 rounded-2xl bg-[#0d1322]/80 border border-white/5 hover:border-white/15 transition duration-300 flex flex-col justify-between group"
-              >
-                <div>
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feat.color} p-0.5 mb-5 flex items-center justify-center`}>
-                    <div className="w-full h-full bg-[#111827] rounded-[10px] flex items-center justify-center">
-                      <Icon className={`w-6 h-6 ${feat.accent}`} />
-                    </div>
-                  </div>
-                  <h3 className="text-base font-semibold text-white mb-2">{feat.title}</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">{feat.desc}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-white/5">
-        <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-12 items-start">
-          <div className="max-w-lg">
-            <div className="text-xs uppercase tracking-[0.22em] text-brand-300 font-bold mb-3">A practice loop that learns with you</div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>From first question to interview-ready.</h2>
-            <p className="mt-4 text-sm text-slate-400 leading-relaxed">Choose a role and interview style. Then practice out loud, get a thoughtful evaluation, and focus your next session on the areas that matter.</p>
-            <Link to={isAuthenticated ? '/create' : '/register'} className="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-brand-300 hover:text-white transition">Build your first session <ArrowRight className="w-4 h-4" /></Link>
-          </div>
-          <div className="grid sm:grid-cols-3 gap-4">
-            {[
-              { icon: ClipboardCheck, number: '01', title: 'Set your focus', text: 'Pick your target role, seniority, difficulty, and interview track.' },
-              { icon: MessageSquareText, number: '02', title: 'Practice naturally', text: 'Answer technical, behavioral, or system design questions by voice or text.' },
-              { icon: TrendingUp, number: '03', title: 'Improve with feedback', text: 'Review score dimensions, transcripts, strengths, and recommended practice.' }
-            ].map(({ icon: Icon, number, title, text }) => (
-              <article key={number} className="p-5 rounded-2xl border border-white/10 bg-[#0d1322]">
-                <div className="flex items-center justify-between"><span className="text-xs font-mono text-brand-300">{number}</span><Icon className="w-5 h-5 text-brand-300" /></div>
-                <h3 className="mt-8 text-base font-bold text-white">{title}</h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-400">{text}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Tracks Preview */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+    <div className="min-h-screen text-zinc-100">
+      <section className="relative border-b border-zinc-800 px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-20">
+        <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,.12)_1px,transparent_1px)] [background-size:18px_18px]" />
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.05fr_.95fr]">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Ready-to-Practice Roles</h2>
-            <p className="text-slate-400 text-sm mt-1">Select any domain and jump into tailored simulations</p>
+            <div className={`${mono} mb-7 inline-flex items-center gap-2 text-orange-400`}><CircleDot size={12} /> Interview systems / 01</div>
+            <h1 className="max-w-3xl text-4xl font-semibold leading-[1.08] tracking-[-.045em] text-white sm:text-6xl">Deterministic Technical Interview Benchmarking</h1>
+            <p className="mt-6 max-w-xl text-base leading-7 text-zinc-400">A focused workspace for technical practice, structured feedback, and a clear record of how each session went.</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link to={isAuthenticated ? '/dashboard' : '/register'} className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-4 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-orange-400">{isAuthenticated ? 'Open dashboard' : 'Start a practice session'}<ArrowRight size={16} /></Link>
+              <Link to={isAuthenticated ? '/create' : '/login'} className="rounded-md border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm font-medium text-zinc-200 transition hover:border-zinc-500">{isAuthenticated ? 'Configure interview' : 'Sign in'} <span className="ml-2 font-mono text-xs text-zinc-500">↵</span></Link>
+            </div>
+            <div className="mt-7 flex flex-wrap gap-2">
+              <button onClick={() => handleQuickDemo('student')} className="rounded border border-zinc-800 px-2.5 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200">Open candidate demo · V Srishanth</button>
+              <button onClick={() => handleQuickDemo('admin')} className="rounded border border-zinc-800 px-2.5 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200">Open admin demo</button>
+            </div>
           </div>
-          <Link
-            to={isAuthenticated ? "/create" : "/register"}
-            className="text-xs font-semibold text-brand-400 hover:text-brand-300 flex items-center gap-1.5 transition"
-          >
-            Explore all custom configurations <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {popularRoles.map((role, idx) => (
-            <div
-              key={idx}
-              className="p-5 rounded-xl bg-[#0d1322] border border-white/5 hover:border-brand-500/30 transition group flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-white group-hover:text-brand-400 transition">
-                    {role.name}
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-slate-400 border border-white/10 font-mono">
-                    {role.diff}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mb-4">{role.skills}</p>
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }} className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/90 shadow-2xl shadow-black/20">
+            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+              <div className="flex items-center gap-2"><Terminal size={15} className="text-orange-400" /><span className={mono}>Live role prompt preview</span></div>
+              <span className={`${mono} flex items-center gap-2 text-zinc-500`}><i className="h-1.5 w-1.5 rounded-full bg-orange-500" /> Preview</span>
+            </div>
+            <div className="p-4 sm:p-5">
+              <div className="flex flex-wrap gap-2">
+                {Object.keys(prompts).map((name) => <button key={name} onClick={() => setTrack(name)} className={`rounded border px-2.5 py-1.5 text-xs transition ${track === name ? 'border-orange-500/50 bg-orange-500/10 text-orange-300' : 'border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}>{name}</button>)}
               </div>
-              <Link
-                to={isAuthenticated ? "/create" : "/register"}
-                className="text-xs font-medium text-slate-300 group-hover:text-white flex items-center gap-1 pt-2 border-t border-white/5"
-              >
-                Launch Simulation <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
-              </Link>
+              <div className="mt-5 min-h-36 rounded-md border border-zinc-800 bg-zinc-950 p-4">
+                <div className={`${mono} text-zinc-600`}><span className="text-orange-400">01</span> / interviewer prompt</div>
+                <p className="mt-4 font-mono text-sm leading-7 text-zinc-200">{visiblePrompt}<span className="ml-0.5 inline-block h-4 w-1 animate-pulse bg-orange-500 align-middle" /></p>
+              </div>
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-800 pt-3">
+                <span className={`${mono} text-zinc-500`}>Illustrative prompt · no live provider call</span>
+                <button onClick={copyPrompt} className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white">{copied ? <Check size={13} /> : <Copy size={13} />}{copied ? 'Copied' : 'Copy'}</button>
+              </div>
             </div>
-          ))}
+          </motion.div>
         </div>
       </section>
 
-      {/* Included capabilities */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="rounded-3xl border border-brand-400/20 bg-gradient-to-br from-brand-500/10 via-indigo-500/10 to-transparent p-6 sm:p-10">
-          <div className="grid lg:grid-cols-[0.85fr_1.15fr] gap-10 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 text-xs font-semibold text-brand-200 bg-brand-500/10 border border-brand-400/20 rounded-full px-3 py-1.5"><Sparkles className="w-3.5 h-3.5" /> All-in-one interview workspace</div>
-              <h2 className="mt-5 text-3xl font-bold text-white" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>Everything you need to keep improving.</h2>
-              <p className="mt-3 text-sm text-slate-300 leading-relaxed">One workspace for live practice, answer review, performance graphs, and your personal interview history.</p>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              {[
-                'Technical, behavioral, coding & system design tracks',
-                'Adaptive follow-up questions and live transcript',
-                'Score breakdowns across five skill dimensions',
-                'Skill charts and performance over time',
-                'Saved interviews with replayable feedback',
-                'AI career coach and focused next steps'
-              ].map((item) => <div key={item} className="flex items-start gap-2.5 rounded-xl border border-white/10 bg-[#0d1322]/80 p-3 text-xs text-slate-200"><CircleCheck className="w-4 h-4 text-brand-300 shrink-0" />{item}</div>)}
-            </div>
+      <div className="mx-auto max-w-6xl px-5 sm:px-8">
+        <div className="grid grid-cols-2 border-b border-zinc-800 py-4 sm:grid-cols-4">
+          {['Browser speech input', 'Question-level feedback', 'Five score dimensions', 'Saved session history'].map((label, i) => <div key={label} className="flex items-center gap-2 py-2 text-xs text-zinc-400"><span className="font-mono text-orange-500">0{i + 1}</span>{label}</div>)}
+        </div>
+
+        <section className="py-14 sm:py-20">
+          <div className="mb-7 flex items-end justify-between gap-4"><div><p className={`${mono} text-orange-400`}>System modules</p><h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">A clear signal after every session.</h2></div><Link to={isAuthenticated ? '/create' : '/register'} className="hidden items-center gap-1 text-sm text-zinc-400 hover:text-white sm:flex">Explore the workspace <ChevronRight size={15} /></Link></div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <article className="row-span-2 rounded-lg border border-zinc-800 bg-zinc-900/70 p-5 md:col-span-1">
+              <div className="flex items-center justify-between"><AudioLines className="text-orange-400" size={19} /><span className={mono + ' text-zinc-600'}>INPUT / 01</span></div><h3 className="mt-8 text-lg font-medium text-white">Voice or text, your choice.</h3><p className="mt-2 text-sm leading-6 text-zinc-400">Use browser speech recognition when available. Your typed response stays editable and can be submitted on its own.</p>
+              <div className="mt-7 flex h-12 items-end gap-1 border-b border-zinc-800 pb-2" aria-label="Illustrative audio waveform">{[15,28,19,38,24,34,13,25,39,20,30,15,28,18,34,22,12,30,19,25].map((h, i) => <span key={i} className="flex-1 rounded-t-sm bg-orange-500/70" style={{ height: `${h}px` }} />)}</div><p className={`${mono} mt-2 text-zinc-600`}>Waveform illustration · not a live meter</p>
+            </article>
+            <article className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-5 md:col-span-2">
+              <div className="flex items-center justify-between"><ChartNoAxesCombined className="text-orange-400" size={19} /><span className={mono + ' text-zinc-600'}>EVALUATION / 02</span></div><h3 className="mt-6 text-lg font-medium text-white">Five dimensions. One consistent rubric.</h3><p className="mt-2 text-sm leading-6 text-zinc-400">Provider evaluations separate technical knowledge, communication, relevance, clarity, and confidence. Fallback guidance is labeled clearly.</p>
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5">{['Technical knowledge', 'Communication', 'Relevance', 'Clarity', 'Confidence'].map((label, i) => <div key={label} className="border-l border-zinc-700 pl-2.5"><span className={`${mono} text-orange-400`}>0{i + 1}</span><p className="mt-1 text-xs text-zinc-300">{label}</p></div>)}</div>
+            </article>
+            <article className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-5 md:col-span-2">
+              <div className="flex items-center justify-between"><ShieldCheck className="text-orange-400" size={19} /><span className={mono + ' text-zinc-600'}>RECORD / 03</span></div><h3 className="mt-6 text-lg font-medium text-white">A reviewable practice record.</h3><p className="mt-2 text-sm leading-6 text-zinc-400">Return to saved interviews, inspect each answer, and use session feedback to choose what to practice next.</p><div className="mt-5 flex items-center gap-2 border-t border-zinc-800 pt-4 text-xs text-zinc-500"><TimerReset size={14} className="text-orange-400" /> Saved sessions and score dimensions appear when recorded.</div>
+            </article>
+            <article className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-5">
+              <div className="flex items-center justify-between"><Gauge className="text-orange-400" size={19} /><span className={mono + ' text-zinc-600'}>WORKFLOW / 04</span></div><h3 className="mt-6 text-lg font-medium text-white">Built for deliberate reps.</h3><p className="mt-2 text-sm leading-6 text-zinc-400">Configure a role, answer at your pace, then review what the saved feedback supports.</p><Link to={isAuthenticated ? '/create' : '/register'} className="mt-5 inline-flex items-center gap-2 text-xs font-medium text-orange-400 hover:text-orange-300">Configure a session <ArrowRight size={14} /></Link>
+            </article>
           </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-white/5">
-        <div className="text-center mb-9"><p className="text-xs uppercase tracking-[0.22em] text-brand-300 font-bold">Questions</p><h2 className="mt-3 text-3xl font-bold text-white" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>A few things you might be wondering</h2></div>
-        <div className="space-y-3">
-          {[
-            ['What kinds of interviews can I practice?', 'Choose technical core, behavioral STAR, coding, or system design sessions, then tailor the role, level, difficulty, and question count.'],
-            ['Can I answer out loud?', 'Yes. The live interview supports microphone transcription and spoken questions, with text input available as well.'],
-            ['What happens after a session?', 'Review your transcript, question-by-question feedback, five-dimension evaluation, and progress charts from your dashboard and history.']
-          ].map(([question, answer]) => <details key={question} className="group rounded-xl border border-white/10 bg-[#0d1322] p-4"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-white">{question}<ChevronDown className="w-4 h-4 text-brand-300 transition group-open:rotate-180" /></summary><p className="mt-3 max-w-3xl text-xs leading-relaxed text-slate-400">{answer}</p></details>)}
-        </div>
-      </section>
-
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-20">
-        <div className="relative overflow-hidden rounded-3xl border border-brand-400/20 bg-[#0d1322] px-6 py-12 text-center sm:px-12">
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-500/10 via-indigo-500/10 to-fuchsia-500/10 pointer-events-none" />
-          <div className="relative"><h2 className="text-3xl sm:text-4xl font-bold text-white" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>Your next great interview starts here.</h2><p className="mt-3 text-sm text-slate-400">Turn preparation into a practice you can measure.</p><Link to={isAuthenticated ? '/create' : '/register'} className="inline-flex items-center gap-2 mt-6 rounded-xl bg-brand-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-600">Start practicing <ArrowRight className="w-4 h-4" /></Link></div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

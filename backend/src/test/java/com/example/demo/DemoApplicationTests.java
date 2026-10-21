@@ -1,4 +1,4 @@
-package com.intervai;
+package com.example.demo;
 
 import org.springframework.test.context.ActiveProfiles;
 import org.junit.jupiter.api.Test;

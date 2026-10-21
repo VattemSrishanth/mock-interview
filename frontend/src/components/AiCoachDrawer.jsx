@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   Send, 
-  Sparkles, 
   Bot, 
   Key, 
   CheckCircle2, 
@@ -121,7 +120,7 @@ export default function AiCoachDrawer({ isOpen, onClose }) {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-brand-500 p-0.5">
               <div className="w-full h-full bg-[#0d1322] rounded-[10px] flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-brand-400" />
+                <Bot className="w-4 h-4 text-brand-400" />
               </div>
             </div>
             <div>

@@ -17,5 +17,16 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (/node_modules\/(recharts|d3-[^/]+|victory-vendor|internmap|decimal\.js-light)\//.test(id)) return 'charts';
+          if (/node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(id)) return 'motion';
+          if (/node_modules\/(react|react-dom|react-router-dom|scheduler)\//.test(id)) return 'framework';
+        }
+      }
+    }
   }
 })

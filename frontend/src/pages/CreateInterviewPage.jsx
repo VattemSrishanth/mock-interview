@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { interviewApi } from '../api/interview';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Sparkles, 
   BrainCircuit, 
   Layers, 
   Gauge, 
@@ -143,7 +142,7 @@ export default function CreateInterviewPage() {
       {/* Title */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold mb-3">
-          <Sparkles className="w-3.5 h-3.5" />
+          <Cpu className="w-3.5 h-3.5" />
           <span>Configurable AI Interview Engine</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">

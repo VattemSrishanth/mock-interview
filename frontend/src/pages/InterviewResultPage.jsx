@@ -1,305 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import confetti from 'canvas-confetti';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { interviewApi } from '../api/interview';
-import { 
-  Award, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Sparkles, 
-  ArrowRight, 
-  RotateCcw, 
-  BarChart3, 
-  Share2, 
-  ChevronDown, 
-  ChevronUp,
-  BookOpen,
-  Bot,
-  MessageSquare
-} from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, Clipboard, FileDown, Flag, RotateCcw } from 'lucide-react';
+
+const mono = 'font-mono text-[10px] uppercase tracking-wider';
+const dimensions = [
+  ['Technical knowledge', 'technicalKnowledgeScore'],
+  ['Communication', 'communicationScore'],
+  ['Relevance', 'relevanceScore'],
+  ['Clarity', 'clarityScore'],
+  ['Confidence', 'confidenceScore'],
+];
 
 export default function InterviewResultPage({ onOpenCoach }) {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [expandedQuestion, setExpandedQuestion] = useState(null);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const fetchResult = async () => {
-      try {
-        const data = await interviewApi.getResult(id);
-        setResult(data);
-
-        // Fire confetti celebration if score >= 70
-        if ((data.overallScore || 0) >= 70) {
-          confetti({
-            particleCount: 80,
-            spread: 70,
-            origin: { y: 0.6 }
-          });
-        }
-      } catch (err) {
-        setError('Unable to load interview analysis scorecard.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResult();
+    let active = true;
+    interviewApi.getResult(id).then((data) => { if (active) setResult(data); }).catch(() => { if (active) setError('Unable to load the saved interview report.'); }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 rounded-full border-4 border-brand-500/20 border-t-brand-400 animate-spin" />
-        <p className="text-slate-400 text-sm animate-pulse">Aggregating 5-dimensional interview analytics...</p>
-      </div>
-    );
-  }
+  const providerScored = result?.evaluationSource === 'AI_PROVIDER' && result.overallScore != null;
+  const chartData = useMemo(() => dimensions.map(([name, key]) => ({ subject: name, score: Number(result?.[key]) || 0 })), [result]);
+  const summaryText = useMemo(() => {
+    if (!result) return '';
+    const score = providerScored ? `${result.overallScore}/100` : 'No provider score';
+    return [`Interview assessment: ${result.jobRole || 'Technical interview'}`, `Track: ${result.interviewType || '—'} · ${result.difficulty || '—'}`, `Provider score: ${score}`, `Evaluation source: ${result.evaluationSource || 'Not recorded'}`, ...dimensions.map(([label, key]) => `${label}: ${providerScored && result[key] != null ? `${result[key]}/100` : 'Not scored'}`)].join('\n');
+  }, [providerScored, result]);
 
-  if (error || !result) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
-        <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto" />
-        <h2 className="text-lg font-bold text-white">Scorecard Not Ready</h2>
-        <p className="text-xs text-slate-400">{error || 'Session results unavailable.'}</p>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold"
-        >
-          Return to Dashboard
-        </button>
-      </div>
-    );
-  }
-
-  const hasProviderScore = result.evaluationSource === 'AI_PROVIDER';
-  const score = hasProviderScore ? result.overallScore : null;
-  const getRatingBadge = (val) => {
-    if (val >= 85) return { text: 'Strong Hire / Top Tier', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' };
-    if (val >= 75) return { text: 'Solid Hire / Offer Ready', color: 'bg-brand-500/10 text-brand-400 border-brand-500/30' };
-    if (val >= 60) return { text: 'Competitive / Minor Gaps', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
-    return { text: 'Developing / Needs Targeted Prep', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30' };
+  const copySummary = async () => {
+    try { await navigator.clipboard.writeText(summaryText); setCopied(true); window.setTimeout(() => setCopied(false), 1500); } catch { setError('Clipboard access is unavailable. You can still print or save this report.'); }
   };
 
-  const badge = hasProviderScore ? getRatingBadge(score) : { text: 'Practice guidance', color: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30' };
+  if (loading) return <div className="mx-auto flex min-h-[70vh] max-w-4xl items-center justify-center"><p className={`${mono} text-zinc-500`}>Loading saved assessment…</p></div>;
+  if (error && !result) return <div className="mx-auto max-w-lg px-5 py-20 text-center"><AlertTriangle size={23} className="mx-auto text-orange-400" /><h1 className="mt-4 text-lg font-medium text-white">Report unavailable</h1><p className="mt-2 text-sm text-zinc-400">{error}</p><button onClick={() => navigate('/dashboard')} className="mt-5 rounded border border-zinc-700 px-3 py-2 text-xs text-zinc-200">Return to dashboard</button></div>;
 
-  return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-      
-      {/* Top Banner / Scorecard Header */}
-      <div className="p-8 rounded-3xl bg-gradient-to-r from-[#0d1322] via-[#111827] to-[#151f33] border border-white/10 relative overflow-hidden backdrop-blur-xl">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-          
-          {/* Left summary */}
-          <div className="space-y-3 text-center md:text-left">
-            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${badge.color}`}>
-              <Award className="w-3.5 h-3.5" />
-              <span>{badge.text}</span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              {result.jobRole} {hasProviderScore ? 'Performance Scorecard' : 'Practice Review'}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
-              Completed simulation across {result.interviewType} track. Scores use technical knowledge, communication, relevance, clarity, and confidence.
-            </p>
-            {!hasProviderScore && (
-              <p className="text-xs text-amber-300 max-w-xl">
-                {result.evaluationSource === 'HEURISTIC'
-                  ? 'Provider evaluation was unavailable. This session has qualitative practice guidance only; no quality score was generated.'
-                  : 'A provider score is unavailable for this session. Question-level practice guidance may still be available.'}
-              </p>
-            )}
+  const questions = result.questions || [];
+  return <div className="mx-auto max-w-6xl px-4 py-7 sm:px-7 sm:py-10">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden"><Link to="/history" className="inline-flex items-center gap-2 text-xs text-zinc-400 hover:text-white"><ArrowLeft size={14} /> Session history</Link><div className="flex gap-2"><button onClick={copySummary} className="inline-flex items-center gap-1.5 rounded border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:text-white">{copied ? <Check size={13} /> : <Clipboard size={13} />}{copied ? 'Copied' : 'Copy summary'}</button><button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:text-white"><FileDown size={13} /> Export / PDF</button></div></div>
+    {error && result && <p role="status" className="mb-3 text-xs text-orange-400">{error}</p>}
 
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
-              <Link
-                to="/create"
-                className="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-brand-500/20 transition active:scale-95"
-              >
-                <RotateCcw className="w-3.5 h-3.5" /> Practice Another Simulation
-              </Link>
-              <button
-                onClick={onOpenCoach}
-                className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-semibold flex items-center gap-1.5 transition"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Consult AI Career Coach
-              </button>
-            </div>
-          </div>
-
-          {/* Right big score circle */}
-          <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-black/40 border border-white/10 min-w-[200px]">
-            <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-emerald-300">
-              {hasProviderScore ? `${score}%` : '—'}
-            </div>
-            <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider mt-1">
-              {hasProviderScore ? 'Provider Evaluation Score' : 'No Provider Score'}
-            </div>
-            <div className="text-[11px] text-slate-400 mt-1 font-mono">
-              Status: {result.status || 'COMPLETED'}
-            </div>
-          </div>
-
-        </div>
+    <header className="grid gap-6 rounded-md border border-zinc-800 bg-zinc-900/60 p-5 sm:p-7 lg:grid-cols-[1fr_260px]">
+      <div><p className={`${mono} flex items-center gap-2 text-orange-400`}><Flag size={12} /> Interview assessment dossier</p><h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-4xl">{result.jobRole || 'Technical interview'} Performance Scorecard</h1><div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] uppercase text-zinc-500"><span>{result.interviewType || 'Interview'} track</span><span>{result.difficulty || 'Level not recorded'}</span><span>{result.status || 'COMPLETED'}</span></div><p className="mt-5 max-w-2xl text-sm leading-6 text-zinc-400">Assessment values shown here reflect the saved interview response. Provider scores and practice guidance are identified separately.</p>
+        <div className="mt-5 flex flex-wrap gap-2 print:hidden"><Link to="/create" className="inline-flex items-center gap-2 rounded bg-orange-500 px-3 py-2 text-xs font-semibold text-zinc-950 hover:bg-orange-400"><RotateCcw size={13} /> Practice another</Link><button onClick={onOpenCoach} className="rounded border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:text-white">Open career coach</button></div>
       </div>
+      <div className="flex min-h-36 flex-col justify-between rounded border border-zinc-800 bg-zinc-950/60 p-4"><span className={mono + ' text-zinc-500'}>Overall provider score</span><div className="font-mono text-5xl font-medium tabular-nums tracking-tight text-white">{providerScored ? `${result.overallScore}%` : '—'}<span className="ml-2 text-base text-zinc-600">/ 100</span></div><span className={`${mono} text-orange-400`}>{providerScored ? 'AI_PROVIDER · SCORED' : result.evaluationSource === 'HEURISTIC' ? 'HEURISTIC · GUIDANCE ONLY' : 'NO PROVIDER SCORE'}</span></div>
+    </header>
 
-      {/* 5-Dimensional Metrics Grid */}
-      {hasProviderScore && <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {[
-          { label: 'Technical Knowledge', val: result.technicalKnowledgeScore, color: 'text-brand-400' },
-          { label: 'Communication', val: result.communicationScore, color: 'text-indigo-400' },
-          { label: 'Relevance', val: result.relevanceScore, color: 'text-purple-400' },
-          { label: 'Clarity', val: result.clarityScore, color: 'text-cyan-400' },
-          { label: 'Confidence', val: result.confidenceScore, color: 'text-amber-400' },
-        ].map((item, idx) => (
-          <div key={idx} className="p-4 rounded-xl bg-[#0d1322] border border-white/5 text-center flex flex-col justify-between">
-            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{item.label}</span>
-            <div className={`text-2xl font-black my-2 ${item.color}`}>{item.val}%</div>
-            <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-brand-400 rounded-full" style={{ width: `${item.val}%` }} />
-            </div>
-          </div>
-        ))}
-      </div>}
+    {!providerScored && <div className="mt-3 border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-xs leading-5 text-zinc-300"><span className="font-mono text-orange-400">Guidance only</span><span className="ml-2">{result.evaluationSource === 'HEURISTIC' ? 'A provider evaluation was unavailable. This session has qualitative practice guidance and no answer quality score.' : 'No provider evaluation score was saved for this session.'}</span></div>}
 
-      {/* Strengths & Improvements */}
-      <div className="grid md:grid-cols-2 gap-6">
-        
-        {/* Strengths */}
-        <div className="p-6 rounded-2xl bg-[#0d1322] border border-emerald-500/20 space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            Key Evaluator Strengths
-          </h3>
-          <ul className="space-y-2.5">
-            {(result.strengths || []).map((str, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
-                <span>{str}</span>
-              </li>
-            ))}
-            {(!result.strengths || result.strengths.length === 0) && <li className="text-xs text-slate-400">No evaluator strengths were recorded.</li>}
-          </ul>
-        </div>
+    {providerScored && <section className="mt-4 grid gap-4 lg:grid-cols-[.9fr_1.1fr]">
+      <article className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4"><div className="flex items-center justify-between"><div><p className={mono + ' text-zinc-500'}>Competency map</p><h2 className="mt-1 text-base font-medium text-white">Saved rubric scores</h2></div><span className={mono + ' text-orange-400'}>5 dimensions</span></div><div className="mt-2 h-[270px] w-full"><ResponsiveContainer width="100%" height="100%"><RadarChart data={chartData} outerRadius="70%"><PolarGrid stroke="currentColor" className="text-zinc-800" /><PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 10 }} /><PolarRadiusAxis domain={[0, 100]} tick={{ fill: '#71717a', fontSize: 9 }} axisLine={false} tickCount={5} /><Radar dataKey="score" stroke="#ff5c00" fill="#ff5c00" fillOpacity={0.16} strokeWidth={2} /></RadarChart></ResponsiveContainer></div></article>
+      <article className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4"><p className={mono + ' text-zinc-500'}>Dimension detail</p><h2 className="mt-1 text-base font-medium text-white">Evaluation breakdown</h2><div className="mt-5 space-y-4">{dimensions.map(([label, key]) => { const score = Number(result[key]) || 0; return <div key={key}><div className="mb-1.5 flex items-center justify-between text-xs"><span className="text-zinc-300">{label}</span><span className="font-mono tabular-nums text-orange-400">{score}</span></div><div className="h-1 bg-zinc-800"><div className="h-full bg-orange-500" style={{ width: `${Math.max(0, Math.min(100, score))}%` }} /></div></div>; })}</div></article>
+    </section>}
 
-        {/* Improvements */}
-        <div className="p-6 rounded-2xl bg-[#0d1322] border border-amber-500/20 space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            Areas for Refinement
-          </h3>
-          <ul className="space-y-2.5">
-            {((result.weaknesses || result.improvements) || []).map((imp, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
-                <span>{imp}</span>
-              </li>
-            ))}
-            {(!(result.weaknesses || result.improvements) || (result.weaknesses || result.improvements).length === 0) && <li className="text-xs text-slate-400">No evaluator improvement notes were recorded.</li>}
-          </ul>
-        </div>
+    {(result.strengths?.length || (result.weaknesses || result.improvements)?.length || (result.recommendations || result.suggestions)?.length) ? <section className="mt-4 grid gap-3 md:grid-cols-3">{[["Observed strengths", result.strengths, 'text-orange-400'], ['Areas to develop', result.weaknesses || result.improvements, 'text-zinc-300'], ['Next practice', result.recommendations || result.suggestions, 'text-zinc-300']].map(([title, list, accent]) => list?.length ? <article key={title} className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4"><p className={`${mono} ${accent}`}>{title}</p><ul className="mt-3 space-y-2 text-xs leading-5 text-zinc-400">{list.map((entry, index) => <li key={`${title}-${index}`} className="flex gap-2"><span className="font-mono text-zinc-600">{String(index + 1).padStart(2, '0')}</span><span>{entry}</span></li>)}</ul></article> : null)}</section> : null}
 
-      </div>
-
-      {/* AI Recommendations Action Roadmap */}
-      {(result.suggestions || result.recommendations) && (result.suggestions || result.recommendations).length > 0 && (
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-indigo-950/40 to-slate-900 border border-indigo-500/30 space-y-4">
-          <div className="flex items-center gap-2 text-indigo-300 text-xs font-bold uppercase tracking-wider">
-            <BookOpen className="w-4 h-4" />
-            <span>{hasProviderScore ? 'Provider Evaluation Recommendations' : 'Practice Recommendations'}</span>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {(result.suggestions || result.recommendations).map((rec, idx) => (
-              <div key={idx} className="p-3.5 rounded-xl bg-black/40 border border-white/5 text-xs text-slate-300 flex items-start gap-2">
-                <span className="font-mono text-brand-400 font-bold shrink-0">{idx + 1}.</span>
-                <span>{rec}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Question by Question Detailed Replay */}
-      <div className="p-6 rounded-2xl bg-[#0d1322] border border-white/5 space-y-4">
-        <div>
-          <h3 className="text-base font-bold text-white">Question-by-Question Deep Dive</h3>
-          <p className="text-xs text-slate-400">Review your responses, evaluator scores, and specific critique</p>
-        </div>
-
-        <div className="space-y-3 pt-2">
-          {(result.questions || []).map((q, idx) => {
-            const isExpanded = expandedQuestion === idx;
-            const hasQuestionScore = q.feedback?.evaluationSource === 'AI_PROVIDER' && q.feedback?.score != null;
-            const qScore = hasQuestionScore ? q.feedback.score : null;
-            const userAnswerText = q.userAnswer || q.candidateAnswer || 'No response recorded';
-            const feedbackText = typeof q.feedback === 'string'
-              ? q.feedback
-              : q.feedback?.suggestions?.join('. ') || q.feedback?.strengths?.join('. ') || q.expectedKeyPoints || 'Answer meets technical rubric criteria.';
-
-            return (
-              <div
-                key={q.id || idx}
-                className="rounded-xl border border-white/5 bg-[#151f33]/60 overflow-hidden transition"
-              >
-                <button
-                  type="button"
-                  onClick={() => setExpandedQuestion(isExpanded ? null : idx)}
-                  className="w-full p-4 flex items-center justify-between text-left hover:bg-white/5 transition"
-                >
-                  <div className="flex items-center gap-3 pr-4">
-                    <span className="w-6 h-6 rounded-full bg-white/5 text-brand-400 flex items-center justify-center text-xs font-mono shrink-0">
-                      {idx + 1}
-                    </span>
-                    <span className="text-xs sm:text-sm font-semibold text-white line-clamp-1">
-                      {q.questionText}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xs font-extrabold text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-lg">
-                      {hasQuestionScore ? `${qScore}%` : q.feedback?.evaluationSource === 'HEURISTIC' ? 'Guidance' : '—'}
-                    </span>
-                    {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                  </div>
-                </button>
-
-                {isExpanded && (
-                  <div className="p-5 border-t border-white/5 bg-[#111827]/70 space-y-4 text-xs">
-                    <div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        Your Submitted Response:
-                      </div>
-                      <p className="p-3 rounded-lg bg-black/30 border border-white/5 text-slate-300 leading-relaxed italic">
-                        "{userAnswerText}"
-                      </p>
-                    </div>
-
-                    <div>
-                      <div className="text-[10px] font-bold text-brand-400 uppercase tracking-wider mb-1">
-                        {q.feedback?.evaluationSource === 'AI_PROVIDER' ? 'Provider Evaluation:' : q.feedback?.evaluationSource === 'HEURISTIC' ? 'Practice Guidance (No AI Score):' : 'Evaluation Feedback:'}
-                      </div>
-                      <p className="text-slate-300 leading-relaxed">
-                        {feedbackText}
-                      </p>
-                    </div>
-
-                    {q.modelAnswer && (
-                      <div className="p-3 rounded-lg bg-slate-900/80 border border-white/10 text-slate-300 space-y-1">
-                        <span className="font-semibold text-white">Expected Concepts / Model Answer:</span>
-                        <p className="italic text-slate-400">{q.modelAnswer}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-    </div>
-  );
+    <section className="mt-4 rounded-md border border-zinc-800 bg-zinc-900/50"><div className="border-b border-zinc-800 px-4 py-4 sm:px-5"><p className={mono + ' text-zinc-500'}>Response review</p><h2 className="mt-1 text-lg font-medium text-white">Question-by-question record</h2></div><div className="divide-y divide-zinc-800">{questions.map((question, index) => { const feedback = typeof question.feedback === 'object' && question.feedback ? question.feedback : {}; const hasScore = feedback.evaluationSource === 'AI_PROVIDER' && feedback.score != null; const candidate = question.userAnswer || question.candidateAnswer || ''; const notes = [...(feedback.strengths || []), ...(feedback.weaknesses || []), ...(feedback.suggestions || [])]; const expected = question.modelAnswer || question.expectedKeyPoints; return <article key={question.id || index} className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[150px_1fr]"><div><span className={mono + ' text-zinc-500'}>Question {String(index + 1).padStart(2, '0')}</span><div className="mt-2 font-mono text-lg tabular-nums text-orange-400">{hasScore ? `${feedback.score}/100` : '—'}</div><span className={`${mono} mt-1 block text-zinc-600`}>{feedback.evaluationSource === 'HEURISTIC' ? 'Guidance only' : feedback.evaluationSource === 'AI_PROVIDER' ? 'Provider score' : 'Not scored'}</span></div><div className="min-w-0"><h3 className="text-sm font-medium leading-6 text-zinc-100">{question.questionText || `Question ${index + 1}`}</h3><div className="mt-3 grid gap-2 xl:grid-cols-2"><div className="rounded border border-zinc-800 bg-zinc-950/60 p-3"><p className={mono + ' text-zinc-600'}>Candidate response</p><p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-zinc-300">{candidate || 'No response recorded.'}</p></div><div className="rounded border border-zinc-800 bg-zinc-950/60 p-3"><p className={mono + ' text-zinc-600'}>Expected concepts / model response</p><p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-zinc-400">{expected || 'No reference answer was saved for this question.'}</p></div></div>{notes.length > 0 && <div className="mt-2 border-l border-orange-500/50 pl-3"><p className={`${mono} text-zinc-600`}>Saved feedback</p><ul className="mt-1 space-y-1 text-xs text-zinc-400">{notes.map((note, noteIndex) => <li key={noteIndex} className="flex gap-2"><span className="text-orange-500">›</span>{note}</li>)}</ul></div>}</div></article>; })}{questions.length === 0 && <p className="px-5 py-10 text-center text-xs text-zinc-500">No question records were saved.</p>}</div></section>
+    <footer className="mt-5 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500"><span className="inline-flex items-center gap-2"><BookOpen size={13} /> Source: saved interview evaluation</span><Link to="/dashboard" className="inline-flex items-center gap-1 text-zinc-400 hover:text-white">Dashboard <ArrowRight size={13} /></Link></footer>
+  </div>;
 }

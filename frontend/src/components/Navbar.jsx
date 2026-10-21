@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Sparkles, 
+  MessageSquare,
   Flame, 
   BarChart3, 
   History, 
@@ -100,7 +100,7 @@ export default function Navbar({ onOpenCoach }) {
                   onClick={onOpenCoach}
                   className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-lg bg-gradient-to-r from-indigo-500/20 to-purple-500/20 hover:from-indigo-500/30 hover:to-purple-500/30 text-indigo-300 border border-indigo-500/30 transition shadow-sm"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-spin" style={{ animationDuration: '6s' }} />
+                  <MessageSquare className="w-3.5 h-3.5 text-brand-400" />
                   <span>AI Career Coach</span>
                 </button>
 
@@ -155,7 +155,7 @@ export default function Navbar({ onOpenCoach }) {
                 onClick={onOpenCoach}
                 className="p-2 text-indigo-400 bg-indigo-500/10 rounded-lg border border-indigo-500/20"
               >
-                <Sparkles className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4" />
               </button>
             )}
             <button

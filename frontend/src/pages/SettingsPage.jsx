@@ -6,9 +6,8 @@ import { useTheme } from '../context/ThemeContext';
 import { authApi } from '../api/auth';
 
 const themes = [
-  { id: 'dark', label: 'Midnight', detail: 'Deep indigo', colors: ['#080c15', '#151f33', '#a855f7'] },
-  { id: 'light', label: 'Daylight', detail: 'Clean and bright', colors: ['#f8fafc', '#ffffff', '#6366f1'] },
-  { id: 'cyberpunk', label: 'Cyberpunk', detail: 'Neon hacker console', colors: ['#050711', '#101426', '#22d3ee', '#f472b6'] }
+  { id: 'dark', label: 'Console', detail: 'Matte zinc · orange accent', colors: ['#09090b', '#27272a', '#ff5c00'] },
+  { id: 'light', label: 'Daylight', detail: 'Clean zinc · orange accent', colors: ['#fafafa', '#ffffff', '#ff5c00'] }
 ];
 
 const roles = [
@@ -89,7 +88,7 @@ export default function SettingsPage() {
             <p className="text-xs text-slate-400">Pick a theme for your workspace.</p>
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {themes.map((option) => (
             <button
               key={option.id}

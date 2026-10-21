@@ -6,8 +6,7 @@ export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     try {
       const savedTheme = localStorage.getItem('app-theme');
-      if (savedTheme === 'aurora') return 'cyberpunk';
-      if (['dark', 'light', 'cyberpunk'].includes(savedTheme)) return savedTheme;
+      if (['dark', 'light'].includes(savedTheme)) return savedTheme;
     } catch {}
     return 'dark'; // default theme
   });
@@ -22,7 +21,7 @@ export const ThemeProvider = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => ({ dark: 'light', light: 'cyberpunk', cyberpunk: 'dark' })[prev] || 'dark');
+    setTheme((prev) => prev === 'light' ? 'dark' : 'light');
   };
 
   return (

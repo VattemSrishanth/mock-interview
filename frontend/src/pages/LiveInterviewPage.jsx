@@ -9,14 +9,15 @@ import {
   VolumeX, 
   Clock, 
   Send, 
-  Sparkles, 
   CheckCircle2, 
   HelpCircle, 
   ArrowRight, 
   Award,
   AlertCircle,
   RefreshCw,
-  LogOut
+  LogOut,
+  Camera,
+  CameraOff
 } from 'lucide-react';
 import LiveAudioWave from '../components/LiveAudioWave';
 import { collectFinalizedResults, combineAnswerParts } from '../utils/voiceTranscript';
@@ -42,6 +43,10 @@ export default function LiveInterviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [cameraStatus, setCameraStatus] = useState('Camera off');
+  const videoRef = useRef(null);
+  const cameraMountedRef = useRef(true);
 
   const recognitionRef = useRef(null);
   const typedAnswerRef = useRef('');
@@ -53,6 +58,39 @@ export default function LiveInterviewPage() {
   const sessionSpeechBaseRef = useRef('');
   const stopResolverRef = useRef(null);
   const answerText = combineAnswerParts(typedAnswer, spokenAnswer);
+
+  useEffect(() => {
+    cameraMountedRef.current = true;
+    if (videoRef.current && cameraStream) videoRef.current.srcObject = cameraStream;
+    return () => {
+      cameraMountedRef.current = false;
+      cameraStream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [cameraStream]);
+
+  const toggleCamera = async () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
+      setCameraStatus('Camera off');
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraStatus('Camera preview is unavailable in this browser.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      if (!cameraMountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      setCameraStream(stream);
+      setCameraStatus('Local preview only · not recorded');
+    } catch {
+      if (cameraMountedRef.current) setCameraStatus('Camera permission denied or no camera found.');
+    }
+  };
 
   const updateTypedAnswer = (value) => {
     typedAnswerRef.current = value;
@@ -424,7 +462,7 @@ export default function LiveInterviewPage() {
       {/* Live Header Bar */}
       <div className="p-4 rounded-2xl bg-[#0d1322] border border-white/10 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-indigo-600 p-0.5">
+          <div className="w-9 h-9 rounded border border-zinc-700 bg-zinc-900 p-0.5">
             <div className="w-full h-full bg-[#111827] rounded-[10px] flex items-center justify-center">
               <Bot className="w-5 h-5 text-brand-400" />
             </div>
@@ -450,7 +488,7 @@ export default function LiveInterviewPage() {
           </div>
           <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-brand-500 to-indigo-500 rounded-full transition-all duration-300"
+              className="h-full bg-orange-500 transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -459,7 +497,7 @@ export default function LiveInterviewPage() {
         {/* Right Tools: Timer & Exit */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#151f33] border border-white/5 text-xs font-mono text-slate-300">
-            <Clock className="w-3.5 h-3.5 text-indigo-400" />
+            <Clock className="w-3.5 h-3.5 text-orange-400" />
             <span>{formatTimer(elapsedSeconds)}</span>
           </div>
 
@@ -489,7 +527,7 @@ export default function LiveInterviewPage() {
               <div className="relative inline-block">
                 <div className={`w-20 h-20 rounded-2xl p-1 bg-gradient-to-tr ${
                   isAiSpeaking 
-                    ? 'from-indigo-500 via-brand-400 to-purple-500 animate-pulse' 
+                    ? 'from-orange-500 via-brand-400 to-zinc-700 animate-pulse'
                     : 'from-slate-700 to-slate-800'
                 } mx-auto transition-all duration-300`}>
                   <div className="w-full h-full bg-[#111827] rounded-[14px] flex items-center justify-center">
@@ -506,7 +544,7 @@ export default function LiveInterviewPage() {
 
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center justify-center gap-1.5">
-                  Interview AI Senior Evaluator
+                  Interview facilitator
                 </h3>
                 <p className="text-[11px] text-slate-400">
                   {isAiSpeaking ? 'Narrating question...' : isEvaluating ? 'Evaluating your answer...' : 'Listening actively'}
@@ -564,17 +602,18 @@ export default function LiveInterviewPage() {
                 <button
                   type="button"
                   onClick={() => setShowHint(!showHint)}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 transition"
+                  className="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1.5 transition"
                 >
                   <HelpCircle className="w-3.5 h-3.5" />
                   <span>{showHint ? 'Hide Guidance & Rubric' : 'Need a hint or rubric clue?'}</span>
                 </button>
 
                 {showHint && (
-                  <div className="mt-2 p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-xs text-indigo-200 leading-relaxed space-y-1">
-                    <p className="font-semibold text-indigo-100">Key Points Evaluator Looks For:</p>
-                    <p>&bull; Be structured: state the core concept, provide a concrete code/design scenario, and articulate trade-offs.</p>
-                    <p>&bull; Mention relevant performance bottlenecks or memory implications where applicable.</p>
+                  <div className="mt-2 rounded border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-300 leading-relaxed space-y-1">
+                    <p className="font-semibold text-orange-300">Technical rubric expectations:</p>
+                    {currentQuestion?.expectedKeyPoints
+                      ? <p className="whitespace-pre-line">{currentQuestion.expectedKeyPoints}</p>
+                      : <><p>&bull; State the core concept, work through a concrete scenario, and explain the trade-offs.</p><p>&bull; Address relevant failure modes, performance limits, and operational consequences.</p></>}
                   </div>
                 )}
               </div>
@@ -584,6 +623,22 @@ export default function LiveInterviewPage() {
 
         {/* Right Column: Candidate Answer Panel (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
+
+          {/* Optional local camera monitor. Video remains in the browser and is never submitted. */}
+          <section className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/70">
+            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+              <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-zinc-400">
+                <span className={`h-2 w-2 rounded-full ${cameraStream ? 'animate-pulse bg-orange-500' : 'bg-zinc-600'}`} />
+                {cameraStream ? 'Local camera preview' : 'Video input · disabled'}
+              </div>
+              <button type="button" onClick={toggleCamera} className="inline-flex items-center gap-1.5 rounded border border-zinc-700 px-2.5 py-1.5 text-[11px] text-zinc-300 hover:border-zinc-500 hover:text-white">
+                {cameraStream ? <CameraOff className="h-3.5 w-3.5" /> : <Camera className="h-3.5 w-3.5" />}
+                {cameraStream ? 'Turn camera off' : 'Preview camera'}
+              </button>
+            </div>
+            {cameraStream ? <video ref={videoRef} autoPlay muted playsInline className="aspect-[16/5] w-full bg-zinc-950 object-cover" /> : <div className="flex aspect-[16/5] min-h-24 items-center justify-center bg-zinc-950/60"><div className="text-center"><CameraOff className="mx-auto h-5 w-5 text-zinc-700" /><p className="mt-2 font-mono text-[10px] uppercase tracking-wider text-zinc-600">Optional preview · no video is recorded or uploaded</p></div></div>}
+            <p className="border-t border-zinc-800 px-4 py-2 text-[10px] text-zinc-500" role="status">{cameraStatus}</p>
+          </section>
           
           {/* Answer Text Area Card */}
           <div className="p-6 rounded-2xl bg-[#0d1322] border border-white/10 space-y-4">
@@ -605,7 +660,7 @@ export default function LiveInterviewPage() {
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm ${
                   isRecording
                     ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20'
-                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/20'
+                    : 'bg-orange-500 hover:bg-orange-400 text-zinc-950 shadow-orange-500/10'
                 }`}
               >
                 {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -627,12 +682,17 @@ export default function LiveInterviewPage() {
               </div>
             </div>
 
+            <div className="flex items-center justify-between gap-3 border-y border-zinc-800 py-2.5" aria-label={isRecording ? 'Microphone speech recognition is active' : 'Microphone speech recognition is inactive'}>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">Mic input · {isRecording ? 'listening' : 'standby'}</span>
+              <div className="flex gap-1" aria-hidden="true">{Array.from({ length: 16 }, (_, i) => <i key={i} className={`h-3 w-1.5 rounded-[1px] ${isRecording && i < 11 ? 'animate-pulse bg-orange-500' : 'bg-zinc-800'}`} style={{ animationDelay: `${i * 35}ms` }} />)}</div>
+            </div>
+
             {(speechStatus || spokenAnswer || interimTranscript) && (
               <div className="rounded-xl bg-black/20 border border-white/5 p-3 space-y-2" aria-live="polite">
                 {speechStatus && <p className="text-xs text-slate-400">{speechStatus}</p>}
                 {spokenAnswer && (
                   <p className="text-xs text-slate-300 whitespace-pre-wrap">
-                    <span className="text-indigo-300 font-semibold">Recognized speech: </span>{spokenAnswer}
+                    <span className="text-orange-300 font-semibold">Recognized speech: </span>{spokenAnswer}
                   </p>
                 )}
                 {interimTranscript && (
@@ -677,7 +737,7 @@ export default function LiveInterviewPage() {
                 {isEvaluating ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>AI Neural Scoring in progress...</span>
+                    <span>Evaluating answer…</span>
                   </>
                 ) : (
                   <>
@@ -700,7 +760,7 @@ export default function LiveInterviewPage() {
             const modelAnswer = feedbackObj.modelAnswer || currentEvaluation.modelAnswer;
 
             return (
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-950/60 to-[#0d1322] border border-indigo-500/40 space-y-5 animate-in fade-in duration-300">
+              <div className="p-6 rounded-xl bg-zinc-900 border border-zinc-800 space-y-5 animate-in fade-in duration-300">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                   <div className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-brand-400" />
@@ -721,7 +781,7 @@ export default function LiveInterviewPage() {
                   </div>
                   <div className="p-2.5 rounded-lg bg-black/30 border border-white/5">
                     <div className="text-[10px] text-slate-400">Communication</div>
-                    <div className="text-sm font-bold text-indigo-300 mt-1">{feedbackObj.communication}%</div>
+                    <div className="text-sm font-bold text-zinc-300 mt-1">{feedbackObj.communication}%</div>
                   </div>
                   <div className="p-2.5 rounded-lg bg-black/30 border border-white/5">
                     <div className="text-[10px] text-slate-400">Relevance</div>
@@ -762,8 +822,8 @@ export default function LiveInterviewPage() {
                   )}
 
                   {suggestionsList.length > 0 && (
-                    <div className="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-indigo-200 space-y-1">
-                      <span className="font-semibold text-indigo-100">Evaluator Suggestions:</span>
+                    <div className="p-3 rounded border border-zinc-800 bg-zinc-950 text-zinc-300 space-y-1">
+                      <span className="font-semibold text-orange-300">Evaluator suggestions:</span>
                       <ul className="list-disc list-inside space-y-0.5">
                         {suggestionsList.map((sug, idx) => (
                           <li key={idx}>{sug}</li>
