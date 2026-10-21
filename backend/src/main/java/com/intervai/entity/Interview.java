@@ -64,6 +64,10 @@ public class Interview {
     @Builder.Default
     private String interviewSource = "PRESET"; // PRESET, RESUME, JOB_DESCRIPTION, RESUME_AND_JD
 
+    @Column
+    @Builder.Default
+    private Boolean enableAdaptiveFollowUp = true;
+
     private Integer overallScore;
     private Integer technicalKnowledgeScore;
     private Integer communicationScore;

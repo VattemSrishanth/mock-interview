@@ -34,6 +34,12 @@ public class Answer {
     @Builder.Default
     private Boolean isSkipped = false;
 
+    @Column(columnDefinition = "TEXT")
+    private String followUpAnswerText;
+
+    @Builder.Default
+    private Boolean isFollowUpAnswered = false;
+
     @OneToOne(mappedBy = "answer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Feedback feedback;
 

@@ -43,6 +43,12 @@ public class InterviewQuestion {
     @Column(columnDefinition = "TEXT")
     private String modelAnswer;
 
+    @Column(columnDefinition = "TEXT")
+    private String followUpQuestion;
+
+    @Column(columnDefinition = "TEXT")
+    private String followUpExpectedPoints;
+
     @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Answer answer;
 

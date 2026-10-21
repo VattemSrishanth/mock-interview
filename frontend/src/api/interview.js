@@ -39,6 +39,10 @@ export const interviewApi = {
     const response = await api.post(`/interviews/${id}/answer`, data);
     return response.data;
   },
+  submitFollowUp: async (id, data) => {
+    const response = await api.post(`/interviews/${id}/follow-up`, data);
+    return response.data;
+  },
   complete: async (id) => {
     const response = await api.post(`/interviews/${id}/complete`);
     return response.data;

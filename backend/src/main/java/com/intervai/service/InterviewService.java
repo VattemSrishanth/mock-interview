@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -54,6 +55,7 @@ public class InterviewService {
                 .resumeText(request.getResumeText())
                 .jobDescription(request.getJobDescription())
                 .interviewSource(request.getInterviewSource() != null ? request.getInterviewSource() : "PRESET")
+                .enableAdaptiveFollowUp(request.getEnableAdaptiveFollowUp() != null ? request.getEnableAdaptiveFollowUp() : true)
                 .status("CREATED")
                 .build();
 
@@ -150,8 +152,81 @@ public class InterviewService {
         feedback.setModelAnswer(evaluation.getModelAnswer() != null ? evaluation.getModelAnswer() : question.getModelAnswer());
         feedbackRepository.saveAndFlush(feedback);
 
+        // Generate and persist adaptive follow-up question if enabled and not skipped
+        if (!skipped && !Boolean.FALSE.equals(interview.getEnableAdaptiveFollowUp())) {
+            String followUp = evaluation.getFollowUpQuestion();
+            if (!StringUtils.hasText(followUp)) {
+                followUp = aiService.generateAdaptiveFollowUp(
+                        question.getQuestionText(),
+                        question.getTargetSkill(),
+                        request.getAnswerText(),
+                        interview.getJobRole(),
+                        interview.getDifficulty()
+                );
+            }
+            question.setFollowUpQuestion(followUp);
+            questionRepository.save(question);
+            if (evaluation.getFollowUpQuestion() == null) {
+                evaluation.setFollowUpQuestion(followUp);
+            }
+        }
+
         // Update skill performance
         updateSkillPerformance(interview.getUser(), question.getTargetSkill(), evaluation.getScore());
+
+        return mapQuestionToDto(question, savedAnswer, feedback);
+    }
+
+    @Transactional
+    public InterviewQuestionDto submitFollowUp(Long userId, Long interviewId, SubmitFollowUpRequest request) {
+        Interview interview = getAuthorizedInterviewForUpdate(userId, interviewId);
+        if (!"IN_PROGRESS".equals(interview.getStatus())) {
+            throw new BadRequestException("Follow-up answers can only be submitted while the interview is in progress");
+        }
+
+        InterviewQuestion question = questionRepository.findById(request.getQuestionId())
+                .orElseThrow(() -> new ResourceNotFoundException("Question not found with id: " + request.getQuestionId()));
+
+        if (!question.getInterview().getId().equals(interview.getId())) {
+            throw new BadRequestException("Question does not belong to this interview session");
+        }
+
+        Answer answer = answerRepository.findByQuestionId(question.getId())
+                .orElseThrow(() -> new BadRequestException("Primary answer must be submitted before answering the adaptive follow-up"));
+
+        if (!aiRateLimiter.tryAcquire(userId)) {
+            throw new com.intervai.exception.AiRateLimitExceededException();
+        }
+
+        answer.setFollowUpAnswerText(request.getFollowUpAnswerText());
+        answer.setIsFollowUpAnswered(true);
+        if (request.getTimeSpentSeconds() != null && request.getTimeSpentSeconds() > 0) {
+            answer.setTimeSpentSeconds((answer.getTimeSpentSeconds() != null ? answer.getTimeSpentSeconds() : 0) + request.getTimeSpentSeconds());
+        }
+        Answer savedAnswer = answerRepository.save(answer);
+
+        FollowUpEvaluationDto eval = aiService.evaluateFollowUp(
+                question.getQuestionText(),
+                answer.getAnswerText(),
+                question.getFollowUpQuestion(),
+                request.getFollowUpAnswerText(),
+                interview.getJobRole(),
+                question.getTargetSkill()
+        );
+
+        Feedback feedback = feedbackRepository.findByAnswerId(savedAnswer.getId())
+                .orElseGet(() -> Feedback.builder().answer(savedAnswer).build());
+
+        feedback.setFollowUpFeedback(eval.getFeedback());
+        feedback.setFollowUpScore(eval.getScore());
+
+        if (feedback.getScore() != null && eval.getScore() != null && eval.getScore() > 0) {
+            int adjustedScore = Math.min(100, Math.round(feedback.getScore() * 0.85f + eval.getScore() * 0.15f));
+            feedback.setScore(adjustedScore);
+            updateSkillPerformance(interview.getUser(), question.getTargetSkill(), adjustedScore);
+        }
+
+        feedbackRepository.saveAndFlush(feedback);
 
         return mapQuestionToDto(question, savedAnswer, feedback);
     }
@@ -481,6 +556,7 @@ public class InterviewService {
                 .numberOfQuestions(interview.getNumberOfQuestions())
                 .interviewMode(interview.getInterviewMode())
                 .interviewSource(interview.getInterviewSource() != null ? interview.getInterviewSource() : "PRESET")
+                .enableAdaptiveFollowUp(Boolean.TRUE.equals(interview.getEnableAdaptiveFollowUp()))
                 .resumeText(interview.getResumeText())
                 .jobDescription(interview.getJobDescription())
                 .status(interview.getStatus())
@@ -519,6 +595,9 @@ public class InterviewService {
                     .suggestions(parseJsonList(fb.getSuggestionsJson()))
                     .modelAnswer(fb.getModelAnswer())
                     .evaluationSource(fb.getEvaluationSource())
+                    .followUpQuestion(q.getFollowUpQuestion())
+                    .followUpFeedback(fb.getFollowUpFeedback())
+                    .followUpScore(fb.getFollowUpScore())
                     .build();
         }
 
@@ -530,6 +609,11 @@ public class InterviewService {
                 .targetSkill(q.getTargetSkill())
                 .expectedKeyPoints(q.getExpectedKeyPoints())
                 .modelAnswer(q.getModelAnswer())
+                .followUpQuestion(q.getFollowUpQuestion())
+                .followUpAnswer(a != null ? a.getFollowUpAnswerText() : null)
+                .isFollowUpAnswered(a != null && Boolean.TRUE.equals(a.getIsFollowUpAnswered()))
+                .followUpFeedback(fb != null ? fb.getFollowUpFeedback() : null)
+                .followUpScore(fb != null ? fb.getFollowUpScore() : null)
                 .isAnswered(a != null)
                 .userAnswer(a != null ? a.getAnswerText() : null)
                 .isSkipped(a != null && Boolean.TRUE.equals(a.getIsSkipped()))

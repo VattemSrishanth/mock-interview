@@ -21,6 +21,7 @@ public class InterviewDto {
     private Integer numberOfQuestions;
     private String interviewMode;
     private String interviewSource;
+    private Boolean enableAdaptiveFollowUp;
     private String resumeText;
     private String jobDescription;
     private String status;

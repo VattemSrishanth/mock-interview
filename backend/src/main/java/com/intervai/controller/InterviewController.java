@@ -82,6 +82,15 @@ public class InterviewController {
         return ResponseEntity.ok(evaluatedQuestion);
     }
 
+    @PostMapping("/{id}/follow-up")
+    public ResponseEntity<InterviewQuestionDto> submitFollowUp(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable Long id,
+            @Valid @RequestBody SubmitFollowUpRequest request) {
+        InterviewQuestionDto evaluatedQuestion = interviewService.submitFollowUp(userPrincipal.getId(), id, request);
+        return ResponseEntity.ok(evaluatedQuestion);
+    }
+
     @PostMapping("/{id}/complete")
     public ResponseEntity<InterviewResultDto> completeInterview(
             @AuthenticationPrincipal UserPrincipal userPrincipal,

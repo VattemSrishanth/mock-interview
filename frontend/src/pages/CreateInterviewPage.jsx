@@ -16,7 +16,8 @@ import {
   Sparkles,
   Trash2,
   RefreshCw,
-  Target
+  Target,
+  Zap
 } from 'lucide-react';
 
 const getDefaultDifficulty = () => {
@@ -84,6 +85,7 @@ export default function CreateInterviewPage() {
 
   // Job Description state
   const [jobDescription, setJobDescription] = useState('');
+  const [enableAdaptiveFollowUp, setEnableAdaptiveFollowUp] = useState(true);
 
   const [formData, setFormData] = useState({
     jobRole: preset.role || user?.targetRole || 'Frontend Developer',
@@ -252,7 +254,8 @@ export default function CreateInterviewPage() {
         skills: formData.skills,
         resumeText: resumeText.trim(),
         jobDescription: jobDescription.trim(),
-        interviewSource: interviewSource
+        interviewSource: interviewSource,
+        enableAdaptiveFollowUp: enableAdaptiveFollowUp
       });
 
       clearInterval(stepInterval);
@@ -272,7 +275,7 @@ export default function CreateInterviewPage() {
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold mb-3">
           <Cpu className="w-3.5 h-3.5" />
-          <span>Configurable AI Interview Engine • Step 1: Resume & JD Integration</span>
+          <span>Adaptive Interview Engine • Resume/JD Grounding + Dynamic Follow-Ups</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
           Create AI Mock Interview
@@ -719,6 +722,54 @@ export default function CreateInterviewPage() {
                   <div className="text-[11px] text-slate-400">Silent focus mode with typed input</div>
                 </div>
               </button>
+            </div>
+          </div>
+
+          {/* Adaptive Interrogation (Dynamic Follow-Ups) Toggle */}
+          <div className="pt-2">
+            <div className={`p-4 rounded-xl border transition-all ${
+              enableAdaptiveFollowUp
+                ? 'bg-amber-500/10 border-amber-500/30'
+                : 'bg-[#151f33] border-white/5'
+            }`}>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                    enableAdaptiveFollowUp ? 'bg-amber-500/20 text-amber-400' : 'bg-white/5 text-slate-500'
+                  }`}>
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white">Dynamic Adaptive Interrogation</span>
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${
+                        enableAdaptiveFollowUp ? 'bg-amber-400/20 text-amber-300' : 'bg-white/10 text-slate-400'
+                      }`}>
+                        {enableAdaptiveFollowUp ? 'ACTIVE' : 'OFF'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                      After each response, the AI interviewer dynamically asks 1 realistic follow-up question to probe trade-offs, edge cases, and architectural depth.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setEnableAdaptiveFollowUp(!enableAdaptiveFollowUp)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    enableAdaptiveFollowUp ? 'bg-amber-500' : 'bg-slate-700'
+                  }`}
+                  role="switch"
+                  aria-checked={enableAdaptiveFollowUp}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      enableAdaptiveFollowUp ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
           </div>
         </div>

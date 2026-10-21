@@ -422,7 +422,8 @@ public class AiService {
                 + "  \"strengths\": [string array of 2-3 specific positives],\n"
                 + "  \"weaknesses\": [string array of 1-3 specific gaps or missed nuances],\n"
                 + "  \"suggestions\": [string array of 2-3 actionable improvements],\n"
-                + "  \"modelAnswer\": string (comprehensive benchmark answer)\n"
+                + "  \"modelAnswer\": string (comprehensive benchmark answer),\n"
+                + "  \"followUpQuestion\": string (1 realistic, challenging technical or behavioral follow-up question drilling down into the candidate's specific answer, trade-offs, or edge cases)\n"
                 + "}";
     }
 
@@ -478,6 +479,8 @@ public class AiService {
         List<String> weaknesses = requiredTextArray(root, "weaknesses");
         List<String> suggestions = requiredTextArray(root, "suggestions");
         String modelAnswer = requiredText(root, "modelAnswer");
+        String followUpQuestion = root.hasNonNull("followUpQuestion") && StringUtils.hasText(root.get("followUpQuestion").asText())
+                ? root.get("followUpQuestion").asText().trim() : null;
         return FeedbackDto.builder()
                 .score(score)
                 .technicalKnowledge(technicalKnowledge)
@@ -489,6 +492,7 @@ public class AiService {
                 .weaknesses(weaknesses)
                 .suggestions(suggestions)
                 .modelAnswer(modelAnswer)
+                .followUpQuestion(followUpQuestion)
                 .evaluationSource("AI_PROVIDER")
                 .build();
     }
@@ -601,6 +605,7 @@ public class AiService {
 
     private FeedbackDto evaluateFallback(String question, String skill, String answer, String role, String difficulty) {
         String topic = StringUtils.hasText(skill) ? skill : "the topic in the question";
+        String followUp = generateAdaptiveFollowUp(question, skill, answer, role, difficulty);
         return FeedbackDto.builder()
                 .evaluationSource("HEURISTIC")
                 .strengths(List.of())
@@ -610,6 +615,160 @@ public class AiService {
                         "For " + topic + ", add a concrete example, explain your reasoning, and mention relevant trade-offs or edge cases."
                 ))
                 .modelAnswer(generateModelAnswer(question, skill))
+                .followUpQuestion(followUp)
+                .build();
+    }
+
+    /**
+     * Step 2: Intelligent Heuristic Follow-Up Question Generator (Adaptive Interrogation).
+     */
+    public String generateAdaptiveFollowUp(String question, String skill, String answer, String role, String difficulty) {
+        if (!StringUtils.hasText(answer)) {
+            return "Could you provide a concrete architectural example explaining how you would implement this in a production scenario?";
+        }
+        String lowerAns = answer.toLowerCase(Locale.ROOT);
+        String lowerSkill = skill != null ? skill.toLowerCase(Locale.ROOT) : "";
+
+        if (lowerAns.contains("redis") || lowerAns.contains("cache") || lowerAns.contains("caching")) {
+            return "You mentioned caching; how do you handle cache invalidation across distributed instances, and what eviction strategy would you configure to prevent memory saturation?";
+        }
+        if (lowerAns.contains("sql") || lowerAns.contains("postgres") || lowerAns.contains("mysql") || lowerAns.contains("query") || lowerAns.contains("database")) {
+            return "In a high-concurrency production environment, how would you diagnose query degradation, and what database isolation level or index design would you use to prevent deadlocks?";
+        }
+        if (lowerAns.contains("kafka") || lowerAns.contains("queue") || lowerAns.contains("rabbit") || lowerAns.contains("pub/sub") || lowerAns.contains("messaging")) {
+            return "How do you guarantee message ordering, idempotency, and handle dead-letter queues if a consumer fails repeatedly mid-batch?";
+        }
+        if (lowerAns.contains("thread") || lowerAns.contains("concurr") || lowerAns.contains("async") || lowerAns.contains("parallel")) {
+            return "How would you guarantee thread safety and prevent race conditions or thread starvation under high contention in that workflow?";
+        }
+        if (lowerAns.contains("jwt") || lowerAns.contains("auth") || lowerAns.contains("oauth") || lowerAns.contains("token") || lowerAns.contains("security")) {
+            return "How do you handle immediate token revocation before expiration, and how do you protect this flow against replay or CSRF attacks?";
+        }
+        if (lowerAns.contains("microservice") || lowerAns.contains("rest") || lowerAns.contains("api") || lowerAns.contains("endpoint")) {
+            return "If a downstream service starts experiencing high latency or timeouts, how would you prevent cascading failures and implement graceful degradation?";
+        }
+        if (lowerAns.contains("react") || lowerAns.contains("hook") || lowerAns.contains("state") || lowerAns.contains("props")) {
+            return "How would you profile and optimize component rendering performance if this state update triggers costly re-renders across the component tree?";
+        }
+        if (lowerAns.contains("docker") || lowerAns.contains("kubernetes") || lowerAns.contains("k8s") || lowerAns.contains("container")) {
+            return "What happens if a pod crashes abruptly during execution? How do you ensure graceful shutdown, health check accuracy, and zero-downtime rolling updates?";
+        }
+
+        // Skill-based dynamic follow-ups
+        if (lowerSkill.contains("spring") || lowerSkill.contains("java")) {
+            return "How would you handle transaction rollback boundaries if an asynchronous event or external API call fails inside that method?";
+        }
+        if (lowerSkill.contains("python") || lowerSkill.contains("django") || lowerSkill.contains("fastapi")) {
+            return "How do you manage CPU-bound versus I/O-bound tasks in that architecture to avoid blocking the event loop or worker processes?";
+        }
+        if (lowerSkill.contains("system design") || lowerSkill.contains("architecture")) {
+            return "What is the single point of failure in this design, and what specific trade-off did you make regarding latency versus consistency (CAP theorem)?";
+        }
+        if (lowerSkill.contains("behavioral") || lowerSkill.contains("hr") || lowerAns.length() > 200) {
+            return "Reflecting on that experience, if you had to do it again with tighter resource constraints or a stricter deadline, what would you do differently?";
+        }
+
+        return "What is the primary architectural trade-off or failure mode of that approach, and how would you monitor it in production?";
+    }
+
+    /**
+     * Step 2: Adaptive Follow-Up Response Evaluator.
+     */
+    public com.intervai.dto.FollowUpEvaluationDto evaluateFollowUp(String questionText, String candidateInitialAnswer,
+                                                                   String followUpQuestion, String candidateFollowUpAnswer,
+                                                                   String jobRole, String targetSkill) {
+        if (!StringUtils.hasText(candidateFollowUpAnswer)) {
+            return com.intervai.dto.FollowUpEvaluationDto.builder()
+                    .score(0)
+                    .feedback("No response was provided for the follow-up interrogation question.")
+                    .strengths(List.of())
+                    .weaknesses(List.of("The follow-up question was left blank."))
+                    .evaluationSource("SKIPPED")
+                    .build();
+        }
+
+        if (hasActiveAiKey()) {
+            try {
+                return evaluateFollowUpViaLlm(questionText, candidateInitialAnswer, followUpQuestion, candidateFollowUpAnswer, jobRole, targetSkill);
+            } catch (Exception e) {
+                log.warn("LLM follow-up evaluation failed; using heuristic fallback: {}", e.getMessage());
+            }
+        }
+
+        return evaluateFollowUpFallback(questionText, candidateInitialAnswer, followUpQuestion, candidateFollowUpAnswer, targetSkill);
+    }
+
+    private com.intervai.dto.FollowUpEvaluationDto evaluateFollowUpViaLlm(String questionText, String candidateInitialAnswer,
+                                                                          String followUpQuestion, String candidateFollowUpAnswer,
+                                                                          String jobRole, String targetSkill) throws Exception {
+        String prompt = "You are an expert technical interviewer evaluating a candidate's response to an adaptive follow-up interrogation question.\n"
+                + "Job Role: " + jobRole + "\n"
+                + "Target Skill: " + (targetSkill != null ? targetSkill : "General") + "\n"
+                + "Original Question: " + questionText + "\n"
+                + "Candidate Initial Answer: " + candidateInitialAnswer + "\n"
+                + "Follow-Up Question Asked: " + followUpQuestion + "\n"
+                + "Candidate Follow-Up Response: " + candidateFollowUpAnswer + "\n\n"
+                + "Evaluate how effectively, accurately, and thoroughly the candidate defended their technical choices or answered the deep-dive scenario.\n"
+                + "Return JSON strictly in this format:\n"
+                + "{\n"
+                + "  \"score\": integer (0-100),\n"
+                + "  \"feedback\": \"string (concise 2-3 sentence assessment of their follow-up answer)\",\n"
+                + "  \"strengths\": [\"string\", \"string\"],\n"
+                + "  \"weaknesses\": [\"string\"]\n"
+                + "}";
+
+        String jsonText = executePrompt(prompt, true);
+        JsonNode root = objectMapper.readTree(cleanJsonBlock(jsonText));
+        int score = root.has("score") ? root.get("score").asInt(80) : 80;
+        String feedback = root.has("feedback") ? root.get("feedback").asText("Good defense of the technical scenario.") : "Good defense of the technical scenario.";
+        List<String> strengths = new ArrayList<>();
+        if (root.has("strengths") && root.get("strengths").isArray()) {
+            for (JsonNode s : root.get("strengths")) strengths.add(s.asText());
+        }
+        List<String> weaknesses = new ArrayList<>();
+        if (root.has("weaknesses") && root.get("weaknesses").isArray()) {
+            for (JsonNode w : root.get("weaknesses")) weaknesses.add(w.asText());
+        }
+        return com.intervai.dto.FollowUpEvaluationDto.builder()
+                .score(score)
+                .feedback(feedback)
+                .strengths(strengths)
+                .weaknesses(weaknesses)
+                .evaluationSource("AI_PROVIDER")
+                .build();
+    }
+
+    private com.intervai.dto.FollowUpEvaluationDto evaluateFollowUpFallback(String questionText, String candidateInitialAnswer,
+                                                                            String followUpQuestion, String candidateFollowUpAnswer,
+                                                                            String targetSkill) {
+        int wordCount = candidateFollowUpAnswer.trim().split("\\s+").length;
+        int score;
+        String critique;
+        List<String> strengths = new ArrayList<>();
+        List<String> weaknesses = new ArrayList<>();
+
+        if (wordCount >= 40) {
+            score = 88;
+            critique = "Strong defense. You directly engaged with the interviewer's deep-dive scenario, articulating specific mechanisms, trade-offs, and operational safeguards.";
+            strengths.add("Directly addressed the technical constraints in the follow-up challenge.");
+            strengths.add("Demonstrated technical depth and architectural clarity under interrogation.");
+        } else if (wordCount >= 15) {
+            score = 76;
+            critique = "Good baseline answer. You acknowledged the follow-up prompt, but elaborating with concrete implementation examples or telemetry details would reinforce your argument.";
+            strengths.add("Provided a relevant answer to the follow-up question.");
+            weaknesses.add("Could elaborate further on production edge cases and error handling.");
+        } else {
+            score = 60;
+            critique = "Brief answer. While you provided an initial thought, senior engineering interviews expect comprehensive analysis of failure modes and trade-offs.";
+            weaknesses.add("Response is too concise for a senior-level technical deep-dive.");
+        }
+
+        return com.intervai.dto.FollowUpEvaluationDto.builder()
+                .score(score)
+                .feedback(critique)
+                .strengths(strengths)
+                .weaknesses(weaknesses)
+                .evaluationSource("HEURISTIC")
                 .build();
     }
 

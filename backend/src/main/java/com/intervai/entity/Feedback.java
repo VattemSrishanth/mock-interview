@@ -45,6 +45,11 @@ public class Feedback {
     @Column(columnDefinition = "TEXT")
     private String modelAnswer;
 
+    @Column(columnDefinition = "TEXT")
+    private String followUpFeedback;
+
+    private Integer followUpScore;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

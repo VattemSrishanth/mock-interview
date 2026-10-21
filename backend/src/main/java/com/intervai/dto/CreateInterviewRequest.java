@@ -41,4 +41,8 @@ public class CreateInterviewRequest {
     private String jobDescription;
     @Builder.Default
     private String interviewSource = "PRESET"; // PRESET, RESUME, JOB_DESCRIPTION, RESUME_AND_JD
+
+    // Step 2: Dynamic Follow-Up Questions (Adaptive Interrogation)
+    @Builder.Default
+    private Boolean enableAdaptiveFollowUp = true;
 }

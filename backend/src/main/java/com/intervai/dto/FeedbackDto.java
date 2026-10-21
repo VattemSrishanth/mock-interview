@@ -22,4 +22,9 @@ public class FeedbackDto {
     private String modelAnswer;
     /** AI_PROVIDER, HEURISTIC, or SKIPPED. Null is reserved for legacy records. */
     private String evaluationSource;
+
+    // Step 2: Dynamic Follow-Up Questions (Adaptive Interrogation)
+    private String followUpQuestion;
+    private String followUpFeedback;
+    private Integer followUpScore;
 }
