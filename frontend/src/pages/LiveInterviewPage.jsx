@@ -18,9 +18,13 @@ import {
   Camera,
   CameraOff,
   Zap,
-  ShieldCheck
+  ShieldCheck,
+  Code2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import LiveAudioWave from '../components/LiveAudioWave';
+import CodeExecutionSandbox from '../components/CodeExecutionSandbox';
 import { collectFinalizedResults, combineAnswerParts } from '../utils/voiceTranscript';
 
 export default function LiveInterviewPage() {
@@ -49,6 +53,7 @@ export default function LiveInterviewPage() {
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [cameraStream, setCameraStream] = useState(null);
   const [cameraStatus, setCameraStatus] = useState('Camera off');
+  const [showCodeSandbox, setShowCodeSandbox] = useState(false);
   const videoRef = useRef(null);
   const cameraMountedRef = useRef(true);
 
@@ -99,6 +104,14 @@ export default function LiveInterviewPage() {
   const updateTypedAnswer = (value) => {
     typedAnswerRef.current = value;
     setTypedAnswer(value);
+  };
+
+  const handleInsertCodeIntoAnswer = (snippet) => {
+    setTypedAnswer((prev) => {
+      const next = prev ? `${prev}\n\n${snippet}` : snippet;
+      typedAnswerRef.current = next;
+      return next;
+    });
   };
 
   const updateSpokenAnswer = (value) => {
@@ -684,6 +697,42 @@ export default function LiveInterviewPage() {
             <p className="border-t border-zinc-800 px-4 py-2 text-[10px] text-zinc-500" role="status">{cameraStatus}</p>
           </section>
           
+          {/* Live Code Execution Sandbox (Monaco + Piston) */}
+          <div className="rounded-2xl border border-indigo-500/30 bg-[#0d1322] overflow-hidden shadow-lg transition-all">
+            <button
+              type="button"
+              onClick={() => setShowCodeSandbox(!showCodeSandbox)}
+              className="w-full px-5 py-3.5 flex items-center justify-between text-left hover:bg-white/[0.03] transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                  <Code2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                    <span>Live Code Sandbox (Monaco Editor)</span>
+                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                      Piston Engine
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-slate-400">
+                    Write, run, and debug code in Python, JavaScript, Java, C++, Go with live execution
+                  </p>
+                </div>
+              </div>
+              <div className="text-xs text-indigo-400 font-semibold flex items-center gap-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg border border-indigo-500/20 transition">
+                <span>{showCodeSandbox ? 'Collapse Sandbox' : 'Open Code Sandbox'}</span>
+                {showCodeSandbox ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </div>
+            </button>
+
+            {showCodeSandbox && (
+              <div className="p-4 border-t border-indigo-500/20 bg-slate-950/70">
+                <CodeExecutionSandbox onInsertIntoAnswer={handleInsertCodeIntoAnswer} />
+              </div>
+            )}
+          </div>
+
           {/* Answer Text Area Card */}
           <div className="p-6 rounded-2xl bg-[#0d1322] border border-white/10 space-y-4">
             <div className="flex items-center justify-between">

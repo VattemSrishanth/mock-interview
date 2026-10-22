@@ -54,5 +54,9 @@ export const interviewApi = {
   delete: async (id) => {
     const response = await api.delete(`/interviews/${id}`);
     return response.data;
+  },
+  executeCode: async ({ language, code, stdin = '' }) => {
+    const response = await api.post('/code/execute', { language, code, stdin });
+    return response.data;
   }
 };
