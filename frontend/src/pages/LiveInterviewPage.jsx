@@ -26,6 +26,8 @@ import {
 import LiveAudioWave from '../components/LiveAudioWave';
 import CodeExecutionSandbox from '../components/CodeExecutionSandbox';
 import SpeechTelemetryWidget from '../components/SpeechTelemetryWidget';
+import InterviewerPersonaSelector from '../components/InterviewerPersonaSelector';
+import { voiceInterviewerService } from '../services/voiceInterviewerService';
 import { collectFinalizedResults, combineAnswerParts } from '../utils/voiceTranscript';
 
 export default function LiveInterviewPage() {
@@ -55,6 +57,7 @@ export default function LiveInterviewPage() {
   const [cameraStream, setCameraStream] = useState(null);
   const [cameraStatus, setCameraStatus] = useState('Camera off');
   const [showCodeSandbox, setShowCodeSandbox] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState(() => voiceInterviewerService.getSelectedPersona());
   const videoRef = useRef(null);
   const cameraMountedRef = useRef(true);
 
@@ -263,25 +266,17 @@ export default function LiveInterviewPage() {
   }, [currentQuestionIndex, interview]);
 
   const speakQuestion = (text) => {
-    if (!('speechSynthesis' in window)) return;
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
-
-    utterance.onstart = () => setIsAiSpeaking(true);
-    utterance.onend = () => setIsAiSpeaking(false);
-    utterance.onerror = () => setIsAiSpeaking(false);
-
-    window.speechSynthesis.speak(utterance);
+    voiceInterviewerService.speak(text, {
+      personaId: selectedPersona?.id,
+      onStart: () => setIsAiSpeaking(true),
+      onEnd: () => setIsAiSpeaking(false),
+      onError: () => setIsAiSpeaking(false)
+    });
   };
 
   const stopSpeaking = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      setIsAiSpeaking(false);
-    }
+    voiceInterviewerService.stopSpeaking();
+    setIsAiSpeaking(false);
   };
 
   const stopRecording = (waitForEnd = false) => {
@@ -588,8 +583,14 @@ export default function LiveInterviewPage() {
                     ? 'from-orange-500 via-brand-400 to-zinc-700 animate-pulse'
                     : 'from-slate-700 to-slate-800'
                 } mx-auto transition-colors duration-300`}>
-                  <div className="w-full h-full bg-[#111827] rounded-[14px] flex items-center justify-center">
-                    <Bot className={`w-10 h-10 ${isAiSpeaking ? 'text-brand-400 scale-105' : 'text-slate-400'} transition`} />
+                  <div className="w-full h-full bg-[#111827] rounded-[14px] flex items-center justify-center text-3xl">
+                    {selectedPersona?.avatar ? (
+                      <span className={isAiSpeaking ? 'scale-110 transition-transform duration-200' : ''}>
+                        {selectedPersona.avatar}
+                      </span>
+                    ) : (
+                      <Bot className={`w-10 h-10 ${isAiSpeaking ? 'text-brand-400 scale-105' : 'text-slate-400'} transition`} />
+                    )}
                   </div>
                 </div>
                 {isAiSpeaking && (
@@ -602,10 +603,11 @@ export default function LiveInterviewPage() {
 
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center justify-center gap-1.5">
-                  Interview facilitator
+                  <span>{selectedPersona?.name || 'Interview facilitator'}</span>
+                  <span className="text-[11px] font-normal text-slate-400">({selectedPersona?.title || 'AI Lead'})</span>
                 </h3>
                 <p className="text-[11px] text-slate-400">
-                  {isAiSpeaking ? 'Narrating question...' : isEvaluating ? 'Evaluating your answer...' : 'Listening actively'}
+                  {isAiSpeaking ? `Narrating with ${selectedPersona?.name}'s voice...` : isEvaluating ? 'Evaluating your answer...' : `${selectedPersona?.accent || 'Natural AI'} · Ready`}
                 </p>
               </div>
 
@@ -637,6 +639,21 @@ export default function LiveInterviewPage() {
                 >
                   Auto-voice: {autoNarrate ? 'ON' : 'OFF'}
                 </button>
+              </div>
+
+              {/* Interviewer Persona Selector */}
+              <div className="pt-3 border-t border-white/5 w-full text-left">
+                <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1.5 text-center">
+                  Interviewer Persona
+                </div>
+                <InterviewerPersonaSelector
+                  compact
+                  selectedPersonaId={selectedPersona?.id}
+                  onSelectPersona={(persona) => {
+                    setSelectedPersona(persona);
+                    voiceInterviewerService.setSelectedPersona(persona.id);
+                  }}
+                />
               </div>
             </div>
 

@@ -70,7 +70,8 @@ public class SecurityConfig {
                                 "/h2-console/**",
                                 "/error",
                                 "/api/skills/public",
-                                "/api/leaderboard/public"
+                                "/api/leaderboard/public",
+                                "/api/tts/personas"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()

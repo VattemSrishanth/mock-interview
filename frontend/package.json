@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node --test src/utils/voiceTranscript.test.js && node --test src/utils/speechTelemetry.test.js && vitest run",
+    "test": "node --test src/utils/voiceTranscript.test.js && node --test src/utils/speechTelemetry.test.js && node --test src/services/voiceInterviewerService.test.js && vitest run",
     "build": "vite build",
     "preview": "vite preview"
   },

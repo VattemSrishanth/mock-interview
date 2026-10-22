@@ -6,9 +6,13 @@ import {
   Volume2, 
   ArrowRight, 
   ShieldCheck, 
-  AlertCircle
+  AlertCircle,
+  VolumeX,
+  UserCheck
 } from 'lucide-react';
 import LiveAudioWave from '../components/LiveAudioWave';
+import InterviewerPersonaSelector from '../components/InterviewerPersonaSelector';
+import { voiceInterviewerService } from '../services/voiceInterviewerService';
 
 export default function InterviewLobbyPage() {
   const { id } = useParams();
@@ -21,6 +25,7 @@ export default function InterviewLobbyPage() {
   const [speakerTesting, setSpeakerTesting] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
+  const [selectedPersona, setSelectedPersona] = useState(() => voiceInterviewerService.getSelectedPersona());
 
   useEffect(() => {
     const fetchInterview = async () => {
@@ -60,16 +65,18 @@ export default function InterviewLobbyPage() {
   };
 
   const testAudioOutput = () => {
-    setSpeakerTesting(true);
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance("Interview AI audio test. Audio is functional.");
-      utterance.rate = 1.0;
-      utterance.onend = () => setSpeakerTesting(false);
-      utterance.onerror = () => setSpeakerTesting(false);
-      window.speechSynthesis.speak(utterance);
-    } else {
-      setTimeout(() => setSpeakerTesting(false), 1000);
+    if (speakerTesting) {
+      voiceInterviewerService.stopSpeaking();
+      setSpeakerTesting(false);
+      return;
     }
+    setSpeakerTesting(true);
+    voiceInterviewerService.speak(selectedPersona?.previewText || "Welcome! Your audio system is calibrated and ready for the technical interview.", {
+      personaId: selectedPersona?.id,
+      onStart: () => setSpeakerTesting(true),
+      onEnd: () => setSpeakerTesting(false),
+      onError: () => setSpeakerTesting(false)
+    });
   };
 
   const handleStart = async () => {
@@ -123,6 +130,37 @@ export default function InterviewLobbyPage() {
         <p className="text-xs sm:text-sm text-slate-400">
           Ensure your audio devices are ready. You can answer using voice recognition or typing.
         </p>
+      </div>
+
+      {/* Realistic Interviewer Persona Selection */}
+      <div className="p-6 rounded-2xl bg-[#0d1322] border border-brand-500/20 space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{selectedPersona?.avatar || '🎙️'}</span>
+              <h2 className="text-base font-bold text-white">
+                Select Your AI Interviewer Persona
+              </h2>
+              <span className="text-[10px] font-semibold text-brand-400 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full">
+                Step 5 Feature
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Choose your interviewer's accent, communication style, and role calibration.
+            </p>
+          </div>
+          <div className="text-xs font-mono text-slate-400 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+            Active: <span className="text-brand-400 font-bold">{selectedPersona?.name}</span> ({selectedPersona?.accent})
+          </div>
+        </div>
+
+        <InterviewerPersonaSelector
+          selectedPersonaId={selectedPersona?.id}
+          onSelectPersona={(persona) => {
+            setSelectedPersona(persona);
+            voiceInterviewerService.setSelectedPersona(persona.id);
+          }}
+        />
       </div>
 
       {/* Grid: Session Summary & Device Check */}
