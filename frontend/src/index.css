@@ -3,139 +3,229 @@
 @tailwind utilities;
 
 @layer base {
-  :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-feature-settings: "tnum"; }
-  html.light { color-scheme: light; }
-  html, body, #root { min-height: 100%; }
-  body { @apply bg-zinc-950 text-zinc-100 antialiased; background-image: none; }
-  html.light body { @apply bg-zinc-50 text-zinc-900; background-image: none; }
-  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
-  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #ff5c00; outline-offset: 2px; }
-  ::selection { color: #fff; background: rgba(255,92,0,.55); }
+  :root {
+    color-scheme: dark;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'tnum';
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  html.light {
+    color-scheme: light;
+  }
+  
+  html, body, #root {
+    min-height: 100%;
+  }
+  
+  body {
+    @apply bg-zinc-950 text-zinc-100 antialiased;
+    background-image: none;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+  
+  html.light body {
+    @apply bg-zinc-50 text-zinc-900;
+    background-image: none;
+  }
+
+  /* Distinct modern typography hierarchy */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+
+  code, kbd, samp, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-feature-settings: 'tnum', 'zero';
+  }
+  
+  button, a, input, select, textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid #ff5c00;
+    outline-offset: 2px;
+  }
+  
+  ::selection {
+    color: #fff;
+    background: rgba(255, 92, 0, 0.45);
+  }
 }
 
-/* Shared visual language across every existing route, matching the workspace sidebar. */
+/* ========================================================
+   UNIFIED APP WORKSPACE DESIGN SYSTEM
+   Aligns all pages to the clean, dark obsidian & zinc aesthetic
+   ======================================================== */
 .app-main {
   color: #e4e4e7;
   background: #09090b;
-  --app-panel: #0d1322;
-  --app-input: #151f33;
+  --app-panel: #121215;
+  --app-panel-subtle: #16161a;
+  --app-input: #18181c;
   --app-line: #27272a;
+  --app-line-subtle: #202024;
   --app-muted: #a1a1aa;
   --app-accent: #ff5c00;
+  --app-accent-glow: rgba(255, 92, 0, 0.15);
 }
 
 .app-main :is(h1, h2, h3, h4) {
-  color: #f4f4f5;
-  letter-spacing: -0.025em;
+  font-family: 'Sora', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  color: #fafafa;
+  letter-spacing: -0.02em;
 }
 
 .app-main .rounded-2xl { border-radius: 0.875rem; }
 .app-main .rounded-xl { border-radius: 0.625rem; }
 
-.app-main [class*="bg-[#0d1322]"] {
-  background-color: var(--app-panel);
-  border-color: #27272a;
+/* Re-map legacy navy blue hex values to unified obsidian/zinc surfaces */
+.app-main [class*="bg-[#0d1322]"],
+.app-main [class*="bg-[#0d1424]"],
+.app-main [class*="bg-[#080c15]"] {
+  background-color: var(--app-panel) !important;
+  border-color: var(--app-line) !important;
 }
 
-.app-main [class*="bg-[#151f33]"] {
-  background-color: var(--app-input);
-  border-color: #35363c;
+.app-main [class*="bg-[#151f33]"],
+.app-main [class*="bg-[#111827]"],
+.app-main [class*="bg-[#1e293b]"] {
+  background-color: var(--app-input) !important;
+  border-color: #2e2e34 !important;
 }
 
 .app-main :is(input, select, textarea) {
-  border-color: #35363c;
+  border-color: #27272a;
   border-radius: 0.625rem;
   background-color: var(--app-input);
   color: #f4f4f5;
+  font-family: 'Inter', sans-serif;
 }
 
 .app-main :is(input, select, textarea):focus {
   border-color: var(--app-accent);
   outline: none;
-  box-shadow: 0 0 0 1px rgb(255 92 0 / 18%);
+  box-shadow: 0 0 0 1px rgba(255, 92, 0, 0.25);
 }
 
 .app-main table thead { color: #a1a1aa; }
 .app-main table tbody tr { border-color: #27272a; }
-.app-main [class*="shadow-"] { --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; box-shadow: none; }
 
-html.light .app-main { background: #fafafa; color: #27272a; }
-html.light .app-main :is(h1, h2, h3, h4) { color: #18181b; }
-html.light .app-main [class*="bg-[#0d1322]"], html.light .app-main [class*="bg-[#151f33]"] { background-color: #fff; border-color: #e4e4e7; }
-html.light .app-main :is(input, select, textarea) { background-color: #fff; color: #18181b; border-color: #d4d4d8; }
+/* Light Theme Overrides */
+html.light .app-main {
+  background: #fafafa;
+  color: #27272a;
+  --app-panel: #ffffff;
+  --app-input: #f4f4f5;
+  --app-line: #e4e4e7;
+}
 
-/* Keep the established screens readable while their surfaces are brought into the shared zinc palette. */
-html.light .bg-\[\#080c15\], html.light .bg-\[\#090d16\], html.light .bg-\[\#070b14\], html.light .bg-\[\#070a12\], html.light .bg-zinc-950 { background-color: #fafafa !important; }
-html.light .bg-\[\#0d1322\], html.light .bg-\[\#111827\], html.light .bg-\[\#151f33\], html.light .bg-\[\#11192e\], html.light .bg-zinc-900 { background-color: #fff !important; }
-html.light .bg-zinc-900\/50, html.light .bg-zinc-900\/60, html.light .bg-zinc-900\/70 { background-color: rgba(255,255,255,.84) !important; }
-html.light .bg-zinc-950\/70 { background-color: rgba(250,250,250,.9) !important; }
-html.light .text-white, html.light .text-zinc-100, html.light .text-zinc-200 { color: #18181b !important; }
+html.light .app-main :is(h1, h2, h3, h4) {
+  color: #18181b;
+}
+
+html.light .app-main [class*="bg-[#0d1322]"],
+html.light .app-main [class*="bg-[#151f33]"],
+html.light .app-main [class*="bg-[#111827]"] {
+  background-color: #ffffff !important;
+  border-color: #e4e4e7 !important;
+}
+
+html.light .app-main :is(input, select, textarea) {
+  background-color: #ffffff;
+  color: #18181b;
+  border-color: #d4d4d8;
+}
+
+html.light .text-white,
+html.light .text-zinc-100,
+html.light .text-zinc-200 {
+  color: #18181b !important;
+}
+
 html.light .text-zinc-300 { color: #3f3f46 !important; }
-html.light .text-zinc-400, html.light .text-zinc-500 { color: #71717a !important; }
-html.light .text-zinc-600 { color: #71717a !important; }
-html.light .border-zinc-800, html.light .border-zinc-700 { border-color: #e4e4e7 !important; }
-html.light .border-white\/5, html.light .border-white\/10 { border-color: #e4e4e7 !important; }
-html.light .bg-slate-900, html.light .bg-slate-800 { background-color: #f4f4f5 !important; }
+html.light .text-zinc-400,
+html.light .text-zinc-500 { color: #71717a !important; }
+html.light .border-zinc-800,
+html.light .border-zinc-700 { border-color: #e4e4e7 !important; }
+html.light .border-white\/5,
+html.light .border-white\/10 { border-color: #e4e4e7 !important; }
 html.light aside { background-color: #fafafa !important; }
-html.light input, html.light textarea, html.light select { color: #18181b !important; }
 
-html.dark [class*="text-indigo-"], html.dark [class*="text-purple-"] { color: #fb923c !important; }
-html.dark [class*="text-cyan-"] { color: #d4d4d8 !important; }
-html.dark .bg-indigo-500\/10, html.dark .bg-purple-500\/10 { background-color: rgba(255,92,0,.1) !important; }
-html.dark .border-indigo-500\/20, html.dark .border-purple-500\/20 { border-color: rgba(255,92,0,.25) !important; }
-html.dark [class*="bg-indigo-950"], html.dark [class*="bg-purple-950"] { background-color: #18181b !important; }
-html.dark [class*="bg-indigo-600"], html.dark [class*="bg-purple-600"] { background-color: #ff5c00 !important; }
-html.dark [class*="bg-indigo-500"], html.dark [class*="bg-purple-500"] { background-color: rgba(255,92,0,.1) !important; }
-html.dark [class*="border-indigo-"], html.dark [class*="border-purple-"] { border-color: rgba(255,92,0,.28) !important; }
-html.dark [class*="from-indigo-"], html.dark [class*="to-indigo-"], html.dark [class*="from-purple-"], html.dark [class*="to-purple-"] { --tw-gradient-to: #27272a var(--tw-gradient-to-position); }
-html.dark [class*="text-emerald-"], html.dark [class*="text-cyan-"], html.dark [class*="text-amber-"] { color: #a1a1aa !important; }
-html.dark [class*="bg-emerald-"], html.dark [class*="bg-cyan-"], html.dark [class*="bg-amber-"] { background-color: rgba(161,161,170,.08) !important; }
-html.dark [class*="border-emerald-"], html.dark [class*="border-cyan-"], html.dark [class*="border-amber-"] { border-color: rgba(161,161,170,.22) !important; }
-html.light [class*="text-indigo-"], html.light [class*="text-purple-"] { color: #c2410c !important; }
-html.light [class*="bg-indigo-950"], html.light [class*="bg-purple-950"] { background-color: #f4f4f5 !important; }
-html.light [class*="bg-indigo-500"], html.light [class*="bg-purple-500"] { background-color: rgba(255,92,0,.08) !important; }
-html.light [class*="bg-indigo-600"], html.light [class*="bg-purple-600"] { background-color: #ff5c00 !important; }
-html.light [class*="border-indigo-"], html.light [class*="border-purple-"] { border-color: rgba(194,65,12,.2) !important; }
-html.light [class*="to-indigo-"], html.light [class*="to-purple-"] { --tw-gradient-to: #e4e4e7 var(--tw-gradient-to-position); }
-html.light [class*="text-emerald-"], html.light [class*="text-cyan-"], html.light [class*="text-amber-"] { color: #71717a !important; }
-html.light [class*="bg-emerald-"], html.light [class*="bg-cyan-"], html.light [class*="bg-amber-"] { background-color: #f4f4f5 !important; }
-html.light [class*="border-emerald-"], html.light [class*="border-cyan-"], html.light [class*="border-amber-"] { border-color: #e4e4e7 !important; }
-
-::-webkit-scrollbar { width: 7px; height: 7px; }
+/* Subtle refined scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #09090b; }
-::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #71717a; }
+::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 html.light ::-webkit-scrollbar-track { background: #fafafa; }
+html.light ::-webkit-scrollbar-thumb { background: #d4d4d8; }
 
+/* Audio meter animation */
 @keyframes audio-meter {
   from { transform: scaleY(calc(var(--meter-scale) * .3)); }
   to { transform: scaleY(var(--meter-scale)); }
 }
-.audio-meter-bar { animation-name: audio-meter; animation-direction: alternate; animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+.audio-meter-bar {
+  animation-name: audio-meter;
+  animation-direction: alternate;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
 
 @keyframes panel-enter {
   from { transform: translateX(1rem); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
-
 .panel-enter { animation: panel-enter 180ms ease-out both; }
 
 @keyframes fade-enter {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 .fade-enter { animation: fade-enter 180ms ease-out both; }
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }
 
+/* Print Stylesheet */
 @media print {
-  body { color: #18181b !important; background: #fff !important; background-image: none !important; }
-  aside, header.sticky, button, a[href], .print\:hidden { display: none !important; }
-  main, #root, #root > div { min-height: 0 !important; padding: 0 !important; margin: 0 !important; }
-  article, section, .bg-zinc-900, .bg-zinc-950 { color: #18181b !important; background: #fff !important; box-shadow: none !important; break-inside: avoid; }
-  .text-white, .text-zinc-100, .text-zinc-200, .text-zinc-300 { color: #18181b !important; }
-  .text-zinc-400, .text-zinc-500, .text-zinc-600 { color: #52525b !important; }
-  .border-zinc-800, .border-zinc-700 { border-color: #d4d4d8 !important; }
+  body {
+    color: #18181b !important;
+    background: #fff !important;
+    background-image: none !important;
+  }
+  aside, header.sticky, button, a[href], .print\:hidden {
+    display: none !important;
+  }
+  main, #root, #root > div {
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  article, section, .bg-zinc-900, .bg-zinc-950 {
+    color: #18181b !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+  .text-white, .text-zinc-100, .text-zinc-200, .text-zinc-300 {
+    color: #18181b !important;
+  }
+  .text-zinc-400, .text-zinc-500, .text-zinc-600 {
+    color: #52525b !important;
+  }
+  .border-zinc-800, .border-zinc-700 {
+    border-color: #d4d4d8 !important;
+  }
 }

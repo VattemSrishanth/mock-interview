@@ -45,8 +45,8 @@ export default function InterviewerPersonaSelector({
               onClick={() => handleSelect(persona)}
               className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition ${
                 isSelected
-                  ? 'bg-indigo-600/25 border-indigo-500 text-white shadow-sm'
-                  : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  ? 'bg-orange-500/15 border-orange-500/50 text-orange-200 shadow-sm'
+                  : 'bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80'
               }`}
             >
               <span className="text-sm">{persona.avatar}</span>

@@ -141,8 +141,8 @@ export default function InterviewLobbyPage() {
               <h2 className="text-base font-bold text-white">
                 Select Your AI Interviewer Persona
               </h2>
-              <span className="text-[10px] font-semibold text-brand-400 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full">
-                Step 5 Feature
+              <span className="text-[10px] font-semibold text-brand-400 bg-brand-500/10 border border-brand-500/20 px-2.5 py-0.5 rounded-full font-mono">
+                Realistic AI Personas
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
