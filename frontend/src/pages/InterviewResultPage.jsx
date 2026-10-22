@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { interviewApi } from '../api/interview';
-import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, Clipboard, FileDown, Flag, RotateCcw, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, Clipboard, FileDown, Flag, RotateCcw, Zap, Activity, Gauge, MessageSquare, Sparkles } from 'lucide-react';
+import { analyzeSpeechTelemetry } from '../utils/speechTelemetry';
 
 const mono = 'font-mono text-[10px] uppercase tracking-wider';
 const dimensions = [
@@ -42,6 +43,13 @@ export default function InterviewResultPage({ onOpenCoach }) {
 
   const providerScored = result?.evaluationSource === 'AI_PROVIDER' && result.overallScore != null;
   const chartData = useMemo(() => dimensions.map(([name, key]) => ({ subject: name, score: Number(result?.[key]) || 0 })), [result]);
+  const sessionTelemetry = useMemo(() => {
+    if (!result?.questions?.length) return null;
+    const allAnswers = result.questions.map((q) => q.userAnswer || q.candidateAnswer || '').filter(Boolean).join(' ');
+    if (!allAnswers) return null;
+    const duration = result.durationSeconds || Math.max(30, result.questions.length * 60);
+    return analyzeSpeechTelemetry(allAnswers, duration);
+  }, [result]);
   const summaryText = useMemo(() => {
     if (!result) return '';
     const score = providerScored ? `${result.overallScore}/100` : 'No provider score';
@@ -75,6 +83,82 @@ export default function InterviewResultPage({ onOpenCoach }) {
     </section>}
 
     {(result.strengths?.length || (result.weaknesses || result.improvements)?.length || (result.recommendations || result.suggestions)?.length) ? <section className="mt-4 grid gap-3 md:grid-cols-3">{[["Observed strengths", result.strengths, 'text-orange-400'], ['Areas to develop', result.weaknesses || result.improvements, 'text-zinc-300'], ['Next practice', result.recommendations || result.suggestions, 'text-zinc-300']].map(([title, list, accent]) => list?.length ? <article key={title} className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4"><p className={`${mono} ${accent}`}>{title}</p><ul className="mt-3 space-y-2 text-xs leading-5 text-zinc-400">{list.map((entry, index) => <li key={`${title}-${index}`} className="flex gap-2"><span className="font-mono text-zinc-600">{String(index + 1).padStart(2, '0')}</span><span>{entry}</span></li>)}</ul></article> : null)}</section> : null}
+
+    {/* Speech & Communication Telemetry Dossier */}
+    {sessionTelemetry && (
+      <section className="mt-4 rounded-md border border-zinc-800 bg-zinc-900/50 p-5 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+          <div>
+            <p className={`${mono} text-indigo-400 flex items-center gap-1.5`}>
+              <Activity size={12} /> Communication & Speech Telemetry
+            </p>
+            <h2 className="mt-1 text-lg font-medium text-white">Delivery Pacing & Articulation Breakdown</h2>
+          </div>
+          <span className={`${mono} px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20`}>
+            {sessionTelemetry.totalWords} Total Words Analyzed
+          </span>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3.5 space-y-1">
+            <span className={`${mono} text-zinc-500 flex items-center gap-1`}>
+              <Gauge size={12} className="text-indigo-400" /> Average Pacing
+            </span>
+            <div className="font-mono text-2xl font-bold text-white">
+              {sessionTelemetry.wordsPerMinute} <span className="text-xs text-zinc-500 font-normal">WPM</span>
+            </div>
+            <p className="text-xs text-emerald-400 font-medium">{sessionTelemetry.pacingLabel}</p>
+          </div>
+
+          <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3.5 space-y-1">
+            <span className={`${mono} text-zinc-500 flex items-center gap-1`}>
+              <MessageSquare size={12} className="text-amber-400" /> Filler Word Frequency
+            </span>
+            <div className="font-mono text-2xl font-bold text-white">
+              {sessionTelemetry.fillerCount} <span className="text-xs text-zinc-500 font-normal">({sessionTelemetry.fillerPercentage}%)</span>
+            </div>
+            <p className="text-xs text-amber-300 font-medium">{sessionTelemetry.fillerLabel}</p>
+          </div>
+
+          <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3.5 space-y-1">
+            <span className={`${mono} text-zinc-500 flex items-center gap-1`}>
+              <Sparkles size={12} className="text-cyan-400" /> Delivery Time
+            </span>
+            <div className="font-mono text-2xl font-bold text-white">
+              {sessionTelemetry.durationSeconds} <span className="text-xs text-zinc-500 font-normal">seconds</span>
+            </div>
+            <p className="text-xs text-zinc-400 font-mono">
+              {(sessionTelemetry.durationSeconds / Math.max(1, sessionTelemetry.totalWords)).toFixed(2)}s per word
+            </p>
+          </div>
+        </div>
+
+        {sessionTelemetry.fillerCount > 0 && (
+          <div className="rounded border border-zinc-800/80 bg-zinc-950/40 p-3">
+            <p className={`${mono} text-zinc-500 mb-2`}>Detected Verbal Filler Instances</p>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(sessionTelemetry.fillerBreakdown).map(([word, count]) => (
+                <span key={word} className="px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-mono">
+                  "{word}" <strong className="text-amber-400">×{count}</strong>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {sessionTelemetry.tips?.length > 0 && (
+          <div className="rounded border border-indigo-500/20 bg-indigo-950/20 p-3 space-y-1">
+            <p className={`${mono} text-indigo-300 font-semibold mb-1`}>Communication Coach Observations</p>
+            {sessionTelemetry.tips.map((tip, idx) => (
+              <p key={idx} className="text-xs text-indigo-200 leading-relaxed flex items-start gap-1.5">
+                <span className="text-indigo-400 font-bold">•</span>
+                <span>{tip}</span>
+              </p>
+            ))}
+          </div>
+        )}
+      </section>
+    )}
 
     <section className="mt-4 rounded-md border border-zinc-800 bg-zinc-900/50"><div className="border-b border-zinc-800 px-4 py-4 sm:px-5"><p className={mono + ' text-zinc-500'}>Response review</p><h2 className="mt-1 text-lg font-medium text-white">Question-by-question record</h2></div><div className="divide-y divide-zinc-800">{questions.map((question, index) => { const feedback = typeof question.feedback === 'object' && question.feedback ? question.feedback : {}; const hasScore = feedback.evaluationSource === 'AI_PROVIDER' && feedback.score != null; const candidate = question.userAnswer || question.candidateAnswer || ''; const notes = [...(feedback.strengths || []), ...(feedback.weaknesses || []), ...(feedback.suggestions || [])]; const expected = question.modelAnswer || question.expectedKeyPoints; const followUpQ = question.followUpQuestion || feedback.followUpQuestion; const followUpA = question.followUpAnswer; const followUpFb = question.followUpFeedback || feedback.followUpFeedback; const followUpSc = question.followUpScore || feedback.followUpScore; return <article key={question.id || index} className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[150px_1fr]"><div><span className={mono + ' text-zinc-500'}>Question {String(index + 1).padStart(2, '0')}</span><div className="mt-2 font-mono text-lg tabular-nums text-orange-400">{hasScore ? `${feedback.score}/100` : '—'}</div><span className={`${mono} mt-1 block text-zinc-600`}>{feedback.evaluationSource === 'HEURISTIC' ? 'Guidance only' : feedback.evaluationSource === 'AI_PROVIDER' ? 'Provider score' : 'Not scored'}</span></div><div className="min-w-0"><h3 className="text-sm font-medium leading-6 text-zinc-100">{question.questionText || `Question ${index + 1}`}</h3><div className="mt-3 grid gap-2 xl:grid-cols-2"><div className="rounded border border-zinc-800 bg-zinc-950/60 p-3"><p className={mono + ' text-zinc-600'}>Candidate response</p><p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-zinc-300">{candidate || 'No response recorded.'}</p></div><div className="rounded border border-zinc-800 bg-zinc-950/60 p-3"><p className={mono + ' text-zinc-600'}>Expected concepts / model response</p><p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-zinc-400">{expected || 'No reference answer was saved for this question.'}</p></div></div>{notes.length > 0 && <div className="mt-2 border-l border-orange-500/50 pl-3"><p className={`${mono} text-zinc-600`}>Saved feedback</p><ul className="mt-1 space-y-1 text-xs text-zinc-400">{notes.map((note, noteIndex) => <li key={noteIndex} className="flex gap-2"><span className="text-orange-500">›</span>{note}</li>)}</ul></div>}{followUpQ && <div className="mt-3 rounded border border-amber-500/30 bg-amber-500/5 p-3 space-y-2"><div className="flex items-center justify-between"><span className="font-mono text-[10px] uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-bold"><Zap size={12} /> Adaptive Interrogation Follow-Up</span>{followUpSc != null && <span className="font-mono text-[10px] text-amber-300 font-bold bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">Defense Score: {followUpSc}/100</span>}</div><p className="text-xs italic text-zinc-300">"{followUpQ}"</p>{followUpA ? <div className="mt-1.5 rounded border border-zinc-800 bg-zinc-950/70 p-2 text-xs text-zinc-300"><span className="font-mono text-[10px] text-zinc-500 uppercase block mb-0.5">Candidate Defense:</span><p className="whitespace-pre-wrap">{followUpA}</p></div> : <p className="text-[11px] text-zinc-500 italic">No defense response recorded for follow-up.</p>}{followUpFb && <p className="text-xs text-emerald-300/90 bg-emerald-950/30 border border-emerald-500/20 p-2 rounded"><span className="font-semibold text-emerald-200">Interrogation feedback: </span>{followUpFb}</p>}</div>}</div></article>; })}{questions.length === 0 && <p className="px-5 py-10 text-center text-xs text-zinc-500">No question records were saved.</p>}</div></section>
     <footer className="mt-5 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500"><span className="inline-flex items-center gap-2"><BookOpen size={13} /> Source: saved interview evaluation</span><Link to="/dashboard" className="inline-flex items-center gap-1 text-zinc-400 hover:text-white">Dashboard <ArrowRight size={13} /></Link></footer>

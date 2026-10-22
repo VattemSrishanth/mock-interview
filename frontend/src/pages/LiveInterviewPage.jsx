@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import LiveAudioWave from '../components/LiveAudioWave';
 import CodeExecutionSandbox from '../components/CodeExecutionSandbox';
+import SpeechTelemetryWidget from '../components/SpeechTelemetryWidget';
 import { collectFinalizedResults, combineAnswerParts } from '../utils/voiceTranscript';
 
 export default function LiveInterviewPage() {
@@ -798,6 +799,13 @@ export default function LiveInterviewPage() {
                 )}
               </div>
             )}
+
+            {/* Live Speech & Communication Telemetry */}
+            <SpeechTelemetryWidget 
+              text={answerText || spokenAnswer} 
+              durationSeconds={elapsedSeconds} 
+              isRecording={isRecording} 
+            />
 
             {/* Submit / Action Bar */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
