@@ -71,7 +71,8 @@ public class SecurityConfig {
                                 "/error",
                                 "/api/skills/public",
                                 "/api/leaderboard/public",
-                                "/api/tts/personas"
+                                "/api/tts/personas",
+                                "/api/interviews/public/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()

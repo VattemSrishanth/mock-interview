@@ -33,4 +33,7 @@ public class InterviewResultDto {
     private LocalDateTime completedAt;
     private List<InterviewQuestionDto> questions;
     private Map<String, Integer> skillBreakdown;
+    private String shareToken;
+    private Boolean isPubliclyShared;
+    private String candidateName; // for public report display
 }

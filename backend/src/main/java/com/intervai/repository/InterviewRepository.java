@@ -59,4 +59,7 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     Double findAvgConfidenceScoreByUserId(@Param("userId") Long userId);
 
     List<Interview> findAllByOrderByCreatedAtDesc();
+
+    @EntityGraph(attributePaths = {"user", "questions", "questions.answer", "questions.answer.feedback"})
+    Optional<Interview> findByShareToken(String shareToken);
 }

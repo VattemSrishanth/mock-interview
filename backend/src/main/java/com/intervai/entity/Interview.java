@@ -87,6 +87,13 @@ public class Interview {
     @Column(columnDefinition = "TEXT")
     private String recommendationsJson;
 
+    @Column(unique = true, length = 64)
+    private String shareToken;
+
+    @Column
+    @Builder.Default
+    private Boolean isPubliclyShared = false;
+
     private Integer durationSeconds;
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;

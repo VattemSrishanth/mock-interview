@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.security.SecureRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -400,6 +401,9 @@ public class InterviewService {
                 .completedAt(interview.getCompletedAt())
                 .questions(questionDtos)
                 .skillBreakdown(skillBreakdown)
+                .shareToken(Boolean.TRUE.equals(interview.getIsPubliclyShared()) ? interview.getShareToken() : null)
+                .isPubliclyShared(Boolean.TRUE.equals(interview.getIsPubliclyShared()))
+                .candidateName(interview.getUser().getName())
                 .build();
     }
 
@@ -421,6 +425,115 @@ public class InterviewService {
     public void deleteInterview(Long userId, Long interviewId) {
         Interview interview = getAuthorizedInterview(userId, interviewId);
         interviewRepository.delete(interview);
+    }
+
+    @Transactional
+    public ShareInterviewResponse togglePublicSharing(Long userId, Long interviewId) {
+        Interview interview = getAuthorizedInterviewForUpdate(userId, interviewId);
+        if (!"COMPLETED".equals(interview.getStatus())) {
+            throw new BadRequestException("Only completed interviews can be shared publicly");
+        }
+
+        boolean newState = !Boolean.TRUE.equals(interview.getIsPubliclyShared());
+        interview.setIsPubliclyShared(newState);
+
+        if (newState && interview.getShareToken() == null) {
+            interview.setShareToken(generateShareToken());
+        }
+
+        interviewRepository.save(interview);
+
+        return ShareInterviewResponse.builder()
+                .interviewId(interview.getId())
+                .isPubliclyShared(newState)
+                .shareToken(newState ? interview.getShareToken() : null)
+                .shareUrl(newState ? "/report/" + interview.getShareToken() : null)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public ShareInterviewResponse getShareStatus(Long userId, Long interviewId) {
+        Interview interview = getAuthorizedInterview(userId, interviewId);
+        boolean shared = Boolean.TRUE.equals(interview.getIsPubliclyShared());
+        return ShareInterviewResponse.builder()
+                .interviewId(interview.getId())
+                .isPubliclyShared(shared)
+                .shareToken(shared ? interview.getShareToken() : null)
+                .shareUrl(shared ? "/report/" + interview.getShareToken() : null)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public InterviewResultDto getPublicInterviewResult(String shareToken) {
+        Interview interview = interviewRepository.findByShareToken(shareToken)
+                .orElseThrow(() -> new ResourceNotFoundException("Shared interview report not found"));
+
+        if (!Boolean.TRUE.equals(interview.getIsPubliclyShared())) {
+            throw new ResourceNotFoundException("This interview report is no longer publicly shared");
+        }
+        if (!"COMPLETED".equals(interview.getStatus())) {
+            throw new BadRequestException("This interview has not been completed yet");
+        }
+
+        List<InterviewQuestion> questions = questionRepository.findByInterviewIdOrderByQuestionOrderAsc(interview.getId());
+        List<InterviewQuestionDto> questionDtos = questions.stream()
+                .map(q -> {
+                    Answer a = q.getAnswer();
+                    Feedback fb = a != null ? a.getFeedback() : null;
+                    return mapQuestionToDto(q, a, fb);
+                })
+                .collect(Collectors.toList());
+
+        List<String> strengths = parseJsonList(interview.getStrengthsJson());
+        List<String> weaknesses = parseJsonList(interview.getWeaknessesJson());
+        List<String> recommendations = parseJsonList(interview.getRecommendationsJson());
+
+        Map<String, Integer> skillBreakdown = new HashMap<>();
+        for (InterviewQuestion q : questions) {
+            String skill = q.getTargetSkill() != null ? q.getTargetSkill() : "Core Knowledge";
+            Answer a = q.getAnswer();
+            if (a != null && a.getFeedback() != null && a.getFeedback().getScore() != null) {
+                skillBreakdown.put(skill, a.getFeedback().getScore());
+            }
+        }
+
+        List<String> skills = interview.getSkills() != null
+                ? Arrays.stream(interview.getSkills().split(",")).filter(s -> !s.isBlank()).collect(Collectors.toList())
+                : List.of();
+
+        return InterviewResultDto.builder()
+                .interviewId(interview.getId())
+                .jobRole(interview.getJobRole())
+                .interviewType(interview.getInterviewType())
+                .interviewSource(interview.getInterviewSource() != null ? interview.getInterviewSource() : "PRESET")
+                .difficulty(interview.getDifficulty())
+                .experience(interview.getExperience())
+                .skills(skills)
+                .overallScore(interview.getOverallScore() != null ? interview.getOverallScore() : 0)
+                .technicalKnowledgeScore(interview.getTechnicalKnowledgeScore() != null ? interview.getTechnicalKnowledgeScore() : 0)
+                .communicationScore(interview.getCommunicationScore() != null ? interview.getCommunicationScore() : 0)
+                .relevanceScore(interview.getRelevanceScore() != null ? interview.getRelevanceScore() : 0)
+                .clarityScore(interview.getClarityScore() != null ? interview.getClarityScore() : 0)
+                .confidenceScore(interview.getConfidenceScore() != null ? interview.getConfidenceScore() : 0)
+                .evaluationSource("AI_PROVIDER")
+                .summaryFeedback(interview.getSummaryFeedback())
+                .strengths(strengths)
+                .weaknesses(weaknesses)
+                .suggestions(recommendations)
+                .durationSeconds(interview.getDurationSeconds() != null ? interview.getDurationSeconds() : 0)
+                .completedAt(interview.getCompletedAt())
+                .questions(questionDtos)
+                .skillBreakdown(skillBreakdown)
+                .shareToken(interview.getShareToken())
+                .isPubliclyShared(true)
+                .candidateName(interview.getUser().getName())
+                .build();
+    }
+
+    private String generateShareToken() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     private Interview getAuthorizedInterview(Long userId, Long interviewId) {
