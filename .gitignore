@@ -27,8 +27,19 @@ yarn-error.log*
 
 # Environment and secrets
 .env
-.env.local
-.env.*.local
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+*credentials*.json
+*serviceAccount*.json
+firebase-adminsdk*.json
 
 # IDE & OS
 .idea/
