@@ -27,6 +27,7 @@ import LiveAudioWave from '../components/LiveAudioWave';
 import CodeExecutionSandbox from '../components/CodeExecutionSandbox';
 import SpeechTelemetryWidget from '../components/SpeechTelemetryWidget';
 import InterviewerPersonaSelector from '../components/InterviewerPersonaSelector';
+import InterviewTimerBadge from '../components/InterviewTimerBadge';
 import { voiceInterviewerService } from '../services/voiceInterviewerService';
 import { collectFinalizedResults, combineAnswerParts } from '../utils/voiceTranscript';
 
@@ -549,10 +550,7 @@ export default function LiveInterviewPage() {
 
         {/* Right Tools: Timer & Exit */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#151f33] border border-white/5 text-xs font-mono text-slate-300">
-            <Clock className="w-3.5 h-3.5 text-orange-400" />
-            <span>{formatTimer(elapsedSeconds)}</span>
-          </div>
+          <InterviewTimerBadge elapsedSeconds={elapsedSeconds} isRecording={isRecording} />
 
           <button
             onClick={() => {
