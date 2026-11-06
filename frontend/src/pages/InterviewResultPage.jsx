@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { interviewApi } from '../api/interview';
-import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, Clipboard, FileDown, Flag, RotateCcw, Zap, Activity, Gauge, MessageSquare, Sparkles, Share2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, Clipboard, FileDown, Flag, RotateCcw, Zap, Activity, Gauge, MessageSquare, Sparkles, Share2, Award } from 'lucide-react';
 import ShareInterviewModal from '../components/ShareInterviewModal';
 import { analyzeSpeechTelemetry } from '../utils/speechTelemetry';
 
@@ -58,6 +58,44 @@ export default function InterviewResultPage({ onOpenCoach }) {
     return [`Interview assessment: ${result.jobRole || 'Technical interview'}`, `Track: ${result.interviewType || '—'} · ${result.difficulty || '—'}`, `Provider score: ${score}`, `Evaluation source: ${result.evaluationSource || 'Not recorded'}`, ...dimensions.map(([label, key]) => `${label}: ${providerScored && result[key] != null ? `${result[key]}/100` : 'Not scored'}`)].join('\n');
   }, [providerScored, result]);
 
+  const readinessTier = useMemo(() => {
+    if (!result) return null;
+    const score = Number(result.overallScore) || 0;
+    if (!providerScored) {
+      return {
+        label: 'Practice Mode Completed',
+        badgeClass: 'bg-zinc-800 text-zinc-300 border-zinc-700',
+        recommendation: 'Complete an AI-scored session to benchmark job readiness.'
+      };
+    }
+    if (score >= 85) {
+      return {
+        label: 'Senior Placement Ready',
+        badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+        recommendation: 'Exceptional response depth, technical rigor, and structured STAR delivery.'
+      };
+    }
+    if (score >= 70) {
+      return {
+        label: 'Proficient Candidate',
+        badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        recommendation: 'Solid engineering fundamentals; minor edge-case reasoning refinements recommended.'
+      };
+    }
+    if (score >= 50) {
+      return {
+        label: 'Developing Foundation',
+        badgeClass: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+        recommendation: 'Review reference answers and practice articulating trade-offs clearly.'
+      };
+    }
+    return {
+      label: 'Practice Suggested',
+      badgeClass: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+      recommendation: 'Focus on technical core depth and real-world system examples.'
+    };
+  }, [providerScored, result]);
+
   const copySummary = async () => {
     try { await navigator.clipboard.writeText(summaryText); setCopied(true); window.setTimeout(() => setCopied(false), 1500); } catch { setError('Clipboard access is unavailable. You can still print or save this report.'); }
   };
@@ -74,7 +112,21 @@ export default function InterviewResultPage({ onOpenCoach }) {
       <div><p className={`${mono} flex items-center gap-2 text-orange-400`}><Flag size={12} /> Interview assessment dossier</p><h1 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-4xl">{result.jobRole || 'Technical interview'} Performance Scorecard</h1><div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] uppercase text-zinc-500"><span>{result.interviewType || 'Interview'} track</span><span>{result.difficulty || 'Level not recorded'}</span><span>{result.status || 'COMPLETED'}</span>{result.interviewSource && result.interviewSource !== 'PRESET' && <span className="text-orange-400 font-semibold">• {result.interviewSource === 'RESUME' ? 'RESUME-DRIVEN' : result.interviewSource === 'JOB_DESCRIPTION' ? 'JD-TARGETED' : 'RESUME & JD MATCH'}</span>}</div><p className="mt-5 max-w-2xl text-sm leading-6 text-zinc-400">Assessment values shown here reflect the saved interview response. Provider scores and practice guidance are identified separately.</p>
         <div className="mt-5 flex flex-wrap gap-2 print:hidden"><Link to="/create" className="inline-flex items-center gap-2 rounded bg-orange-500 px-3 py-2 text-xs font-semibold text-zinc-950 hover:bg-orange-400"><RotateCcw size={13} /> Practice another</Link><button onClick={onOpenCoach} className="rounded border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:text-white">Open career coach</button></div>
       </div>
-      <div className="flex min-h-36 flex-col justify-between rounded border border-zinc-800 bg-zinc-950/60 p-4"><span className={mono + ' text-zinc-500'}>Overall provider score</span><div className="font-mono text-5xl font-medium tabular-nums tracking-tight text-white">{providerScored ? `${result.overallScore}%` : '—'}<span className="ml-2 text-base text-zinc-600">/ 100</span></div><span className={`${mono} text-orange-400`}>{providerScored ? 'AI_PROVIDER · SCORED' : result.evaluationSource === 'HEURISTIC' ? 'HEURISTIC · GUIDANCE ONLY' : 'NO PROVIDER SCORE'}</span></div>
+      <div className="flex min-h-36 flex-col justify-between rounded border border-zinc-800 bg-zinc-950/60 p-4">
+        <div>
+          <span className={mono + ' text-zinc-500'}>Overall provider score</span>
+          <div className="mt-1 font-mono text-5xl font-medium tabular-nums tracking-tight text-white">{providerScored ? `${result.overallScore}%` : '—'}<span className="ml-2 text-base text-zinc-600">/ 100</span></div>
+        </div>
+        <div className="mt-3 space-y-1.5">
+          {readinessTier && (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-medium ${readinessTier.badgeClass}`}>
+              <Award size={13} className="shrink-0" />
+              <span>{readinessTier.label}</span>
+            </div>
+          )}
+          <span className={`${mono} block text-orange-400`}>{providerScored ? 'AI_PROVIDER · SCORED' : result.evaluationSource === 'HEURISTIC' ? 'HEURISTIC · GUIDANCE ONLY' : 'NO PROVIDER SCORE'}</span>
+        </div>
+      </div>
     </header>
 
     {!providerScored && <div className="mt-3 border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-xs leading-5 text-zinc-300"><span className="font-mono text-orange-400">Guidance only</span><span className="ml-2">{result.evaluationSource === 'HEURISTIC' ? 'A provider evaluation was unavailable. This session has qualitative practice guidance and no answer quality score.' : 'No provider evaluation score was saved for this session.'}</span></div>}
