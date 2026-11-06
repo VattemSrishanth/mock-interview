@@ -89,6 +89,32 @@ npm run dev
 
 ---
 
+## 🩺 System Observability & Health API
+
+The backend exposes an unauthenticated diagnostic endpoint for uptime checkers, orchestrators, and load balancers:
+
+- **Endpoint**: `GET /api/v1/health`
+- **Response Sample**:
+```json
+{
+  "status": "UP",
+  "timestamp": 1730914800000,
+  "uptimeSeconds": 1420,
+  "jvmVersion": "21.0.4",
+  "memory": {
+    "totalMb": 512,
+    "usedMb": 184,
+    "freeMb": 328,
+    "maxMb": 2048
+  },
+  "services": {
+    "database": "UP"
+  }
+}
+```
+
+---
+
 ## 🛡️ Security & Environment Variables
 
 | Variable | Description | Default |
