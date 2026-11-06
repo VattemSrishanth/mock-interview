@@ -29,6 +29,7 @@ yarn-error.log*
 .env
 .env.*
 *.env
+!.env.example
 *.pem
 *.key
 *.p12
@@ -48,4 +49,5 @@ firebase-adminsdk*.json
 *.ipr
 .DS_Store
 Thumbs.db
+intervai-home-*.png
 
