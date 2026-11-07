@@ -50,3 +50,97 @@ export function exportInterviewReportJson(result, readinessTier = null) {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+export function exportInterviewReportMarkdown(result, readinessTier = null) {
+  if (!result) return;
+
+  const role = result.jobRole || 'Technical Interview';
+  const score = result.overallScore != null ? `${result.overallScore}%` : 'N/A';
+  const tier = readinessTier?.label || 'Completed';
+  const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+  const lines = [
+    `# IntervAI Performance Scorecard — ${role}`,
+    ``,
+    `> **Assessment Date**: ${dateStr}  `,
+    `> **Overall Score**: ${score}  `,
+    `> **Readiness Tier**: ${tier}  `,
+    `> **Track & Level**: ${result.interviewType || 'General'} · ${result.difficulty || 'Standard'}  `,
+    `> **Evaluation Mode**: ${result.evaluationSource || 'Standard'}`,
+    ``,
+    `---`,
+    ``,
+    `## 📊 Competency Rubric Scores`,
+    ``,
+    `| Competency Dimension | Score | Scale |`,
+    `| :--- | :---: | :---: |`,
+    `| Technical Knowledge | ${result.technicalKnowledgeScore ?? '—'} | / 100 |`,
+    `| Communication & Articulation | ${result.communicationScore ?? '—'} | / 100 |`,
+    `| Relevance & Focus | ${result.relevanceScore ?? '—'} | / 100 |`,
+    `| Clarity & Structure | ${result.clarityScore ?? '—'} | / 100 |`,
+    `| Confidence & Poise | ${result.confidenceScore ?? '—'} | / 100 |`,
+    ``
+  ];
+
+  const strengths = result.strengths || [];
+  if (strengths.length > 0) {
+    lines.push(`## 🌟 Observed Strengths`, ``);
+    strengths.forEach((s, i) => lines.push(`${i + 1}. ${s}`));
+    lines.push(``);
+  }
+
+  const areas = result.weaknesses || result.improvements || [];
+  if (areas.length > 0) {
+    lines.push(`## 🎯 Areas for Development`, ``);
+    areas.forEach((a) => lines.push(`- ${a}`));
+    lines.push(``);
+  }
+
+  const recs = result.recommendations || result.suggestions || [];
+  if (recs.length > 0) {
+    lines.push(`## 💡 Recommended Next Practice`, ``);
+    recs.forEach((r) => lines.push(`- ${r}`));
+    lines.push(``);
+  }
+
+  const questions = result.questions || [];
+  if (questions.length > 0) {
+    lines.push(`---`, ``, `## 📝 Question-by-Question Transcript & AI Feedback`, ``);
+    questions.forEach((q, idx) => {
+      const fb = q.feedback || {};
+      const qScore = fb.score != null ? `${fb.score}/100` : 'Guidance Only';
+      lines.push(`### Question ${idx + 1}: ${q.questionText || 'Question'}`);
+      lines.push(`- **Score**: ${qScore}`);
+      lines.push(``);
+      lines.push(`#### Candidate Response:`);
+      lines.push(q.userAnswer || q.candidateAnswer ? `> ${q.userAnswer || q.candidateAnswer}` : `*No response recorded.*`);
+      lines.push(``);
+      if (q.modelAnswer || q.expectedKeyPoints) {
+        lines.push(`#### Expected Concepts / Reference Model:`);
+        lines.push(`> ${q.modelAnswer || q.expectedKeyPoints}`);
+        lines.push(``);
+      }
+      const notes = [...(fb.strengths || []), ...(fb.suggestions || [])];
+      if (notes.length > 0) {
+        lines.push(`#### AI Coaching Observations:`);
+        notes.forEach((n) => lines.push(`- ${n}`));
+        lines.push(``);
+      }
+      lines.push(`---`, ``);
+    });
+  }
+
+  lines.push(`*Generated via IntervAI AI-Powered Mock Interview Platform.*`);
+
+  const mdContent = lines.join('\n');
+  const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const roleSlug = (result.jobRole || 'interview').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  link.href = url;
+  link.download = `intervai-scorecard-${roleSlug}-${new Date().toISOString().slice(0, 10)}.md`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
