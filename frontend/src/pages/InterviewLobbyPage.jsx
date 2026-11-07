@@ -8,7 +8,12 @@ import {
   ShieldCheck, 
   AlertCircle,
   VolumeX,
-  UserCheck
+  UserCheck,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  BookOpen
 } from 'lucide-react';
 import LiveAudioWave from '../components/LiveAudioWave';
 import InterviewerPersonaSelector from '../components/InterviewerPersonaSelector';
@@ -26,6 +31,7 @@ export default function InterviewLobbyPage() {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
   const [selectedPersona, setSelectedPersona] = useState(() => voiceInterviewerService.getSelectedPersona());
+  const [showStrategyGuide, setShowStrategyGuide] = useState(false);
 
   useEffect(() => {
     const fetchInterview = async () => {
@@ -287,6 +293,67 @@ export default function InterviewLobbyPage() {
           </button>
         </div>
 
+      </div>
+
+      {/* Collapsible High-Impact Preparation & STAR Rubric Guide */}
+      <div className="rounded-2xl bg-[#0d1322] border border-white/5 overflow-hidden transition-all">
+        <button
+          type="button"
+          onClick={() => setShowStrategyGuide((prev) => !prev)}
+          className="w-full p-5 flex items-center justify-between text-left hover:bg-white/[0.02] transition"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-orange-500/10 text-orange-400">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <span>High-Impact Response Strategy & STAR Rubric</span>
+                <span className="text-[10px] font-mono text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">
+                  Candidate Cheat Sheet
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400">
+                Key principles evaluated by the AI scoring model during technical & behavioral rounds.
+              </p>
+            </div>
+          </div>
+          <div className="text-slate-400 p-1">
+            {showStrategyGuide ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+        </button>
+
+        {showStrategyGuide && (
+          <div className="px-5 pb-6 pt-2 border-t border-white/5 space-y-4 text-xs">
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* STAR Framework */}
+              <div className="p-4 rounded-xl bg-[#151f33] border border-white/5 space-y-2">
+                <h4 className="font-bold text-orange-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                  <BookOpen className="w-3.5 h-3.5" /> Behavioral Answers: The STAR Method
+                </h4>
+                <ul className="space-y-1.5 text-slate-300">
+                  <li><strong className="text-white">Situation:</strong> Set the context, team setup, and specific timeline in 1-2 sentences.</li>
+                  <li><strong className="text-white">Task:</strong> Clearly state what you personally were accountable for solving.</li>
+                  <li><strong className="text-white">Action:</strong> Elaborate on your technical steps, architecture choices, and teamwork.</li>
+                  <li><strong className="text-white">Result:</strong> Share quantified metrics (e.g., latency cut 40%, zero downtime rollout).</li>
+                </ul>
+              </div>
+
+              {/* Technical / System Design Strategy */}
+              <div className="p-4 rounded-xl bg-[#151f33] border border-white/5 space-y-2">
+                <h4 className="font-bold text-cyan-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Technical & Architecture Delivery
+                </h4>
+                <ul className="space-y-1.5 text-slate-300">
+                  <li><strong className="text-white">Clarify Requirements:</strong> State your assumptions and scope before diving into code.</li>
+                  <li><strong className="text-white">Discuss Trade-offs:</strong> Compare memory vs speed (e.g., caching vs database queries).</li>
+                  <li><strong className="text-white">Pacing:</strong> Target 1-3 minutes per question; avoid rushing or over-explaining trivial points.</li>
+                  <li><strong className="text-white">Confidence:</strong> Speak in decisive, active sentences; acknowledge edge cases explicitly.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
