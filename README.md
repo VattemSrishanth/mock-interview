@@ -113,6 +113,18 @@ The backend exposes an unauthenticated diagnostic endpoint for uptime checkers, 
 }
 ```
 
+### 💡 Public Reference & Preparation Endpoints
+
+The platform provides unauthenticated endpoints for system monitoring, candidate preparation, and track discovery:
+
+| Endpoint | Method | Description |
+| :--- | :---: | :--- |
+| `/api/v1/health` | `GET` | System health, JVM memory metrics, uptime, and database connectivity |
+| `/api/interviews/public/tips` | `GET` | Structured preparation rubrics (STAR behavioral, system design, coding, speech delivery) |
+| `/api/skills/public` | `GET` | Directory of pre-configured engineering tracks and verified skill tags |
+| `/api/tts/personas` | `GET` | Available interviewer voice personas, accents, and calibration configurations |
+
+
 ---
 
 ## 🛡️ Security & Environment Variables
