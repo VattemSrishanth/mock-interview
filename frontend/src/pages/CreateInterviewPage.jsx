@@ -574,6 +574,22 @@ export default function CreateInterviewPage() {
                   <option key={role} value={role}>{role}</option>
                 ))}
               </select>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {['Full Stack Developer', 'Backend Developer', 'Frontend Developer', 'DevOps Engineer', 'Data Engineer'].map((presetRole) => (
+                  <button
+                    key={presetRole}
+                    type="button"
+                    onClick={() => handleRoleChange(presetRole)}
+                    className={`text-[10px] px-2 py-0.5 rounded-md border transition ${
+                      formData.jobRole === presetRole
+                        ? 'bg-orange-500/20 border-orange-500/40 text-orange-300 font-semibold'
+                        : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:border-white/20'
+                    }`}
+                  >
+                    {presetRole.replace(' Developer', '').replace(' Engineer', '')}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
