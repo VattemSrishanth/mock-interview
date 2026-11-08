@@ -783,11 +783,20 @@ export default function LiveInterviewPage() {
                 rows={9}
                 value={typedAnswer}
                 onChange={(e) => updateTypedAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    if (answerText.trim() && !isEvaluating) {
+                      e.preventDefault();
+                      handleSubmitAnswer();
+                    }
+                  }
+                }}
                 placeholder="Type your response here. Use the microphone to add a separate speech transcript. Tip: Structure your answer clearly with concrete examples."
                 className="w-full bg-[#151f33] border border-white/10 rounded-xl p-4 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition resize-none leading-relaxed"
               />
-              <div className="absolute right-3 bottom-3 text-[11px] text-slate-500 font-mono">
-                {answerText.trim().split(/\s+/).filter(Boolean).length} words &bull; {answerText.length} chars
+              <div className="absolute right-3 bottom-3 text-[11px] text-slate-500 font-mono flex items-center gap-2">
+                <span className="hidden sm:inline opacity-75">Ctrl + Enter to submit &bull;</span>
+                <span>{answerText.trim().split(/\s+/).filter(Boolean).length} words &bull; {answerText.length} chars</span>
               </div>
             </div>
 
