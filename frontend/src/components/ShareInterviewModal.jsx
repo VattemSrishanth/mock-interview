@@ -127,22 +127,33 @@ export default function ShareInterviewModal({ interviewId, isOpen, onClose }) {
                   />
                   <button
                     onClick={handleCopy}
-                    className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-slate-950 text-[11px] font-bold transition"
+                    className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-slate-950 text-[11px] font-bold transition active:scale-95"
+                    title="Copy public link to clipboard"
                   >
                     {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     {copied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
 
-                <a
-                  href={getFullShareUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 transition"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  Open public report in new tab
-                </a>
+                {copied && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-medium" role="status">
+                    <Check className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>Public report link copied to clipboard! Ready to share with recruiters or mentors.</span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between text-xs pt-0.5">
+                  <a
+                    href={getFullShareUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-brand-400 hover:text-brand-300 transition"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Open public report in new tab
+                  </a>
+                  <span className="font-mono text-[10px] text-zinc-500">token: {shareStatus.shareToken.slice(0, 8)}…</span>
+                </div>
               </div>
             )}
 
