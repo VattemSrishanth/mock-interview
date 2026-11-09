@@ -162,6 +162,9 @@ Render Postgres provides separate internal and external connection URLs; prefer 
 
 ## Automated verification
 
+For detailed test coverage commands, public endpoint schemas, and developer workflows, see the [Backend Developer Guide](backend/DEVELOPER_GUIDE.md).
+
+
 Run the backend regression suite and package build from the repository root:
 
 ```powershell
