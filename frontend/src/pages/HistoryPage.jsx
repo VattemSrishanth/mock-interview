@@ -17,6 +17,8 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('ALL');
+  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [sortBy, setSortBy] = useState('NEWEST');
 
   useEffect(() => {
     fetchHistory();
@@ -45,12 +47,23 @@ export default function HistoryPage() {
     }
   };
 
-  const filteredInterviews = interviews.filter((item) => {
-    const matchesSearch = item.jobRole?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.interviewType?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDiff = filterDifficulty === 'ALL' || item.difficulty === filterDifficulty;
-    return matchesSearch && matchesDiff;
-  });
+  const filteredInterviews = interviews
+    .filter((item) => {
+      const matchesSearch = item.jobRole?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            item.interviewType?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesDiff = filterDifficulty === 'ALL' || item.difficulty === filterDifficulty;
+      const matchesStatus = filterStatus === 'ALL' || (filterStatus === 'COMPLETED' ? item.status === 'COMPLETED' : item.status !== 'COMPLETED');
+      return matchesSearch && matchesDiff && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'HIGHEST_SCORE') {
+        return (Number(b.overallScore) || 0) - (Number(a.overallScore) || 0);
+      }
+      if (sortBy === 'OLDEST') {
+        return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+      }
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -87,17 +100,40 @@ export default function HistoryPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <Filter className="w-4 h-4 text-slate-400 shrink-0" />
           <select
             value={filterDifficulty}
             onChange={(e) => setFilterDifficulty(e.target.value)}
             className="bg-[#151f33] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500 w-full sm:w-auto"
+            title="Filter by Difficulty"
           >
             <option value="ALL">All Difficulties</option>
             <option value="Easy">Easy / Foundational</option>
             <option value="Medium">Medium / Standard</option>
             <option value="Hard">Hard / Senior</option>
+          </select>
+
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="bg-[#151f33] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500 w-full sm:w-auto"
+            title="Filter by Session Status"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="IN_PROGRESS">In Progress</option>
+          </select>
+
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="bg-[#151f33] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500 w-full sm:w-auto"
+            title="Sort Results"
+          >
+            <option value="NEWEST">Newest First</option>
+            <option value="HIGHEST_SCORE">Highest Score</option>
+            <option value="OLDEST">Oldest First</option>
           </select>
         </div>
       </div>
