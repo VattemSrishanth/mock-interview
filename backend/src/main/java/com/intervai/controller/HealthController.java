@@ -2,6 +2,7 @@ package com.intervai.controller;
 
 import com.intervai.dto.SystemHealthDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class HealthController {
 
     private final JdbcTemplate jdbcTemplate;
+    private final Environment environment;
 
     @GetMapping
     public ResponseEntity<SystemHealthDto> getHealth() {
@@ -26,12 +28,14 @@ public class HealthController {
         long freeMemory = runtime.freeMemory();
         long maxMemory = runtime.maxMemory();
         long usedMemory = totalMemory - freeMemory;
+        int usedPercentage = totalMemory > 0 ? (int) Math.round(((double) usedMemory / totalMemory) * 100) : 0;
 
         Map<String, Object> memMap = new HashMap<>();
         memMap.put("totalMb", totalMemory / (1024 * 1024));
         memMap.put("usedMb", usedMemory / (1024 * 1024));
         memMap.put("freeMb", freeMemory / (1024 * 1024));
         memMap.put("maxMb", maxMemory / (1024 * 1024));
+        memMap.put("usedPercentage", usedPercentage);
 
         Map<String, Object> servicesMap = new HashMap<>();
         boolean dbHealthy = false;
@@ -44,9 +48,13 @@ public class HealthController {
         servicesMap.put("database", dbHealthy ? "UP" : "DOWN");
 
         long uptime = ManagementFactory.getRuntimeMXBean().getUptime() / 1000;
+        String activeEnv = environment.getActiveProfiles().length > 0
+                ? String.join(",", environment.getActiveProfiles())
+                : (environment.getDefaultProfiles().length > 0 ? String.join(",", environment.getDefaultProfiles()) : "dev");
 
         SystemHealthDto health = SystemHealthDto.builder()
                 .status(dbHealthy ? "UP" : "DEGRADED")
+                .environment(activeEnv)
                 .timestamp(System.currentTimeMillis())
                 .uptimeSeconds(uptime)
                 .jvmVersion(System.getProperty("java.version"))

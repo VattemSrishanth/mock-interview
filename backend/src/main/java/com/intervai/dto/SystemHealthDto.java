@@ -13,6 +13,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class SystemHealthDto {
     private String status;
+    private String environment;
     private long timestamp;
     private long uptimeSeconds;
     private String jvmVersion;
