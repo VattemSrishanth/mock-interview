@@ -29,6 +29,15 @@ const getDefaultDifficulty = () => {
   }
 };
 
+const getDefaultQuestionCount = () => {
+  try {
+    const parsed = Number(localStorage.getItem('default-interview-question-count'));
+    return [3, 5, 8].includes(parsed) ? parsed : 5;
+  } catch {
+    return 5;
+  }
+};
+
 const ROLE_SKILLS = {
   'Frontend Developer': ['React', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'Web Performance'],
   'Backend Developer': ['Java', 'Spring Boot', 'REST APIs', 'SQL', 'PostgreSQL', 'Redis'],
@@ -92,7 +101,7 @@ export default function CreateInterviewPage() {
     experience: user?.experience || 'Fresher',
     interviewType: preset.type || 'Technical',
     difficulty: preset.diff || getDefaultDifficulty(),
-    questionCount: 5,
+    questionCount: preset.questionCount || getDefaultQuestionCount(),
     mode: 'AUDIO_AND_TEXT',
     skills: user?.skills?.length && !preset.role ? user.skills : ROLE_SKILLS[preset.role || user?.targetRole || 'Frontend Developer']
   });

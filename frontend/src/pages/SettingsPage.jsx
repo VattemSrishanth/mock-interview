@@ -17,6 +17,7 @@ const roles = [
 
 const experienceLevels = ['Fresher', 'Junior (1-2 years)', 'Mid-Level (3-5 years)', 'Senior (5+ years)'];
 const difficultyLevels = ['Easy', 'Medium', 'Hard'];
+const questionCounts = [3, 5, 8];
 
 const getSavedDifficulty = () => {
   try {
@@ -27,6 +28,15 @@ const getSavedDifficulty = () => {
   }
 };
 
+const getSavedQuestionCount = () => {
+  try {
+    const parsed = Number(localStorage.getItem('default-interview-question-count'));
+    return questionCounts.includes(parsed) ? parsed : 5;
+  } catch {
+    return 5;
+  }
+};
+
 export default function SettingsPage() {
   const { user, updateUserProfile, logout } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -34,6 +44,7 @@ export default function SettingsPage() {
   const [targetRole, setTargetRole] = useState(user?.targetRole || 'Frontend Developer');
   const [experience, setExperience] = useState(user?.experience || 'Fresher');
   const [defaultDifficulty, setDefaultDifficulty] = useState(getSavedDifficulty);
+  const [defaultQuestionCount, setDefaultQuestionCount] = useState(getSavedQuestionCount);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [saveError, setSaveError] = useState(false);
@@ -55,6 +66,7 @@ export default function SettingsPage() {
       updateUserProfile(updatedUser);
       try {
         localStorage.setItem('default-interview-difficulty', defaultDifficulty);
+        localStorage.setItem('default-interview-question-count', String(defaultQuestionCount));
       } catch {}
       setMessage('Interview defaults saved. New practice sessions will use them.');
     } catch (error) {
@@ -136,6 +148,14 @@ export default function SettingsPage() {
               Default difficulty
               <select value={defaultDifficulty} onChange={(event) => setDefaultDifficulty(event.target.value)} className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#151f33] px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none">
                 {difficultyLevels.map((level) => <option key={level}>{level}</option>)}
+              </select>
+            </label>
+            <label className="block text-xs font-semibold text-slate-300">
+              Default question count
+              <select value={defaultQuestionCount} onChange={(event) => setDefaultQuestionCount(Number(event.target.value))} className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#151f33] px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none">
+                <option value={3}>3 Questions (Quick Sprint)</option>
+                <option value={5}>5 Questions (Standard)</option>
+                <option value={8}>8 Questions (Deep Dive)</option>
               </select>
             </label>
           </div>
