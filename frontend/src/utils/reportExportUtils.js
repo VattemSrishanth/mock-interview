@@ -2,11 +2,20 @@
  * Utility functions for exporting interview session results to downloadable files (JSON/Markdown)
  */
 
-export function exportInterviewReportJson(result, readinessTier = null) {
-  if (!result) return;
+export function buildReportFilename(jobRole, extension = 'json', dateSlug = new Date().toISOString().slice(0, 10)) {
+  const prefix = extension === 'md' ? 'intervai-scorecard' : 'intervai-report';
+  const roleSlug = (jobRole || 'interview')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'interview';
+  return `${prefix}-${roleSlug}-${dateSlug}.${extension}`;
+}
 
-  const exportPayload = {
-    exportDate: new Date().toISOString(),
+export function buildInterviewReportPayload(result, readinessTier = null, exportDate = new Date().toISOString()) {
+  if (!result) return null;
+
+  return {
+    exportDate,
     session: {
       id: result.id,
       jobRole: result.jobRole || 'Technical Interview',
@@ -37,27 +46,18 @@ export function exportInterviewReportJson(result, readinessTier = null) {
       feedback: q.feedback?.strengths || q.feedback?.suggestions || []
     }))
   };
-
-  const jsonStr = JSON.stringify(exportPayload, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  const roleSlug = (result.jobRole || 'interview').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  link.href = url;
-  link.download = `intervai-report-${roleSlug}-${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
 
-export function exportInterviewReportMarkdown(result, readinessTier = null) {
-  if (!result) return;
+export function buildInterviewReportMarkdown(
+  result,
+  readinessTier = null,
+  dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+) {
+  if (!result) return '';
 
   const role = result.jobRole || 'Technical Interview';
   const score = result.overallScore != null ? `${result.overallScore}%` : 'N/A';
   const tier = readinessTier?.label || 'Completed';
-  const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
   const lines = [
     `# IntervAI Performance Scorecard — ${role}`,
@@ -131,14 +131,34 @@ export function exportInterviewReportMarkdown(result, readinessTier = null) {
   }
 
   lines.push(`*Generated via IntervAI AI-Powered Mock Interview Platform.*`);
+  return lines.join('\n');
+}
 
-  const mdContent = lines.join('\n');
+export function exportInterviewReportJson(result, readinessTier = null) {
+  const exportPayload = buildInterviewReportPayload(result, readinessTier);
+  if (!exportPayload) return;
+
+  const jsonStr = JSON.stringify(exportPayload, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = buildReportFilename(result.jobRole, 'json');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export function exportInterviewReportMarkdown(result, readinessTier = null) {
+  const mdContent = buildInterviewReportMarkdown(result, readinessTier);
+  if (!mdContent) return;
+
   const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const roleSlug = (result.jobRole || 'interview').toLowerCase().replace(/[^a-z0-9]+/g, '-');
   link.href = url;
-  link.download = `intervai-scorecard-${roleSlug}-${new Date().toISOString().slice(0, 10)}.md`;
+  link.download = buildReportFilename(result.jobRole, 'md');
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
