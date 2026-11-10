@@ -4,6 +4,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import CreateInterviewPage from './CreateInterviewPage';
+import DashboardPage from './DashboardPage';
 import InterviewResultPage from './InterviewResultPage';
 import AnalyticsPage from './AnalyticsPage';
 import { interviewApi } from '../api/interview';
@@ -12,7 +13,7 @@ import { analyticsApi } from '../api/analytics';
 const { useAuth } = vi.hoisted(() => ({ useAuth: vi.fn() }));
 vi.mock('../context/AuthContext', () => ({ useAuth }));
 vi.mock('../api/interview', () => ({ interviewApi: {
-  create: vi.fn(), getResult: vi.fn()
+  create: vi.fn(), getAll: vi.fn(), getResult: vi.fn()
 } }));
 vi.mock('../api/analytics', () => ({ analyticsApi: { getAnalytics: vi.fn() } }));
 vi.mock('canvas-confetti', () => ({ default: vi.fn() }));
@@ -75,5 +76,48 @@ describe('interview setup and reporting pages', () => {
     render(<MemoryRouter><AnalyticsPage /></MemoryRouter>);
     expect(await screen.findByRole('heading', { name: /performance & readiness analytics/i })).toBeTruthy();
     expect(screen.getAllByText(/82%/).length).toBeGreaterThan(0);
+  });
+
+  it('renders dashboard starter tracks when empty and recent sessions table when populated', async () => {
+    useAuth.mockReturnValue({ user: { name: 'V Srishanth', interviewStreak: 4 } });
+    interviewApi.getAll.mockResolvedValueOnce([]);
+    analyticsApi.getAnalytics.mockResolvedValueOnce({ completedInterviews: 0, totalInterviews: 0, averageScore: 0 });
+
+    const { unmount } = render(
+      <MemoryRouter>
+        <DashboardPage onOpenCoach={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText('No interview sessions recorded yet')).toBeTruthy();
+    expect(screen.getByText('Frontend Developer')).toBeTruthy();
+    unmount();
+
+    interviewApi.getAll.mockResolvedValueOnce([
+      {
+        id: 12,
+        jobRole: 'Platform Engineer',
+        interviewType: 'System Design',
+        difficulty: 'Hard',
+        status: 'COMPLETED',
+        overallScore: 91,
+        durationSeconds: 600,
+        createdAt: '2026-11-09T10:00:00Z'
+      }
+    ]);
+    analyticsApi.getAnalytics.mockResolvedValueOnce({
+      completedInterviews: 1,
+      totalInterviews: 1,
+      averageScore: 91,
+      bestScore: 91,
+      currentStreak: 4
+    });
+
+    render(
+      <MemoryRouter>
+        <DashboardPage onOpenCoach={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(await screen.findByText('Platform Engineer')).toBeTruthy();
+    expect(screen.getByText('COMPLETED')).toBeTruthy();
   });
 });
