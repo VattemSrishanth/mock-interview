@@ -9,7 +9,8 @@ import {
   AlertCircle, 
   Trophy, 
   Flame, 
-  Search
+  Search,
+  X
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -123,10 +124,14 @@ export default function ProfilePage() {
     }
   };
 
-  const filteredLeaderboard = leaderboard.filter((item) =>
-    item.name?.toLowerCase().includes(leaderboardSearch.toLowerCase()) ||
-    item.targetRole?.toLowerCase().includes(leaderboardSearch.toLowerCase())
-  );
+  const normalizedSearch = leaderboardSearch.trim().toLowerCase();
+  const rankedLeaderboard = leaderboard.map((item, idx) => ({ ...item, globalRank: idx + 1 }));
+  const filteredLeaderboard = normalizedSearch
+    ? rankedLeaderboard.filter((item) =>
+        item.name?.toLowerCase().includes(normalizedSearch) ||
+        item.targetRole?.toLowerCase().includes(normalizedSearch)
+      )
+    : rankedLeaderboard;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -331,8 +336,18 @@ export default function ProfilePage() {
                 placeholder="Search candidates..."
                 value={leaderboardSearch}
                 onChange={(e) => setLeaderboardSearch(e.target.value)}
-                className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-brand-500"
+                className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-9 pr-8 py-2 text-xs text-white focus:outline-none focus:border-brand-500"
               />
+              {leaderboardSearch && (
+                <button
+                  type="button"
+                  onClick={() => setLeaderboardSearch('')}
+                  aria-label="Clear candidate search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -341,8 +356,22 @@ export default function ProfilePage() {
               <div className="w-8 h-8 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin" />
             </div>
           ) : filteredLeaderboard.length === 0 ? (
-            <div className="text-center py-12 text-xs text-slate-400">
-              No ranked candidates matching your search filter.
+            <div className="text-center py-12 space-y-3">
+              <p className="text-xs text-slate-400">
+                {normalizedSearch
+                  ? `No ranked candidates matching "${leaderboardSearch.trim()}".`
+                  : 'No ranked candidates available yet.'}
+              </p>
+              {normalizedSearch && (
+                <button
+                  type="button"
+                  onClick={() => setLeaderboardSearch('')}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Clear search
+                </button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -358,14 +387,19 @@ export default function ProfilePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {filteredLeaderboard.map((item, idx) => {
-                    const rank = idx + 1;
+                  {filteredLeaderboard.map((item) => {
+                    const rank = item.globalRank;
                     const isTop1 = rank === 1;
-                    const isTop3 = rank <= 3;
+                    const isCurrentUser = item.id === user?.id;
                     const avg = item.averageScore != null ? Math.round(item.averageScore) : 0;
 
                     return (
-                      <tr key={item.id} className="hover:bg-white/5 transition">
+                      <tr
+                        key={item.id}
+                        className={`transition ${
+                          isCurrentUser ? 'bg-brand-500/[0.08] hover:bg-brand-500/[0.12]' : 'hover:bg-white/5'
+                        }`}
+                      >
                         <td className="py-3.5 pl-2">
                           <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold font-mono text-xs ${
                             isTop1 ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30' :
