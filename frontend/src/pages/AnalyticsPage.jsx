@@ -18,7 +18,8 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   Zap,
-  PlayCircle 
+  PlayCircle,
+  Download
 } from 'lucide-react';
 
 const SkillChart = React.memo(function SkillChart({ data }) {
@@ -60,6 +61,7 @@ export default function AnalyticsPage() {
   const totalInterviews = data?.totalInterviews || 0;
   const completedInterviews = data?.completedInterviews || 0;
   const avgScore = data?.averageScore ? Math.round(data.averageScore) : 0;
+  const readinessLabel = avgScore >= 80 ? 'Tier 1 Hire' : avgScore >= 65 ? 'Tier 2 Ready' : 'Developing';
   const totalQuestions = data?.skillWisePerformance?.reduce((acc, s) => acc + (s.evaluated || 0), 0) || (completedInterviews * 5);
   const skillChartData = useMemo(() => (data?.skillWisePerformance || []).map((item) => ({
     skill: item.skill || item.name || 'Skill', score: Math.round(item.score ?? 0),
@@ -75,6 +77,58 @@ export default function AnalyticsPage() {
   const weakestAreas = useMemo(() => data?.weakestAreas?.length
     ? data.weakestAreas : data?.recommendedPractice?.length ? data.recommendedPractice : [], [data]);
 
+  const triggerDownload = (content, mimeType, filename) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportJson = () => {
+    if (!data || completedInterviews === 0) return;
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      summary: {
+        averageScore: avgScore,
+        bestScore: data?.bestScore ?? null,
+        currentStreak: data?.currentStreak ?? 0,
+        totalInterviews,
+        completedInterviews,
+        totalEvaluatedQuestions: totalQuestions,
+        readinessIndex: readinessLabel
+      },
+      skillProficiency: skillChartData,
+      scoreTrajectory: trendData,
+      topStrengths,
+      priorityFocusAreas: weakestAreas
+    };
+    const dateSlug = new Date().toISOString().slice(0, 10);
+    triggerDownload(JSON.stringify(payload, null, 2), 'application/json', `intervai-analytics-${dateSlug}.json`);
+  };
+
+  const handleExportCsv = () => {
+    if (!data || completedInterviews === 0) return;
+    const escapeCell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const rows = [
+      ['Section', 'Metric / Label', 'Primary Value', 'Secondary Detail'],
+      ['Summary', 'Average Score (%)', avgScore, readinessLabel],
+      ['Summary', 'Completed Interviews', completedInterviews, `Total: ${totalInterviews}`],
+      ['Summary', 'Evaluated Questions', totalQuestions, 'Across rubrics'],
+      ...skillChartData.map((s) => ['Skill Proficiency', s.skill, s.score, '/ 100']),
+      ...trendData.map((t) => ['Score Trajectory', t.session, t.score, `Tech: ${t.technical} / Comm: ${t.communication}`]),
+      ...topStrengths.map((st, idx) => ['Validated Strength', `#${idx + 1}`, st, '']),
+      ...weakestAreas.map((w, idx) => ['Priority Focus', `#${idx + 1}`, w, ''])
+    ];
+    const csvContent = rows.map((row) => row.map(escapeCell).join(',')).join('\n');
+    const dateSlug = new Date().toISOString().slice(0, 10);
+    triggerDownload(csvContent, 'text/csv;charset=utf-8', `intervai-analytics-${dateSlug}.csv`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center gap-4">
@@ -87,14 +141,36 @@ export default function AnalyticsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Title */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-          <BarChart3 className="w-7 h-7 text-brand-400" />
-          Performance & Readiness Analytics
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          In-depth skill proficiency, score trajectory, and hiring bar benchmarks
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+            <BarChart3 className="w-7 h-7 text-brand-400" />
+            Performance & Readiness Analytics
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            In-depth skill proficiency, score trajectory, and hiring bar benchmarks
+          </p>
+        </div>
+        {completedInterviews > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExportJson}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#0d1322] px-3 py-2 text-xs font-semibold text-slate-300 hover:border-white/25 hover:text-white transition"
+            >
+              <Download className="w-3.5 h-3.5 text-brand-400" />
+              Export JSON
+            </button>
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#0d1322] px-3 py-2 text-xs font-semibold text-slate-300 hover:border-white/25 hover:text-white transition"
+            >
+              <Download className="w-3.5 h-3.5 text-indigo-400" />
+              Export CSV
+            </button>
+          </div>
+        )}
       </div>
 
       {completedInterviews === 0 ? (
@@ -142,7 +218,7 @@ export default function AnalyticsPage() {
             <div className="p-5 rounded-2xl bg-[#0d1322] border border-white/5">
               <div className="text-xs text-slate-400 mb-1">Current Readiness Index</div>
               <div className="text-3xl font-black text-indigo-400">
-                {avgScore >= 80 ? 'Tier 1 Hire' : avgScore >= 65 ? 'Tier 2 Ready' : 'Developing'}
+                {readinessLabel}
               </div>
               <div className="text-[11px] text-slate-400 mt-1">Product Tech Company Bar</div>
             </div>
