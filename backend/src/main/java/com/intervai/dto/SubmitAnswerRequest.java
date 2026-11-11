@@ -1,5 +1,6 @@
 package com.intervai.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.AssertTrue;
@@ -21,6 +22,7 @@ public class SubmitAnswerRequest {
     @Size(max = 2048, message = "Voice audio URL must be at most 2048 characters")
     private String voiceAudioUrl;
 
+    @Min(value = 0, message = "Time spent cannot be negative")
     @Builder.Default
     private Integer timeSpentSeconds = 0;
 
