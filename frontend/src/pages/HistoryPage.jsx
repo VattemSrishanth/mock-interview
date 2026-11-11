@@ -8,13 +8,17 @@ import {
   Trash2, 
   PlayCircle, 
   Clock, 
-  ChevronRight
+  ChevronRight,
+  X,
+  RotateCcw,
+  AlertCircle
 } from 'lucide-react';
 
 export default function HistoryPage() {
   const navigate = useNavigate();
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -25,11 +29,13 @@ export default function HistoryPage() {
   }, []);
 
   const fetchHistory = async () => {
+    setErrorMessage('');
     try {
       const data = await interviewApi.getAll();
-      setInterviews(data);
+      setInterviews(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to load history:', err);
+      setErrorMessage('Failed to load interview history. Please refresh and try again.');
     } finally {
       setLoading(false);
     }
@@ -38,19 +44,41 @@ export default function HistoryPage() {
   const handleDelete = async (id, e) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this interview record?')) {
+      setErrorMessage('');
       try {
         await interviewApi.delete(id);
         setInterviews((prev) => prev.filter((i) => i.id !== id));
       } catch (err) {
-        alert('Failed to delete interview record.');
+        setErrorMessage('Failed to delete interview record. Please try again.');
       }
     }
   };
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const hasActiveFilters = Boolean(normalizedQuery || filterDifficulty !== 'ALL' || filterStatus !== 'ALL');
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setFilterDifficulty('ALL');
+    setFilterStatus('ALL');
+  };
+
+  const formatSessionDate = (value) => {
+    if (!value) return 'Date unavailable';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return 'Date unavailable';
+    return parsed.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   const filteredInterviews = interviews
     .filter((item) => {
-      const matchesSearch = item.jobRole?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            item.interviewType?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = !normalizedQuery ||
+                            item.jobRole?.toLowerCase().includes(normalizedQuery) ||
+                            item.interviewType?.toLowerCase().includes(normalizedQuery);
       const matchesDiff = filterDifficulty === 'ALL' || item.difficulty === filterDifficulty;
       const matchesStatus = filterStatus === 'ALL' || (filterStatus === 'COMPLETED' ? item.status === 'COMPLETED' : item.status !== 'COMPLETED');
       return matchesSearch && matchesDiff && matchesStatus;
@@ -59,10 +87,12 @@ export default function HistoryPage() {
       if (sortBy === 'HIGHEST_SCORE') {
         return (Number(b.overallScore) || 0) - (Number(a.overallScore) || 0);
       }
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() || 0 : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() || 0 : 0;
       if (sortBy === 'OLDEST') {
-        return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+        return timeA - timeB;
       }
-      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      return timeB - timeA;
     });
 
   return (
@@ -87,6 +117,23 @@ export default function HistoryPage() {
         </Link>
       </div>
 
+      {errorMessage && (
+        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-between gap-3 text-xs text-red-400">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setErrorMessage('')}
+            aria-label="Dismiss error"
+            className="p-1 rounded-lg hover:bg-red-500/15 transition"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Filter and Search Bar */}
       <div className="p-4 rounded-2xl bg-[#0d1322] border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="relative w-full sm:w-80">
@@ -96,8 +143,18 @@ export default function HistoryPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by role or category..."
-            className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition"
+            className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-10 pr-9 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -139,14 +196,55 @@ export default function HistoryPage() {
       </div>
 
       {/* Interviews Table / List */}
-      <div className="p-6 rounded-2xl bg-[#0d1322] border border-white/5">
+      <div className="p-6 rounded-2xl bg-[#0d1322] border border-white/5 space-y-4">
+        {!loading && interviews.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+            <span>
+              Showing <span className="font-semibold text-white">{filteredInterviews.length}</span> of{' '}
+              <span className="font-semibold text-white">{interviews.length}</span> interviews
+            </span>
+            {hasActiveFilters && filteredInterviews.length > 0 && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset filters
+              </button>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <div className="py-16 flex justify-center items-center">
             <div className="w-8 h-8 rounded-full border-2 border-brand-500/20 border-t-brand-400 animate-spin" />
           </div>
         ) : filteredInterviews.length === 0 ? (
-          <div className="text-center py-16 text-slate-400 text-xs">
-            No interview records found matching your filters.
+          <div className="text-center py-16 space-y-3">
+            <p className="text-xs sm:text-sm text-slate-400">
+              {interviews.length === 0
+                ? 'No mock interviews recorded yet.'
+                : 'No interview records found matching your filters.'}
+            </p>
+            {interviews.length === 0 ? (
+              <Link
+                to="/create"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold text-xs px-4 py-2 transition"
+              >
+                <PlayCircle className="w-4 h-4" />
+                Start Your First Interview
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset Filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
@@ -181,11 +279,7 @@ export default function HistoryPage() {
                     <div className="text-xs text-slate-400 flex items-center gap-3">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-slate-500" />
-                        {new Date(item.createdAt).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
+                        {formatSessionDate(item.createdAt)}
                       </span>
                       <span>&bull;</span>
                       <span>{item.questions?.length || 5} questions</span>
@@ -193,7 +287,7 @@ export default function HistoryPage() {
                   </div>
 
                   <div className="flex items-center justify-between sm:justify-end gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
-                    {isCompleted && item.overallScore !== null ? (
+                    {isCompleted && item.overallScore != null ? (
                       <div className="text-right">
                         <div className="text-base font-extrabold text-brand-400">{item.overallScore}%</div>
                         <div className="text-[10px] text-slate-400">Scorecard</div>
@@ -206,7 +300,9 @@ export default function HistoryPage() {
 
                     <div className="flex items-center gap-2">
                       <button
+                        type="button"
                         onClick={(e) => handleDelete(item.id, e)}
+                        aria-label={`Delete ${item.jobRole} session`}
                         className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
                         title="Delete Session"
                       >
