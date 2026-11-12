@@ -6,8 +6,16 @@ import {
   Layers, 
   Award, 
   Activity, 
-  Search
+  Search,
+  X
 } from 'lucide-react';
+
+const formatSessionDate = (value) => {
+  if (!value) return 'Date unavailable';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Date unavailable';
+  return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+};
 
 export default function AdminPage() {
   const [stats, setStats] = useState(null);
@@ -143,21 +151,54 @@ export default function AdminPage() {
             </button>
           </div>
 
-          <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search records..."
-              className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-            />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <span className="text-xs text-slate-400">
+              {activeTab === 'users'
+                ? `Showing ${filteredUsers.length} of ${users.length} candidates`
+                : `Showing ${filteredInterviews.length} of ${interviews.length} interviews`}
+            </span>
+            <div className="relative w-full sm:w-64">
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search records..."
+                className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-9 pr-8 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Tab 1: Users */}
         {activeTab === 'users' && (
-          <div className="overflow-x-auto">
+          filteredUsers.length === 0 ? (
+            <div className="py-10 text-center space-y-3">
+              <p className="text-xs text-slate-400">
+                {search ? `No candidate records match "${search}".` : 'No registered candidates found.'}
+              </p>
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-medium transition"
+                >
+                  Clear search filter
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="border-b border-white/5 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
                 <tr>
@@ -196,10 +237,27 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
+          )
         )}
 
         {/* Tab 2: Interviews */}
         {activeTab === 'interviews' && (
+          filteredInterviews.length === 0 ? (
+            <div className="py-10 text-center space-y-3">
+              <p className="text-xs text-slate-400">
+                {search ? `No interview sessions match "${search}".` : 'No platform interviews recorded yet.'}
+              </p>
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-medium transition"
+                >
+                  Clear search filter
+                </button>
+              )}
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="border-b border-white/5 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
@@ -229,7 +287,7 @@ export default function AdminPage() {
                       </span>
                     </td>
                     <td className="py-3.5 font-bold text-brand-400">
-                      {i.overallScore !== null ? `${i.overallScore}%` : 'N/A'}
+                      {i.overallScore !== null && i.overallScore !== undefined ? `${i.overallScore}%` : 'N/A'}
                     </td>
                     <td className="py-3.5">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-mono ${
@@ -239,13 +297,14 @@ export default function AdminPage() {
                       </span>
                     </td>
                     <td className="py-3.5 text-slate-400 text-[11px]">
-                      {new Date(i.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      {formatSessionDate(i.createdAt)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          )
         )}
       </div>
     </div>
