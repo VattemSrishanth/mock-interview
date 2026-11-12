@@ -9,7 +9,10 @@ const prompts = {
   'System Design': 'Design a rate limiter for a global API. How would you handle bursts, clock skew, and regional failover?',
   'Distributed Systems': 'A consumer processes the same event twice after a retry. How do you make the workflow safe and observable?'
 };
-const demoCredentials = { student: ['srishanth@intervai.com', 'password123'], studentFallback: ['revanth@intervai.com', 'password123'], admin: ['admin@intervai.com', 'admin123'] };
+const showQuickDemo = import.meta.env.DEV;
+const demoCredentials = showQuickDemo
+  ? { student: ['srishanth@intervai.com', 'password123'], studentFallback: ['revanth@intervai.com', 'password123'], admin: ['admin@intervai.com', 'admin123'] }
+  : null;
 const mono = 'font-mono text-[11px] uppercase tracking-wider';
 
 export default function LandingPage() {
@@ -31,6 +34,10 @@ export default function LandingPage() {
   }, [track]);
 
   const handleQuickDemo = async (role) => {
+    if (!demoCredentials) {
+      navigate('/login');
+      return;
+    }
     const credentials = role === 'admin' ? [demoCredentials.admin] : [demoCredentials.student, demoCredentials.studentFallback];
     try {
       let lastError;
@@ -63,10 +70,12 @@ export default function LandingPage() {
               <Link to={isAuthenticated ? '/dashboard' : '/register'} className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-4 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-orange-400">{isAuthenticated ? 'Open dashboard' : 'Start a practice session'}<ArrowRight size={16} /></Link>
               <Link to={isAuthenticated ? '/create' : '/login'} className="rounded-md border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm font-medium text-zinc-200 transition hover:border-zinc-500">{isAuthenticated ? 'Configure interview' : 'Sign in'} <span className="ml-2 font-mono text-xs text-zinc-500">↵</span></Link>
             </div>
-            <div className="mt-7 flex flex-wrap gap-2">
-              <button onClick={() => handleQuickDemo('student')} className="rounded border border-zinc-800 px-2.5 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200">Open candidate demo · V Srishanth</button>
-              <button onClick={() => handleQuickDemo('admin')} className="rounded border border-zinc-800 px-2.5 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200">Open admin demo</button>
-            </div>
+            {showQuickDemo && (
+              <div className="mt-7 flex flex-wrap gap-2">
+                <button onClick={() => handleQuickDemo('student')} className="rounded border border-zinc-800 px-2.5 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200">Open candidate demo · V Srishanth</button>
+                <button onClick={() => handleQuickDemo('admin')} className="rounded border border-zinc-800 px-2.5 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200">Open admin demo</button>
+              </div>
+            )}
           </div>
 
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }} className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900/90 shadow-2xl shadow-black/20">
