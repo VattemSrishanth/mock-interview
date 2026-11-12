@@ -99,4 +99,71 @@ class RequestValidationTest {
                 .build();
         assertEquals(2, validator.validate(blank).size());
     }
+
+    @Test
+    void createInterviewEnforcesRequiredFieldsAndQuestionBounds() {
+        CreateInterviewRequest valid = CreateInterviewRequest.builder()
+                .jobRole("Backend Developer")
+                .experience("Mid-Level (3-5 years)")
+                .interviewType("Technical")
+                .difficulty("Medium")
+                .numberOfQuestions(5)
+                .interviewMode("Voice")
+                .skills(List.of("Java", "Spring Boot"))
+                .build();
+        assertTrue(validator.validate(valid).isEmpty());
+
+        CreateInterviewRequest outOfBounds = CreateInterviewRequest.builder()
+                .jobRole(" ")
+                .experience("")
+                .interviewType("Technical")
+                .difficulty("Medium")
+                .numberOfQuestions(25)
+                .skills(IntStream.range(0, 26).mapToObj(i -> "Skill" + i).toList())
+                .build();
+        assertEquals(4, validator.validate(outOfBounds).size());
+    }
+
+    @Test
+    void submitAnswerAndFollowUpEnforceNonBlankTextUnlessSkipped() {
+        SubmitAnswerRequest missingAnswer = SubmitAnswerRequest.builder()
+                .questionId(1L)
+                .answerText("   ")
+                .isSkipped(false)
+                .build();
+        assertFalse(validator.validate(missingAnswer).isEmpty());
+
+        SubmitAnswerRequest skippedWithoutAnswer = SubmitAnswerRequest.builder()
+                .questionId(1L)
+                .answerText("")
+                .isSkipped(true)
+                .timeSpentSeconds(12)
+                .build();
+        assertTrue(validator.validate(skippedWithoutAnswer).isEmpty());
+
+        SubmitFollowUpRequest invalidFollowUp = SubmitFollowUpRequest.builder()
+                .questionId(1L)
+                .followUpAnswerText(" ")
+                .timeSpentSeconds(-5)
+                .build();
+        assertEquals(2, validator.validate(invalidFollowUp).size());
+    }
+
+    @Test
+    void ttsRequestEnforcesTextAndSpeedBounds() {
+        TtsRequest valid = TtsRequest.builder()
+                .text("Walk me through how you would partition a hot Kafka topic.")
+                .voice("nova")
+                .persona("sarah")
+                .speed(1.1)
+                .build();
+        assertTrue(validator.validate(valid).isEmpty());
+
+        TtsRequest invalid = TtsRequest.builder()
+                .text(" ")
+                .speed(5.0)
+                .build();
+        assertEquals(2, validator.validate(invalid).size());
+    }
 }
+
