@@ -27,7 +27,7 @@ public class AiService {
     @Value("${app.gemini.api-key:}")
     private String geminiApiKey;
 
-    @Value("${app.gemini.model:gemini-1.5-flash}")
+    @Value("${app.gemini.model:gemini-2.5-flash}")
     private String geminiModel;
 
     @Value("${app.openai.api-key:}")

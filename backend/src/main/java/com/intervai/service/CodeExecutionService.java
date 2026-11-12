@@ -6,6 +6,8 @@ import com.intervai.dto.CodeExecutionRequest;
 import com.intervai.dto.CodeExecutionResponse;
 import com.intervai.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -36,12 +38,27 @@ public class CodeExecutionService {
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
 
+    @Value("${app.code-execution.local-fallback-enabled:false}")
+    private boolean localFallbackEnabled;
+
+    @Autowired
     public CodeExecutionService(ObjectMapper objectMapper) {
+        this(objectMapper, false);
+    }
+
+    CodeExecutionService(ObjectMapper objectMapper, boolean localFallbackEnabled) {
         this.objectMapper = objectMapper;
+        this.localFallbackEnabled = localFallbackEnabled;
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(8000);  // 8s connect timeout
         factory.setReadTimeout(15000);    // 15s execution timeout
         this.restTemplate = new RestTemplate(factory);
+    }
+
+    CodeExecutionService(ObjectMapper objectMapper, RestTemplate restTemplate, boolean localFallbackEnabled) {
+        this.objectMapper = objectMapper;
+        this.restTemplate = restTemplate;
+        this.localFallbackEnabled = localFallbackEnabled;
     }
 
     public CodeExecutionResponse executeCode(CodeExecutionRequest request) {
@@ -75,20 +92,26 @@ public class CodeExecutionService {
 
         } catch (Exception e) {
             long elapsed = System.currentTimeMillis() - startTime;
-            log.warn("Remote Piston execution unavailable or whitelisted ({}). Engaging local execution engine.", e.getMessage());
+            log.warn("Remote Piston execution unavailable or whitelisted ({}). Local fallback enabled={}.", e.getMessage(), localFallbackEnabled);
 
-            // Fallback to local sandbox execution for installed runtimes (Python, Node.js, Java)
-            CodeExecutionResponse localRes = executeLocally(normalizedLanguage, request.getCode(), request.getStdin());
-            if (localRes != null) {
-                return localRes;
+            // Only execute on host runtime when explicitly opted in (disabled by default in production)
+            if (localFallbackEnabled) {
+                CodeExecutionResponse localRes = executeLocally(normalizedLanguage, request.getCode(), request.getStdin());
+                if (localRes != null) {
+                    return localRes;
+                }
             }
+
+            String message = localFallbackEnabled
+                    ? "Execution engine unavailable: " + e.getMessage() + "\nPlease review your code syntax or retry in a moment."
+                    : "Remote code execution sandbox is currently unavailable and host execution fallback is disabled.";
 
             return CodeExecutionResponse.builder()
                     .language(normalizedLanguage)
                     .version("standard")
                     .stdout("")
-                    .stderr("Execution engine unavailable: " + e.getMessage() + "\nPlease review your code syntax or retry in a moment.")
-                    .output("Execution service error: " + e.getMessage())
+                    .stderr(message)
+                    .output(message)
                     .exitCode(1)
                     .executionTimeMs(elapsed)
                     .status("ERROR")
