@@ -47,7 +47,7 @@ public class TtsService {
                     .description("Analytical, rigorous, probing deep system trade-offs and edge cases.")
                     .previewText("Good day. I am James. We'll be walking through systems architecture and algorithmic resilience.")
                     .cloudVoice("onyx")
-                    .defaultPitch(0.95)
+                    .defaultPitch(0.88)
                     .defaultRate(0.92)
                     .build(),
             TtsPersonaDto.builder()
@@ -59,7 +59,7 @@ public class TtsService {
                     .description("Strategic and encouraging, focusing on leadership, architecture, and team outcomes.")
                     .previewText("Welcome! I am Elena. I am excited to discuss how you structure complex applications and collaborate.")
                     .cloudVoice("shimmer")
-                    .defaultPitch(1.05)
+                    .defaultPitch(1.15)
                     .defaultRate(0.98)
                     .build(),
             TtsPersonaDto.builder()
@@ -71,7 +71,7 @@ public class TtsService {
                     .description("Direct, pragmatic, and focused on production reliability and performance.")
                     .previewText("Hi there, I am Alex. Let's dive right into implementation details, concurrency, and telemetry.")
                     .cloudVoice("echo")
-                    .defaultPitch(0.90)
+                    .defaultPitch(0.95)
                     .defaultRate(1.00)
                     .build()
     );

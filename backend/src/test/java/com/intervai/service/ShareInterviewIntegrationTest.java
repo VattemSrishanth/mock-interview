@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:share-test;DB_CLOSE_DELAY=-1")
 @ActiveProfiles("dev")
 @Transactional
 public class ShareInterviewIntegrationTest {
