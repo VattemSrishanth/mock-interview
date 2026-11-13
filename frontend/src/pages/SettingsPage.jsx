@@ -28,9 +28,12 @@ const getSavedDifficulty = () => {
   }
 };
 
-const getSavedQuestionCount = () => {
+export const getSavedQuestionCount = () => {
   try {
-    const parsed = Number(localStorage.getItem('default-interview-question-count'));
+    const raw = localStorage.getItem('default-interview-question-count');
+    if (!raw) return 5;
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed)) return 5;
     return questionCounts.includes(parsed) ? parsed : 5;
   } catch {
     return 5;
@@ -65,8 +68,9 @@ export default function SettingsPage() {
       });
       updateUserProfile(updatedUser);
       try {
+        const validatedCount = questionCounts.includes(Number(defaultQuestionCount)) ? Number(defaultQuestionCount) : 5;
         localStorage.setItem('default-interview-difficulty', defaultDifficulty);
-        localStorage.setItem('default-interview-question-count', String(defaultQuestionCount));
+        localStorage.setItem('default-interview-question-count', String(validatedCount));
       } catch {}
       setMessage('Interview defaults saved. New practice sessions will use them.');
     } catch (error) {
