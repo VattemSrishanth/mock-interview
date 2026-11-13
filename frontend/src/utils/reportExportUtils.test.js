@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {
   buildInterviewReportMarkdown,
   buildInterviewReportPayload,
-  buildReportFilename
+  buildReportFilename,
+  formatReportScore
 } from './reportExportUtils.js';
 
 const sampleResult = {
@@ -78,6 +79,18 @@ test('buildInterviewReportPayload handles minimal partial payloads without throw
   assert.equal(payload.session.overallScore, null);
   assert.equal(payload.competencyScores.communication, null);
   assert.deepEqual(payload.questions, []);
+});
+
+test('formatReportScore handles null, undefined, bounds clamping, and formatting', () => {
+  assert.equal(formatReportScore(null), 'N/A');
+  assert.equal(formatReportScore(undefined), 'N/A');
+  assert.equal(formatReportScore(''), 'N/A');
+  assert.equal(formatReportScore('invalid'), 'N/A');
+  assert.equal(formatReportScore(85), '85%');
+  assert.equal(formatReportScore('72'), '72%');
+  assert.equal(formatReportScore(72.6), '73%');
+  assert.equal(formatReportScore(-10), '0%');
+  assert.equal(formatReportScore(125), '100%');
 });
 
 test('buildInterviewReportMarkdown renders scorecard sections, rubric table, and question transcripts', () => {

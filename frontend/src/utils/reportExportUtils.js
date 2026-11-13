@@ -11,6 +11,19 @@ export function buildReportFilename(jobRole, extension = 'json', dateSlug = new 
   return `${prefix}-${roleSlug}-${dateSlug}.${extension}`;
 }
 
+/**
+ * Safely formats a numerical score into a clamped percentage string.
+ * @param {number|string|null|undefined} score
+ * @returns {string} Formatted score like "85%" or "N/A"
+ */
+export function formatReportScore(score) {
+  if (score == null || score === '') return 'N/A';
+  const num = Number(score);
+  if (Number.isNaN(num)) return 'N/A';
+  const clamped = Math.max(0, Math.min(100, Math.round(num)));
+  return `${clamped}%`;
+}
+
 export function buildInterviewReportPayload(result, readinessTier = null, exportDate = new Date().toISOString()) {
   if (!result) return null;
 
@@ -56,7 +69,7 @@ export function buildInterviewReportMarkdown(
   if (!result) return '';
 
   const role = result.jobRole || 'Technical Interview';
-  const score = result.overallScore != null ? `${result.overallScore}%` : 'N/A';
+  const score = formatReportScore(result.overallScore);
   const tier = readinessTier?.label || 'Completed';
 
   const lines = [
