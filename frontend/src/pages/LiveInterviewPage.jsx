@@ -648,6 +648,9 @@ export default function LiveInterviewPage() {
                   compact
                   selectedPersonaId={selectedPersona?.id}
                   onSelectPersona={(persona) => {
+                    if (isAiSpeaking) {
+                      stopSpeaking();
+                    }
                     setSelectedPersona(persona);
                     voiceInterviewerService.setSelectedPersona(persona.id);
                   }}

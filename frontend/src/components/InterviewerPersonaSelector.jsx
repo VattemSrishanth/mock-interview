@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, Check, Sparkles, UserCheck } from 'lucide-react';
 import { INTERVIEWER_PERSONAS, voiceInterviewerService } from '../services/voiceInterviewerService';
 
@@ -9,7 +9,17 @@ export default function InterviewerPersonaSelector({
 }) {
   const [playingId, setPlayingId] = useState(null);
 
+  useEffect(() => {
+    return () => {
+      voiceInterviewerService.stopSpeaking();
+    };
+  }, []);
+
   const handleSelect = (persona) => {
+    if (playingId) {
+      voiceInterviewerService.stopSpeaking();
+      setPlayingId(null);
+    }
     voiceInterviewerService.setSelectedPersona(persona.id);
     onSelectPersona?.(persona);
   };

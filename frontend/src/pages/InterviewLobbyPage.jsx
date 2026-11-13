@@ -163,6 +163,10 @@ export default function InterviewLobbyPage() {
         <InterviewerPersonaSelector
           selectedPersonaId={selectedPersona?.id}
           onSelectPersona={(persona) => {
+            if (speakerTesting) {
+              voiceInterviewerService.stopSpeaking();
+              setSpeakerTesting(false);
+            }
             setSelectedPersona(persona);
             voiceInterviewerService.setSelectedPersona(persona.id);
           }}
