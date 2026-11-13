@@ -165,5 +165,44 @@ class RequestValidationTest {
                 .build();
         assertEquals(2, validator.validate(invalid).size());
     }
+
+    @Test
+    void createInterviewRejectsZeroAndExcessiveQuestionCounts() {
+        CreateInterviewRequest zeroQuestions = CreateInterviewRequest.builder()
+                .jobRole("Full Stack Engineer")
+                .experience("Mid-Level")
+                .interviewType("Technical")
+                .difficulty("Medium")
+                .numberOfQuestions(0)
+                .build();
+        assertFalse(validator.validate(zeroQuestions).isEmpty());
+
+        CreateInterviewRequest minValidQuestions = CreateInterviewRequest.builder()
+                .jobRole("Full Stack Engineer")
+                .experience("Mid-Level")
+                .interviewType("Technical")
+                .difficulty("Medium")
+                .numberOfQuestions(1)
+                .build();
+        assertTrue(validator.validate(minValidQuestions).isEmpty());
+
+        CreateInterviewRequest maxValidQuestions = CreateInterviewRequest.builder()
+                .jobRole("Full Stack Engineer")
+                .experience("Mid-Level")
+                .interviewType("Technical")
+                .difficulty("Medium")
+                .numberOfQuestions(20)
+                .build();
+        assertTrue(validator.validate(maxValidQuestions).isEmpty());
+
+        CreateInterviewRequest excessiveQuestions = CreateInterviewRequest.builder()
+                .jobRole("Full Stack Engineer")
+                .experience("Mid-Level")
+                .interviewType("Technical")
+                .difficulty("Medium")
+                .numberOfQuestions(21)
+                .build();
+        assertFalse(validator.validate(excessiveQuestions).isEmpty());
+    }
 }
 
