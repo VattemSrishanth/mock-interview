@@ -26,6 +26,16 @@ export const FILLER_WORDS = [
 ];
 
 /**
+ * Checks whether speaking pace falls in the optimal 120-160 WPM interview range.
+ * @param {number} wordsPerMinute
+ * @returns {boolean}
+ */
+export function isOptimalPacing(wordsPerMinute) {
+  if (typeof wordsPerMinute !== 'number' || Number.isNaN(wordsPerMinute)) return false;
+  return wordsPerMinute >= 120 && wordsPerMinute <= 160;
+}
+
+/**
  * Analyzes raw text / speech transcript and duration to produce delivery telemetry.
  *
  * @param {string} text - The spoken or combined answer transcript
@@ -36,6 +46,8 @@ export function analyzeSpeechTelemetry(text = '', durationSeconds = 0) {
   if (!text || typeof text !== 'string') {
     return {
       totalWords: 0,
+      uniqueWords: 0,
+      vocabularyDiversity: 0,
       durationSeconds: Math.max(0, Math.round(durationSeconds)),
       wordsPerMinute: 0,
       pacingStatus: 'STANDBY',
@@ -54,6 +66,12 @@ export function analyzeSpeechTelemetry(text = '', durationSeconds = 0) {
   const cleanText = text.trim();
   const words = cleanText.split(/\s+/).filter(Boolean);
   const totalWords = words.length;
+  const uniqueWords = totalWords > 0
+    ? new Set(words.map((w) => w.toLowerCase().replace(/[^a-z0-9]/g, '')).filter(Boolean)).size
+    : 0;
+  const vocabularyDiversity = totalWords > 0
+    ? Math.round((uniqueWords / totalWords) * 100) / 100
+    : 0;
 
   // Multi-word and single-word filler detection
   const lowerText = ` ${cleanText.toLowerCase().replace(/[.,!?;:()"]/g, ' ')} `;
@@ -172,6 +190,8 @@ export function analyzeSpeechTelemetry(text = '', durationSeconds = 0) {
 
   return {
     totalWords,
+    uniqueWords,
+    vocabularyDiversity,
     durationSeconds: duration,
     wordsPerMinute,
     pacingStatus,

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { analyzeSpeechTelemetry, FILLER_WORDS } from './speechTelemetry.js';
+import { analyzeSpeechTelemetry, isOptimalPacing, FILLER_WORDS } from './speechTelemetry.js';
 
 test('analyzeSpeechTelemetry handles empty or null input gracefully', () => {
   const result = analyzeSpeechTelemetry('', 0);
@@ -51,4 +51,29 @@ test('generates constructive advice tips when pacing or fillers are problematic'
   assert.ok(res.tips.length > 0);
   assert.ok(res.tips.some((tip) => tip.includes('Frequent filler usage detected')));
 });
+
+test('computes uniqueWords and vocabularyDiversity correctly', () => {
+  const repeated = 'architecture architecture architecture';
+  const resRepeated = analyzeSpeechTelemetry(repeated, 5);
+  assert.equal(resRepeated.totalWords, 3);
+  assert.equal(resRepeated.uniqueWords, 1);
+  assert.equal(resRepeated.vocabularyDiversity, 0.33);
+
+  const diverse = 'I design distributed resilient systems';
+  const resDiverse = analyzeSpeechTelemetry(diverse, 10);
+  assert.equal(resDiverse.totalWords, 5);
+  assert.equal(resDiverse.uniqueWords, 5);
+  assert.equal(resDiverse.vocabularyDiversity, 1);
+});
+
+test('isOptimalPacing identifies optimal conversational interview range', () => {
+  assert.equal(isOptimalPacing(140), true);
+  assert.equal(isOptimalPacing(120), true);
+  assert.equal(isOptimalPacing(160), true);
+  assert.equal(isOptimalPacing(110), false);
+  assert.equal(isOptimalPacing(180), false);
+  assert.equal(isOptimalPacing(null), false);
+  assert.equal(isOptimalPacing(NaN), false);
+});
+
 
