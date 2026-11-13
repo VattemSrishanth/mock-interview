@@ -24,6 +24,9 @@ export default function InterviewTimerBadge({ elapsedSeconds = 0, isRecording = 
     pacingColor = 'text-rose-300 border-rose-500/20 bg-rose-500/10';
   }
 
+  const mins = Math.floor(elapsedSeconds / 60);
+  const secs = elapsedSeconds % 60;
+
   return (
     <div className="flex items-center gap-2">
       {/* Live recording indicator if microphone is active */}
@@ -43,6 +46,8 @@ export default function InterviewTimerBadge({ elapsedSeconds = 0, isRecording = 
 
       {/* Elapsed session & pacing badge */}
       <div 
+        role="timer"
+        aria-label={`Interview response timer: ${mins} minutes ${secs} seconds elapsed (${pacingLabel})`}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono transition-colors ${pacingColor}`}
         title={`Elapsed: ${formatTimer(elapsedSeconds)} (${pacingLabel})`}
       >
