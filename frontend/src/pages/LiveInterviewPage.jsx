@@ -1028,12 +1028,20 @@ export default function LiveInterviewPage() {
                             rows={3}
                             value={typedFollowUp}
                             onChange={(e) => setTypedFollowUp(e.target.value)}
+                            onKeyDown={(e) => {
+                              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                                if (typedFollowUp.trim() && !isEvaluatingFollowUp) {
+                                  e.preventDefault();
+                                  handleSubmitFollowUp();
+                                }
+                              }
+                            }}
                             placeholder="Defend your architectural choices or address the follow-up scenario here..."
                             className="w-full bg-[#151f33] border border-white/10 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition resize-none leading-relaxed font-mono"
                           />
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-[10px] text-slate-500 font-mono">
-                              {typedFollowUp.trim().split(/\s+/).filter(Boolean).length} words
+                              {typedFollowUp.trim().split(/\s+/).filter(Boolean).length} words &bull; Ctrl+Enter to submit
                             </span>
                             <div className="flex items-center gap-2">
                               <button
