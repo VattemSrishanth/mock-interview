@@ -647,6 +647,7 @@ export default function LiveInterviewPage() {
                 <InterviewerPersonaSelector
                   compact
                   selectedPersonaId={selectedPersona?.id}
+                  activeVoiceStatus={isAiSpeaking ? 'speaking' : isRecording ? 'listening' : isEvaluating ? 'evaluating' : 'idle'}
                   onSelectPersona={(persona) => {
                     if (isAiSpeaking) {
                       stopSpeaking();
