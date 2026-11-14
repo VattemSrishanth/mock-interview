@@ -468,6 +468,43 @@ export default function LiveInterviewPage() {
     }
   };
 
+  // Keyboard shortcut listener for live interview HUD actions
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore if focus is in an input or textarea unless Alt modifier is active
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+        if (!e.altKey) return;
+      }
+
+      // Alt+M: Toggle microphone
+      if (e.altKey && (e.key === 'm' || e.key === 'M')) {
+        e.preventDefault();
+        toggleRecording();
+      }
+
+      // Alt+S: Toggle question narration
+      if (e.altKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        if (isAiSpeaking) {
+          stopSpeaking();
+        } else if (currentQuestion?.questionText) {
+          speakQuestion(currentQuestion.questionText);
+        }
+      }
+
+      // Alt+N: Next question (if current is evaluated and not evaluating)
+      if (e.altKey && (e.key === 'n' || e.key === 'N')) {
+        if (currentEvaluation && !isEvaluating) {
+          e.preventDefault();
+          handleNextQuestion();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isRecording, isAiSpeaking, currentQuestion, currentEvaluation, isEvaluating, toggleRecording, speakQuestion, stopSpeaking, handleNextQuestion]);
+
   const formatTimer = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -770,6 +807,7 @@ export default function LiveInterviewPage() {
               <button
                 type="button"
                 onClick={toggleRecording}
+                title="Toggle Microphone (Alt+M)"
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shadow-sm ${
                   isRecording
                     ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20'
@@ -778,6 +816,7 @@ export default function LiveInterviewPage() {
               >
                 {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 <span>{isRecording ? 'Stop Mic' : 'Voice Input (Mic)'}</span>
+                <kbd className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/20 text-current">Alt+M</kbd>
               </button>
             </div>
 
@@ -798,9 +837,12 @@ export default function LiveInterviewPage() {
                 placeholder="Type your response here. Use the microphone to add a separate speech transcript. Tip: Structure your answer clearly with concrete examples."
                 className="w-full bg-[#151f33] border border-white/10 rounded-xl p-4 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition resize-none leading-relaxed"
               />
-              <div className="absolute right-3 bottom-3 text-[11px] text-slate-500 font-mono flex items-center gap-2">
-                <span className="hidden sm:inline opacity-75">Ctrl + Enter to submit &bull;</span>
-                <span>{answerText.trim().split(/\s+/).filter(Boolean).length} words &bull; {answerText.length} chars</span>
+              <div className="absolute right-3 bottom-3 text-[11px] text-zinc-500 font-mono flex items-center gap-2">
+                <span className="hidden sm:inline opacity-75">
+                  <kbd className="px-1.5 py-0.5 rounded bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 text-[10px]">Ctrl+Enter</kbd> submit &bull;
+                  <kbd className="ml-1 px-1.5 py-0.5 rounded bg-zinc-800/80 text-zinc-300 border border-zinc-700/60 text-[10px]">Alt+M</kbd> mic &bull;
+                </span>
+                <span className="text-zinc-400">{answerText.trim().split(/\s+/).filter(Boolean).length} words &bull; {answerText.length} chars</span>
               </div>
             </div>
 
