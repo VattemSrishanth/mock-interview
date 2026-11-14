@@ -47,6 +47,20 @@ export default function DashboardPage({ onOpenCoach }) {
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 6), [interviews]);
 
+  // Dynamic placement readiness tier calculation from real user data
+  const readinessTier = useMemo(() => {
+    if (!completed || completed === 0 || average === 0) {
+      return { label: 'Calibration Needed', color: 'text-zinc-500', bg: 'bg-zinc-800/40 border-zinc-700/60', desc: 'Complete your first interview to calculate readiness.' };
+    }
+    if (average >= 85) {
+      return { label: 'FAANG / Tier-1 Ready', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', desc: 'Performance indicates strong competitive offer readiness.' };
+    }
+    if (average >= 70) {
+      return { label: 'Interview Competitive', color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/30', desc: 'Solid technical depth with room for structured behavioral polish.' };
+    }
+    return { label: 'Building Foundation', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30', desc: 'Focus on pacing, system design depth, and concise delivery.' };
+  }, [completed, average]);
+
   const metrics = [
     { label: 'Completed sessions', value: completed, unit: 'sessions', Icon: Layers3, note: `${analytics?.totalInterviews ?? interviews.length} total recorded` },
     { label: 'Average provider score', value: average > 0 ? Math.round(average) : '—', unit: average > 0 ? '/ 100' : 'no score', Icon: Target, note: 'Provider scores only' },
@@ -57,8 +71,28 @@ export default function DashboardPage({ onOpenCoach }) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-7 sm:px-7 sm:py-10">
       <header className="flex flex-wrap items-end justify-between gap-5 border-b border-zinc-800 pb-6">
-        <div><p className={`${mono} flex items-center gap-2 text-orange-400`}><CircleDot size={11} /> Candidate workspace / overview</p><h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">Good to see you, {user?.name?.split(' ')[0] || 'Candidate'}.</h1><p className="mt-2 text-sm text-zinc-400">Your practice history and recorded evaluation data.</p></div>
-        <div className="flex gap-2"><button onClick={onOpenCoach} className="rounded-md border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:border-zinc-500">Ask career coach</button><Link to="/create" className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-3.5 py-2 text-xs font-semibold text-zinc-950 hover:bg-orange-400"><Plus size={14} /> New interview</Link></div>
+        <div>
+          <p className={`${mono} flex items-center gap-2 text-orange-400`}>
+            <CircleDot size={11} /> Candidate workspace / overview
+          </p>
+          <div className="mt-3 flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-semibold tracking-tight text-white">
+              Good to see you, {user?.name?.split(' ')[0] || 'Candidate'}.
+            </h1>
+            <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-mono font-medium ${readinessTier.bg} ${readinessTier.color}`}>
+              {readinessTier.label}
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-zinc-400">Your practice history and recorded evaluation data.</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onOpenCoach} className="rounded-md border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:border-zinc-500 transition">
+            Ask career coach
+          </button>
+          <Link to="/create" className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-3.5 py-2 text-xs font-semibold text-zinc-950 hover:bg-orange-400 transition">
+            <Plus size={14} /> New interview
+          </Link>
+        </div>
       </header>
 
       <section className="grid gap-3 py-5 sm:grid-cols-2 xl:grid-cols-4" aria-label="Practice telemetry">
