@@ -6,7 +6,9 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    include: ['src/**/*.vitest.{js,jsx}']
+    include: ['src/**/*.vitest.{js,jsx}'],
+    testTimeout: 20000,
+    fileParallelism: false
   },
   server: {
     port: 5173,

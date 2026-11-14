@@ -468,7 +468,24 @@ export default function LiveInterviewPage() {
     }
   };
 
-  // Keyboard shortcut listener for live interview HUD actions
+  // Stabilized keyboard shortcut listener for live interview HUD actions
+  const toggleRecordingRef = useRef(toggleRecording);
+  toggleRecordingRef.current = toggleRecording;
+  const isAiSpeakingRef = useRef(isAiSpeaking);
+  isAiSpeakingRef.current = isAiSpeaking;
+  const isEvaluatingRef = useRef(isEvaluating);
+  isEvaluatingRef.current = isEvaluating;
+  const currentEvaluationRef = useRef(currentEvaluation);
+  currentEvaluationRef.current = currentEvaluation;
+  const currentQuestionRef = useRef(currentQuestion);
+  currentQuestionRef.current = currentQuestion;
+  const handleNextQuestionRef = useRef(handleNextQuestion);
+  handleNextQuestionRef.current = handleNextQuestion;
+  const speakQuestionRef = useRef(speakQuestion);
+  speakQuestionRef.current = speakQuestion;
+  const stopSpeakingRef = useRef(stopSpeaking);
+  stopSpeakingRef.current = stopSpeaking;
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Ignore if focus is in an input or textarea unless Alt modifier is active
@@ -479,31 +496,31 @@ export default function LiveInterviewPage() {
       // Alt+M: Toggle microphone
       if (e.altKey && (e.key === 'm' || e.key === 'M')) {
         e.preventDefault();
-        toggleRecording();
+        toggleRecordingRef.current?.();
       }
 
       // Alt+S: Toggle question narration
       if (e.altKey && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
-        if (isAiSpeaking) {
-          stopSpeaking();
-        } else if (currentQuestion?.questionText) {
-          speakQuestion(currentQuestion.questionText);
+        if (isAiSpeakingRef.current) {
+          stopSpeakingRef.current?.();
+        } else if (currentQuestionRef.current?.questionText) {
+          speakQuestionRef.current?.(currentQuestionRef.current.questionText);
         }
       }
 
       // Alt+N: Next question (if current is evaluated and not evaluating)
       if (e.altKey && (e.key === 'n' || e.key === 'N')) {
-        if (currentEvaluation && !isEvaluating) {
+        if (currentEvaluationRef.current && !isEvaluatingRef.current) {
           e.preventDefault();
-          handleNextQuestion();
+          handleNextQuestionRef.current?.();
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isRecording, isAiSpeaking, currentQuestion, currentEvaluation, isEvaluating, toggleRecording, speakQuestion, stopSpeaking, handleNextQuestion]);
+  }, []);
 
   const formatTimer = (seconds) => {
     const mins = Math.floor(seconds / 60);
