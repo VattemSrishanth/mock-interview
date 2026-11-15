@@ -49,6 +49,10 @@ public class ResumeParserService {
             throw new BadRequestException("Uploaded resume file cannot be empty");
         }
 
+        if (file.getSize() > 10 * 1024 * 1024) {
+            throw new BadRequestException("Uploaded resume file exceeds 10MB maximum limit");
+        }
+
         String filename = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
         String extractedText;
 
