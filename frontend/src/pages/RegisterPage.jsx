@@ -1,7 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bot, Mail, Lock, User, Briefcase, GraduationCap, ArrowRight, AlertCircle, Check } from 'lucide-react';
+import { authApi } from '../api/auth';
+import {
+  Bot,
+  Mail,
+  Lock,
+  User,
+  Briefcase,
+  GraduationCap,
+  ArrowRight,
+  AlertCircle,
+  Check,
+  KeyRound,
+  Send,
+  CheckCircle2,
+  ShieldCheck,
+  Clock
+} from 'lucide-react';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -11,6 +27,7 @@ export default function RegisterPage() {
     name: '',
     email: '',
     password: '',
+    verificationCode: '',
     targetRole: 'Frontend Developer',
     experience: 'Fresher',
     careerGoal: 'Secure a full-time software engineering role',
@@ -20,11 +37,28 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Email Verification Code States
+  const [sendingCode, setSendingCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [codeCooldown, setCodeCooldown] = useState(0);
+  const [codeStatus, setCodeStatus] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [devCode, setDevCode] = useState('');
+
   const availableSkills = [
     'React', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'Tailwind CSS',
     'Java', 'Spring Boot', 'Python', 'SQL', 'PostgreSQL', 'Docker',
     'System Design', 'REST APIs', 'Communication'
   ];
+
+  // Cooldown countdown timer
+  useEffect(() => {
+    if (codeCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCodeCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [codeCooldown]);
 
   const toggleSkill = (skill) => {
     setFormData((prev) => {
@@ -38,9 +72,48 @@ export default function RegisterPage() {
     });
   };
 
+  const handleSendCode = async () => {
+    setCodeError('');
+    setCodeStatus('');
+    setError('');
+
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,63}$/;
+    if (!formData.email || !emailRegex.test(formData.email.trim())) {
+      setCodeError('Please enter a valid email address with a domain (e.g. name@example.com).');
+      return;
+    }
+
+    setSendingCode(true);
+    try {
+      const res = await authApi.sendVerificationCode(formData.email.trim());
+      setCodeSent(true);
+      setCodeCooldown(30);
+      setCodeStatus(res.message || 'Verification code sent to your email.');
+      if (res.devCode) {
+        setDevCode(res.devCode);
+      }
+    } catch (err) {
+      setCodeError(
+        err.response?.data?.message || 'Failed to send verification code. The email may already be in use.'
+      );
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!codeSent && !formData.verificationCode) {
+      setError('Please click "Send Code" and enter the 6-digit email verification code.');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(formData.verificationCode?.trim())) {
+      setError('Verification code must be exactly 6 digits.');
+      return;
+    }
 
     if (formData.skills.length === 0) {
       setError('Please select at least one primary skill to focus your interview simulations.');
@@ -49,11 +122,22 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(formData);
-      navigate('/dashboard');
+      await register({
+        ...formData,
+        email: formData.email.trim(),
+        verificationCode: formData.verificationCode.trim()
+      });
+
+      // Security requirement: redirect to login and require explicit authentication
+      navigate('/login', {
+        state: {
+          registeredEmail: formData.email.trim(),
+          message: 'Account created successfully! For security, please sign in with your email and password.'
+        }
+      });
     } catch (err) {
       setError(
-        err.response?.data?.message || 'Registration failed. The email may already be in use.'
+        err.response?.data?.message || 'Registration failed. Please check your verification code and details.'
       );
     } finally {
       setLoading(false);
@@ -89,10 +173,11 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Full Name</label>
+              <label htmlFor="reg-name" className="block text-xs font-semibold text-slate-300 mb-1.5">Full Name</label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
+                  id="reg-name"
                   type="text"
                   required
                   value={formData.name}
@@ -103,27 +188,106 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Email Address</label>
-                <div className="relative">
+            {/* Email Address & Verification Code Sender */}
+            <div>
+              <label htmlFor="reg-email" className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Email Address
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
                   <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
+                    id="reg-email"
                     type="email"
                     required
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      setCodeSent(false);
+                      setCodeStatus('');
+                      setCodeError('');
+                      setDevCode('');
+                    }}
                     placeholder="alex@example.com"
                     className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition"
                   />
                 </div>
+                <button
+                  type="button"
+                  disabled={sendingCode || codeCooldown > 0}
+                  onClick={handleSendCode}
+                  className="px-3.5 py-2.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 disabled:opacity-50 text-indigo-200 border border-indigo-500/40 text-xs font-medium flex items-center gap-1.5 whitespace-nowrap transition"
+                >
+                  {sendingCode ? (
+                    <div className="w-3.5 h-3.5 border-2 border-indigo-200 border-t-transparent rounded-full animate-spin" />
+                  ) : codeCooldown > 0 ? (
+                    <>
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{codeCooldown}s</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>{codeSent ? 'Resend Code' : 'Send Code'}</span>
+                    </>
+                  )}
+                </button>
               </div>
 
+              {/* Status and Error messages for code */}
+              {codeError && (
+                <p className="mt-1.5 text-[11px] text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3 shrink-0" />
+                  <span>{codeError}</span>
+                </p>
+              )}
+
+              {codeStatus && (
+                <div className="mt-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-2 text-[11px] text-emerald-400">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>{codeStatus}</span>
+                  </span>
+                  {devCode && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, verificationCode: devCode })}
+                      className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] hover:bg-emerald-500/30 transition"
+                    >
+                      Fill: {devCode}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 6-Digit Email Verification Code Input */}
+            <div>
+              <label htmlFor="reg-code" className="block text-xs font-semibold text-slate-300 mb-1.5">
+                6-Digit Email Verification Code
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  id="reg-code"
+                  type="text"
+                  required
+                  maxLength={6}
+                  value={formData.verificationCode}
+                  onChange={(e) => setFormData({ ...formData, verificationCode: e.target.value.replace(/\D/g, '') })}
+                  placeholder="Enter 6-digit code"
+                  className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 tracking-widest font-mono focus:outline-none focus:border-brand-500 transition"
+                />
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
+                <label htmlFor="reg-password" className="block text-xs font-semibold text-slate-300 mb-1.5">Password</label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
+                    id="reg-password"
                     type="password"
                     required
                     minLength={6}
@@ -134,9 +298,7 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
-            </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">Target Role</label>
                 <div className="relative">
@@ -155,22 +317,22 @@ export default function RegisterPage() {
                   </select>
                 </div>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">Experience Level</label>
-                <div className="relative">
-                  <GraduationCap className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <select
-                    value={formData.experience}
-                    onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                    className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 transition appearance-none"
-                  >
-                    <option value="Fresher">Fresher (0-1 yrs)</option>
-                    <option value="Junior">Junior (1-2 yrs)</option>
-                    <option value="Mid-level">Mid-level (2-4 yrs)</option>
-                    <option value="Senior">Senior (5+ yrs)</option>
-                  </select>
-                </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Experience Level</label>
+              <div className="relative">
+                <GraduationCap className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <select
+                  value={formData.experience}
+                  onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                  className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-500 transition appearance-none"
+                >
+                  <option value="Fresher">Fresher (0-1 yrs)</option>
+                  <option value="Junior">Junior (1-2 yrs)</option>
+                  <option value="Mid-level">Mid-level (2-4 yrs)</option>
+                  <option value="Senior">Senior (5+ yrs)</option>
+                </select>
               </div>
             </div>
 
@@ -210,7 +372,7 @@ export default function RegisterPage() {
                 <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>Create Account & Start Practicing</span>
+                  <span>Create Account & Verify</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -220,9 +382,14 @@ export default function RegisterPage() {
           <div className="mt-6 text-center text-xs text-slate-400">
             Already have an account?{' '}
             <Link to="/login" className="text-brand-400 hover:underline font-semibold">
-              Sign In
+              Sign in
             </Link>
           </div>
+        </div>
+
+        <div className="mt-6 flex items-center justify-center gap-2 text-center text-[11px] text-zinc-500">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Strict duplicate prevention · 6-digit email code verified · Isolated data</span>
         </div>
       </div>
     </div>

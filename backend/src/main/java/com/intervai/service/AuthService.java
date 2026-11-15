@@ -36,12 +36,18 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException("An account with email " + request.getEmail() + " already exists");
+        String email = request.getEmail().toLowerCase().trim();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new BadRequestException("An account with email " + email + " already exists. Please sign in instead.");
         }
+
+        // Verify that the email verification code is valid and consume it
+        emailVerificationService.verifyAndConsume(email, request.getVerificationCode());
 
         Role studentRole = roleRepository.findByName(RoleName.ROLE_STUDENT)
                 .orElseGet(() -> roleRepository.save(Role.builder().name(RoleName.ROLE_STUDENT).build()));
@@ -59,8 +65,8 @@ public class AuthService {
         }
 
         User user = User.builder()
-                .name(request.getName())
-                .email(request.getEmail().toLowerCase().trim())
+                .name(request.getName().trim())
+                .email(email)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .targetRole(request.getTargetRole() != null ? request.getTargetRole() : "Software Engineer")
                 .experience(request.getExperience() != null ? request.getExperience() : "Fresher")
@@ -73,14 +79,22 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        // Authenticate immediately upon registration
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail().toLowerCase().trim(), request.getPassword())
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = tokenProvider.generateToken(authentication);
-
-        return buildAuthResponse(savedUser, jwt);
+        // Security best practice: Do NOT automatically log in and issue JWT upon registration.
+        // User must explicitly authenticate using their password.
+        return AuthResponse.builder()
+                .id(savedUser.getId())
+                .name(savedUser.getName())
+                .email(savedUser.getEmail())
+                .targetRole(savedUser.getTargetRole())
+                .experience(savedUser.getExperience())
+                .careerGoal(savedUser.getCareerGoal())
+                .avatarUrl(savedUser.getAvatarUrl())
+                .interviewStreak(0)
+                .roles(List.of(RoleName.ROLE_STUDENT.name()))
+                .token(null)
+                .requiresLogin(true)
+                .message("Account registered successfully! For security, please sign in with your email and password.")
+                .build();
     }
 
     public AuthResponse login(AuthRequest request) {
@@ -113,7 +127,9 @@ public class AuthService {
                 .experience(user.getExperience())
                 .careerGoal(user.getCareerGoal())
                 .avatarUrl(user.getAvatarUrl())
-                .interviewStreak(user.getInterviewStreak() != null ? user.getInterviewStreak() : 1)
+                .interviewStreak(user.getInterviewStreak() != null ? user.getInterviewStreak() : 0)
+                .requiresLogin(false)
+                .message("Login successful")
                 .build();
     }
 }

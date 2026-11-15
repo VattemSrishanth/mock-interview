@@ -22,4 +22,6 @@ public class AuthResponse {
     private String careerGoal;
     private String avatarUrl;
     private Integer interviewStreak;
+    private Boolean requiresLogin;
+    private String message;
 }

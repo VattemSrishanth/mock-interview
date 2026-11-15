@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bot, Mail, Lock, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Bot, Mail, Lock, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => location.state?.registeredEmail || '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState(() => location.state?.message || '');
   const [loading, setLoading] = useState(false);
 
   const from = location.state?.from?.pathname || '/dashboard';
@@ -56,6 +57,13 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <div className="p-6 sm:p-8 rounded-2xl bg-[#0d1322] border border-white/10 shadow-2xl">
+          {successMessage && (
+            <div className="mb-5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2 text-xs text-emerald-400">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
           {error && (
             <div className="mb-5 p-3 rounded-xl bg-red-500/10 border border-red-500/25 flex items-center gap-2 text-xs text-red-400">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -74,7 +82,10 @@ export default function LoginPage() {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (successMessage) setSuccessMessage('');
+                  }}
                   placeholder="name@example.com"
                   className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition"
                 />

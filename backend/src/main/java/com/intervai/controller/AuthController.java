@@ -3,7 +3,10 @@ package com.intervai.controller;
 import com.intervai.dto.AuthRequest;
 import com.intervai.dto.AuthResponse;
 import com.intervai.dto.RegisterRequest;
+import com.intervai.dto.SendVerificationCodeRequest;
+import com.intervai.dto.SendVerificationCodeResponse;
 import com.intervai.service.AuthService;
+import com.intervai.service.EmailVerificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +22,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
+
+    @PostMapping("/send-verification-code")
+    public ResponseEntity<SendVerificationCodeResponse> sendVerificationCode(
+            @Valid @RequestBody SendVerificationCodeRequest request) {
+        SendVerificationCodeResponse response = emailVerificationService.sendVerificationCode(request.getEmail());
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {

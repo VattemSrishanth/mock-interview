@@ -1,11 +1,14 @@
 package com.intervai.service;
 
 import com.intervai.dto.AnalyticsDto;
+import com.intervai.dto.AuthRequest;
 import com.intervai.dto.AuthResponse;
 import com.intervai.dto.InterviewDto;
 import com.intervai.dto.RegisterRequest;
+import com.intervai.dto.SendVerificationCodeResponse;
 import com.intervai.entity.Interview;
 import com.intervai.entity.User;
+import com.intervai.exception.BadRequestException;
 import com.intervai.exception.UnauthorizedException;
 import com.intervai.repository.InterviewRepository;
 import com.intervai.repository.UserRepository;
@@ -40,6 +43,9 @@ class CandidateDataIsolationIntegrationTest {
     private AuthService authService;
 
     @Autowired
+    private EmailVerificationService emailVerificationService;
+
+    @Autowired
     private InterviewService interviewService;
 
     @Autowired
@@ -59,8 +65,47 @@ class CandidateDataIsolationIntegrationTest {
     }
 
     @Test
-    void newCandidateStartsAtPureZeroState() {
+    void emailVerificationRequiresValidCodeAndPreventsDuplicates() {
+        String email = "verify-" + UUID.randomUUID() + "@example.com";
+        SendVerificationCodeResponse codeResponse = emailVerificationService.sendVerificationCode(email);
+        assertTrue(codeResponse.isSuccess());
+        assertNotNull(codeResponse.getDevCode());
+
+        // Attempting registration with wrong code must fail
+        RegisterRequest invalidReq = RegisterRequest.builder()
+                .name("Test Candidate")
+                .email(email)
+                .password("Password123!")
+                .verificationCode("000000")
+                .skills(List.of("React"))
+                .build();
+
+        assertThrows(BadRequestException.class, () -> authService.register(invalidReq),
+                "Registration with incorrect verification code must be rejected");
+
+        // Attempting to request code for existing email must be rejected
+        RegisterRequest validReq = RegisterRequest.builder()
+                .name("Valid Candidate")
+                .email(email)
+                .password("Password123!")
+                .verificationCode(codeResponse.getDevCode())
+                .skills(List.of("React"))
+                .build();
+
+        AuthResponse registered = authService.register(validReq);
+        assertTrue(registered.getRequiresLogin());
+        assertNull(registered.getToken(), "Session token must not be granted upon registration");
+
+        // Duplicate code request must throw BadRequestException
+        assertThrows(BadRequestException.class, () -> emailVerificationService.sendVerificationCode(email),
+                "Requesting verification code for registered email must be rejected");
+    }
+
+    @Test
+    void newCandidateStartsAtPureZeroStateAndRequiresExplicitLogin() {
         String email = "candidate-" + UUID.randomUUID() + "@example.com";
+        SendVerificationCodeResponse codeResp = emailVerificationService.sendVerificationCode(email);
+
         RegisterRequest registerReq = RegisterRequest.builder()
                 .name("Authentic Candidate")
                 .email(email)
@@ -69,11 +114,17 @@ class CandidateDataIsolationIntegrationTest {
                 .experience("1-3 years")
                 .careerGoal("Target Senior Engineer role")
                 .skills(List.of("Java", "Spring Boot", "SQL"))
+                .verificationCode(codeResp.getDevCode())
                 .build();
 
         AuthResponse auth = authService.register(registerReq);
-        assertNotNull(auth.getToken());
+        assertTrue(auth.getRequiresLogin(), "Registration must require subsequent login for security");
+        assertNull(auth.getToken(), "Registration must not grant an automatic JWT session");
         assertEquals(0, auth.getInterviewStreak(), "New candidate interview streak must start at 0");
+
+        // Authenticate explicitly
+        AuthResponse loginAuth = authService.login(new AuthRequest(email, "SecurePass123!"));
+        assertNotNull(loginAuth.getToken(), "Explicit login must grant valid JWT token");
 
         List<InterviewDto> sessions = interviewService.getUserInterviews(auth.getId());
         assertTrue(sessions.isEmpty(), "New candidate must have exactly 0 interview sessions");
@@ -89,6 +140,7 @@ class CandidateDataIsolationIntegrationTest {
     void strictlyIsolatesInterviewsAndAnalyticsBetweenDistinctCandidates() {
         // Candidate 1
         String emailA = "candidate-a-" + UUID.randomUUID() + "@example.com";
+        SendVerificationCodeResponse codeA = emailVerificationService.sendVerificationCode(emailA);
         AuthResponse candidateA = authService.register(RegisterRequest.builder()
                 .name("Candidate Alpha")
                 .email(emailA)
@@ -97,10 +149,12 @@ class CandidateDataIsolationIntegrationTest {
                 .experience("Fresher")
                 .careerGoal("Frontend Specialist")
                 .skills(List.of("React", "TypeScript"))
+                .verificationCode(codeA.getDevCode())
                 .build());
 
         // Candidate 2
         String emailB = "candidate-b-" + UUID.randomUUID() + "@example.com";
+        SendVerificationCodeResponse codeB = emailVerificationService.sendVerificationCode(emailB);
         AuthResponse candidateB = authService.register(RegisterRequest.builder()
                 .name("Candidate Beta")
                 .email(emailB)
@@ -109,6 +163,7 @@ class CandidateDataIsolationIntegrationTest {
                 .experience("3-5 years")
                 .careerGoal("Staff Architect")
                 .skills(List.of("Java", "Distributed Systems"))
+                .verificationCode(codeB.getDevCode())
                 .build());
 
         User userA = userRepository.findById(candidateA.getId()).orElseThrow();

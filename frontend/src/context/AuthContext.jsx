@@ -27,12 +27,14 @@ export const AuthProvider = ({ children }) => {
 
   const register = useCallback(async (formData) => {
     const data = await authApi.register(formData);
-    const { token: jwtToken, ...userData } = data;
-    localStorage.setItem('token', jwtToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setToken(jwtToken);
-    setUser(userData);
-    return userData;
+    if (data.token) {
+      const { token: jwtToken, ...userData } = data;
+      localStorage.setItem('token', jwtToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setToken(jwtToken);
+      setUser(userData);
+    }
+    return data;
   }, []);
 
   const logout = useCallback(() => {

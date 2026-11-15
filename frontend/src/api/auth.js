@@ -1,6 +1,10 @@
 import api from './client';
 
 export const authApi = {
+  sendVerificationCode: async (email) => {
+    const response = await api.post('/auth/send-verification-code', { email });
+    return response.data;
+  },
   login: async (credentials) => {
     const response = await api.post('/auth/login', credentials);
     return response.data;
