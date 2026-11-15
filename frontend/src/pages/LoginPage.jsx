@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Bot, Mail, Lock, ArrowRight, Zap, AlertCircle } from 'lucide-react';
+import { Bot, Mail, Lock, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -36,12 +36,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = (demoEmail, demoPassword) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setError('');
-  };
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
@@ -58,38 +52,6 @@ export default function LoginPage() {
           <p className="text-xs sm:text-sm text-slate-400 mt-2">
             Continue your interview preparation and performance tracking
           </p>
-        </div>
-
-        {/* Quick Demo Credentials Card */}
-        <div className="mb-6 p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30">
-          <div className="flex items-center gap-2 text-indigo-300 text-xs font-semibold mb-2">
-            <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
-            <span>One-Click Demo Credentials:</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await handleQuickLogin('srishanth@intervai.com', 'password123');
-                } catch {
-                  await handleQuickLogin('revanth@intervai.com', 'password123');
-                }
-              }}
-              className="px-3 py-2 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 text-xs font-medium text-left transition"
-            >
-              <div className="font-semibold text-white">Student (V Srishanth)</div>
-              <div className="text-[10px] text-indigo-300 opacity-80">Frontend Track</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('admin@intervai.com', 'admin123')}
-              className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 text-xs font-medium text-left transition"
-            >
-              <div className="font-semibold text-white">Platform Admin</div>
-              <div className="text-[10px] text-slate-400">Analytics & Users</div>
-            </button>
-          </div>
         </div>
 
         {/* Login Form */}
@@ -158,6 +120,12 @@ export default function LoginPage() {
               Create an account
             </Link>
           </div>
+        </div>
+
+        {/* Security & Isolation Callout */}
+        <div className="mt-6 flex items-center justify-center gap-2 text-center text-[11px] text-zinc-500">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Isolated candidate database with strict privacy and zero cross-account sharing</span>
         </div>
       </div>
     </div>
