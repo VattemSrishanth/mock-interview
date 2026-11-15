@@ -8,6 +8,7 @@ import {
   Inbox as InboxIcon,
   ShieldCheck,
   Check,
+  CheckCircle2,
   Copy,
   ExternalLink,
   Clock,
