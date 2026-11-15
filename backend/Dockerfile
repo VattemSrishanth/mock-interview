@@ -16,7 +16,13 @@ COPY src ./src
 RUN mvn -B clean verify
 
 # --- Stage 2: Minimal Production JRE Runtime ---
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:21-jdk-jammy
+
+# Install Python 3 and Node.js for Code Sandbox isolated execution
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    nodejs \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Create unprivileged application user

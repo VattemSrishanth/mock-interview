@@ -65,5 +65,111 @@ class CodeExecutionServiceTest {
         assertEquals(1, response.getExitCode());
         assertTrue(response.getStderr().contains("host execution fallback is disabled"));
     }
+
+    @Test
+    void executesPythonLocallyAndCapturesStdout() {
+        CodeExecutionRequest req = CodeExecutionRequest.builder()
+                .language("python")
+                .code("print('Antigravity Python Sandbox OK')")
+                .build();
+
+        CodeExecutionResponse response = service.executeCode(req);
+        assertNotNull(response);
+        assertEquals("python", response.getLanguage());
+        assertEquals("SUCCESS", response.getStatus());
+        assertEquals(0, response.getExitCode());
+        assertTrue(response.getStdout().contains("Antigravity Python Sandbox OK"));
+    }
+
+    @Test
+    void executesJavaScriptLocallyAndCapturesStdout() {
+        CodeExecutionRequest req = CodeExecutionRequest.builder()
+                .language("javascript")
+                .code("console.log('Antigravity JS Sandbox OK');")
+                .build();
+
+        CodeExecutionResponse response = service.executeCode(req);
+        assertNotNull(response);
+        assertEquals("javascript", response.getLanguage());
+        assertEquals("SUCCESS", response.getStatus());
+        assertEquals(0, response.getExitCode());
+        assertTrue(response.getStdout().contains("Antigravity JS Sandbox OK"));
+    }
+
+    @Test
+    void executesTypeScriptLocallyAndCapturesStdout() {
+        CodeExecutionRequest req = CodeExecutionRequest.builder()
+                .language("typescript")
+                .code("const msg: string = 'Antigravity TS Sandbox OK'; console.log(msg);")
+                .build();
+
+        CodeExecutionResponse response = service.executeCode(req);
+        assertNotNull(response);
+        assertEquals("typescript", response.getLanguage());
+        assertEquals("SUCCESS", response.getStatus());
+        assertEquals(0, response.getExitCode());
+        assertTrue(response.getStdout().contains("Antigravity TS Sandbox OK"));
+    }
+
+    @Test
+    void executesJavaLocallyAndCapturesStdout() {
+        String javaCode = """
+                public class Solution {
+                    public static void main(String[] args) {
+                        System.out.println("Antigravity Java Sandbox OK");
+                    }
+                }
+                """;
+
+        CodeExecutionRequest req = CodeExecutionRequest.builder()
+                .language("java")
+                .code(javaCode)
+                .build();
+
+        CodeExecutionResponse response = service.executeCode(req);
+        assertNotNull(response);
+        assertEquals("java", response.getLanguage());
+        assertEquals("SUCCESS", response.getStatus());
+        assertEquals(0, response.getExitCode());
+        assertTrue(response.getStdout().contains("Antigravity Java Sandbox OK"));
+    }
+
+    @Test
+    void reportsJavaCompilationErrorWithDiagnostic() {
+        String brokenJava = """
+                public class Solution {
+                    public static void main(String[] args) {
+                        brokenSyntaxDoesNotExist();
+                    }
+                }
+                """;
+
+        CodeExecutionRequest req = CodeExecutionRequest.builder()
+                .language("java")
+                .code(brokenJava)
+                .build();
+
+        CodeExecutionResponse response = service.executeCode(req);
+        assertNotNull(response);
+        assertEquals("java", response.getLanguage());
+        assertEquals("COMPILE_ERROR", response.getStatus());
+        assertNotEquals(0, response.getExitCode());
+        assertTrue(response.getStderr().contains("cannot find symbol"));
+    }
+
+    @Test
+    void passesStdinToProcess() {
+        CodeExecutionRequest req = CodeExecutionRequest.builder()
+                .language("python")
+                .code("import sys; line = sys.stdin.readline().strip(); print(f'ECHO: {line}')")
+                .stdin("Hello IntervAI")
+                .build();
+
+        CodeExecutionResponse response = service.executeCode(req);
+        assertNotNull(response);
+        assertEquals("SUCCESS", response.getStatus());
+        assertEquals(0, response.getExitCode());
+        assertTrue(response.getStdout().contains("ECHO: Hello IntervAI"));
+    }
 }
 

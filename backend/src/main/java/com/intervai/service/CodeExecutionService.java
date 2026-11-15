@@ -14,7 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -23,6 +29,7 @@ public class CodeExecutionService {
     private static final String PISTON_API_URL = "https://emkc.org/api/v2/piston/execute";
     private static final Map<String, String> LANGUAGE_MAP = Map.ofEntries(
             Map.entry("python", "python"),
+            Map.entry("py", "python"),
             Map.entry("javascript", "javascript"),
             Map.entry("js", "javascript"),
             Map.entry("typescript", "typescript"),
@@ -37,28 +44,32 @@ public class CodeExecutionService {
 
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
+    private final boolean localFallbackEnabled;
 
-    @Value("${app.code-execution.local-fallback-enabled:false}")
-    private boolean localFallbackEnabled;
+    private static String RESOLVED_PYTHON_CMD = null;
+
+    public CodeExecutionService(ObjectMapper objectMapper) {
+        this(objectMapper, createDefaultRestTemplate(), true);
+    }
 
     @Autowired
-    public CodeExecutionService(ObjectMapper objectMapper) {
-        this(objectMapper, false);
+    public CodeExecutionService(
+            ObjectMapper objectMapper,
+            @Value("${app.code-execution.local-fallback-enabled:true}") boolean localFallbackEnabled) {
+        this(objectMapper, createDefaultRestTemplate(), localFallbackEnabled);
     }
 
-    CodeExecutionService(ObjectMapper objectMapper, boolean localFallbackEnabled) {
-        this.objectMapper = objectMapper;
-        this.localFallbackEnabled = localFallbackEnabled;
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(8000);  // 8s connect timeout
-        factory.setReadTimeout(15000);    // 15s execution timeout
-        this.restTemplate = new RestTemplate(factory);
-    }
-
-    CodeExecutionService(ObjectMapper objectMapper, RestTemplate restTemplate, boolean localFallbackEnabled) {
+    public CodeExecutionService(ObjectMapper objectMapper, RestTemplate restTemplate, boolean localFallbackEnabled) {
         this.objectMapper = objectMapper;
         this.restTemplate = restTemplate;
         this.localFallbackEnabled = localFallbackEnabled;
+    }
+
+    private static RestTemplate createDefaultRestTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(4000);  // 4s connect timeout
+        factory.setReadTimeout(8000);     // 8s execution timeout
+        return new RestTemplate(factory);
     }
 
     public CodeExecutionResponse executeCode(CodeExecutionRequest request) {
@@ -68,9 +79,17 @@ public class CodeExecutionService {
 
         String rawLang = request.getLanguage().toLowerCase(Locale.ROOT).trim();
         String normalizedLanguage = LANGUAGE_MAP.getOrDefault(rawLang, rawLang);
-
         long startTime = System.currentTimeMillis();
 
+        // 1. Direct local execution for natively supported languages (sub-100ms response time)
+        if (localFallbackEnabled && isLocallySupported(normalizedLanguage)) {
+            CodeExecutionResponse localRes = executeLocally(normalizedLanguage, request.getCode(), request.getStdin());
+            if (localRes != null) {
+                return localRes;
+            }
+        }
+
+        // 2. If remote sandbox is available, attempt remote Piston execution
         try {
             Map<String, Object> payload = new HashMap<>();
             payload.put("language", normalizedLanguage);
@@ -92,9 +111,8 @@ public class CodeExecutionService {
 
         } catch (Exception e) {
             long elapsed = System.currentTimeMillis() - startTime;
-            log.warn("Remote Piston execution unavailable or whitelisted ({}). Local fallback enabled={}.", e.getMessage(), localFallbackEnabled);
+            log.warn("Remote code sandbox unavailable ({}). Attempting local runtime fallback.", e.getMessage());
 
-            // Only execute on host runtime when explicitly opted in (disabled by default in production)
             if (localFallbackEnabled) {
                 CodeExecutionResponse localRes = executeLocally(normalizedLanguage, request.getCode(), request.getStdin());
                 if (localRes != null) {
@@ -102,9 +120,16 @@ public class CodeExecutionService {
                 }
             }
 
-            String message = localFallbackEnabled
-                    ? "Execution engine unavailable: " + e.getMessage() + "\nPlease review your code syntax or retry in a moment."
-                    : "Remote code execution sandbox is currently unavailable and host execution fallback is disabled.";
+            String message;
+            if (!localFallbackEnabled) {
+                message = "Remote code execution sandbox is currently unavailable and host execution fallback is disabled.";
+            } else if ("c++".equals(normalizedLanguage) || "cpp".equals(normalizedLanguage)) {
+                message = "C++ compiler (g++) is not configured in this sandbox environment.\nSupported compilers: Python 3.12, JavaScript (Node.js), TypeScript, and Java 21.";
+            } else if ("go".equals(normalizedLanguage)) {
+                message = "Go compiler is not configured in this sandbox environment.\nSupported compilers: Python 3.12, JavaScript (Node.js), TypeScript, and Java 21.";
+            } else {
+                message = "Code execution engine error: " + e.getMessage() + "\nPlease review your code syntax or retry in a moment.";
+            }
 
             return CodeExecutionResponse.builder()
                     .language(normalizedLanguage)
@@ -119,96 +144,117 @@ public class CodeExecutionService {
         }
     }
 
+    private boolean isLocallySupported(String language) {
+        return "python".equals(language) || "javascript".equals(language)
+                || "typescript".equals(language) || "java".equals(language);
+    }
+
     private CodeExecutionResponse executeLocally(String language, String code, String stdin) {
         long start = System.currentTimeMillis();
-        java.nio.file.Path tempDir = null;
+        Path tempDir = null;
+
         try {
-            tempDir = java.nio.file.Files.createTempDirectory("intervai_sandbox_");
+            tempDir = Files.createTempDirectory("intervai_sandbox_");
             String fileName;
             List<String> command;
+            String versionLabel;
 
             switch (language.toLowerCase(Locale.ROOT)) {
                 case "python":
                     fileName = "solution.py";
-                    command = List.of("python", fileName);
+                    String pyCmd = resolvePythonCommand();
+                    command = List.of(pyCmd, "-u", fileName);
+                    versionLabel = "Python (Local Engine)";
                     break;
+
                 case "javascript":
-                case "typescript":
                     fileName = "solution.js";
                     command = List.of("node", fileName);
+                    versionLabel = "JavaScript (Node.js Local)";
                     break;
+
+                case "typescript":
+                    fileName = "solution.ts";
+                    command = List.of("node", "--experimental-strip-types", fileName);
+                    versionLabel = "TypeScript (Node.js Local)";
+                    break;
+
                 case "java":
-                    fileName = "Main.java";
-                    // For Java, we compile first then run
-                    java.nio.file.Path javaFile = tempDir.resolve(fileName);
-                    java.nio.file.Files.writeString(javaFile, code);
-                    
+                    String className = extractJavaClassName(code);
+                    fileName = className + ".java";
+                    Path javaFile = tempDir.resolve(fileName);
+                    Files.writeString(javaFile, code, StandardCharsets.UTF_8);
+
                     ProcessBuilder compilePb = new ProcessBuilder("javac", fileName);
                     compilePb.directory(tempDir.toFile());
                     Process compileProc = compilePb.start();
-                    boolean compDone = compileProc.waitFor(8, java.util.concurrent.TimeUnit.SECONDS);
+                    boolean compDone = compileProc.waitFor(8, TimeUnit.SECONDS);
+
                     if (!compDone || compileProc.exitValue() != 0) {
-                        String compErr = new String(compileProc.getErrorStream().readAllBytes());
+                        String compErr = new String(compileProc.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
                         return CodeExecutionResponse.builder()
                                 .language("java")
-                                .version("Java 21 Local")
+                                .version("Java 21 (OpenJDK)")
                                 .stdout("")
                                 .stderr(compErr)
                                 .output(compErr)
-                                .exitCode(compileProc.exitValue())
+                                .exitCode(compileProc.exitValue() != 0 ? compileProc.exitValue() : 1)
                                 .executionTimeMs(System.currentTimeMillis() - start)
                                 .status("COMPILE_ERROR")
                                 .build();
                     }
-                    command = List.of("java", "Main");
+
+                    command = List.of("java", className);
+                    versionLabel = "Java 21 (OpenJDK)";
                     break;
+
                 default:
-                    return null; // Not supported locally without compiler installed
+                    return null;
             }
 
             if (!"java".equals(language)) {
-                java.nio.file.Path sourceFile = tempDir.resolve(fileName);
-                java.nio.file.Files.writeString(sourceFile, code);
+                Path sourceFile = tempDir.resolve(fileName);
+                Files.writeString(sourceFile, code, StandardCharsets.UTF_8);
             }
 
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.directory(tempDir.toFile());
             Process process = pb.start();
 
-            // Pipe stdin if provided
+            // Feed stdin if provided
             if (StringUtils.hasText(stdin)) {
                 try (var os = process.getOutputStream()) {
-                    os.write(stdin.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    os.write(stdin.getBytes(StandardCharsets.UTF_8));
                     os.flush();
                 }
             } else {
                 process.getOutputStream().close();
             }
 
-            boolean finished = process.waitFor(8, java.util.concurrent.TimeUnit.SECONDS);
+            boolean finished = process.waitFor(8, TimeUnit.SECONDS);
             if (!finished) {
                 process.destroyForcibly();
                 return CodeExecutionResponse.builder()
                         .language(language)
-                        .version("Local Runtime")
+                        .version(versionLabel)
                         .stdout("")
                         .stderr("Execution timed out after 8000ms")
-                        .output("Timed Out")
+                        .output("Timed Out (8s limit exceeded)")
                         .exitCode(124)
                         .executionTimeMs(System.currentTimeMillis() - start)
                         .status("TIMEOUT")
                         .build();
             }
 
-            String stdout = new String(process.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            String stderr = new String(process.getErrorStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
             int exitCode = process.exitValue();
             String output = StringUtils.hasText(stderr) ? (StringUtils.hasText(stdout) ? stdout + "\n" + stderr : stderr) : stdout;
             String status = exitCode == 0 ? "SUCCESS" : "RUNTIME_ERROR";
 
             return CodeExecutionResponse.builder()
                     .language(language)
-                    .version("Local Engine")
+                    .version(versionLabel)
                     .stdout(stdout)
                     .stderr(stderr)
                     .output(output)
@@ -218,7 +264,7 @@ public class CodeExecutionService {
                     .build();
 
         } catch (Exception ex) {
-            log.error("Local sandbox execution failed", ex);
+            log.error("Local sandbox execution failed: {}", ex.getMessage(), ex);
             return null;
         } finally {
             if (tempDir != null) {
@@ -227,6 +273,43 @@ public class CodeExecutionService {
                 } catch (Exception ignored) {}
             }
         }
+    }
+
+    private String extractJavaClassName(String code) {
+        if (code == null || code.isBlank()) return "Main";
+        Matcher publicMatcher = Pattern.compile("public\\s+class\\s+([A-Za-z0-9_]+)").matcher(code);
+        if (publicMatcher.find()) {
+            return publicMatcher.group(1);
+        }
+        Matcher classMatcher = Pattern.compile("class\\s+([A-Za-z0-9_]+)").matcher(code);
+        if (classMatcher.find()) {
+            return classMatcher.group(1);
+        }
+        return "Main";
+    }
+
+    private static synchronized String resolvePythonCommand() {
+        if (RESOLVED_PYTHON_CMD != null) {
+            return RESOLVED_PYTHON_CMD;
+        }
+        try {
+            Process p = new ProcessBuilder("python", "--version").start();
+            if (p.waitFor(2, TimeUnit.SECONDS) && p.exitValue() == 0) {
+                RESOLVED_PYTHON_CMD = "python";
+                return RESOLVED_PYTHON_CMD;
+            }
+        } catch (Exception ignored) {}
+
+        try {
+            Process p = new ProcessBuilder("python3", "--version").start();
+            if (p.waitFor(2, TimeUnit.SECONDS) && p.exitValue() == 0) {
+                RESOLVED_PYTHON_CMD = "python3";
+                return RESOLVED_PYTHON_CMD;
+            }
+        } catch (Exception ignored) {}
+
+        RESOLVED_PYTHON_CMD = "python";
+        return RESOLVED_PYTHON_CMD;
     }
 
     private CodeExecutionResponse parsePistonResponse(String responseBody, String language, long elapsed) {
