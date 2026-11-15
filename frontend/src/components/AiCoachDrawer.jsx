@@ -60,7 +60,7 @@ export default function AiCoachDrawer({ isOpen, onClose }) {
           id: Date.now() + 1,
           sender: 'coach',
           text: response.reply,
-          suggestedActions: response.suggestedActions
+          suggestedActions: response.suggestions || response.suggestedActions || []
         }
       ]);
     } catch (err) {

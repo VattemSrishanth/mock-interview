@@ -183,7 +183,7 @@ public class AiService {
             }
         }
 
-        return fallbackCoachResponse(message);
+        return fallbackCoachResponse(message, userProfileContext);
     }
 
     // ==========================================
@@ -798,48 +798,198 @@ public class AiService {
         return "An exemplary response defines the primary concept clearly, illustrates a concrete real-world implementation example, discusses architectural trade-offs (such as memory vs latency or complexity vs maintainability), and highlights how telemetry, error boundaries, and edge cases are handled in production.";
     }
 
-    private AiCoachResponse fallbackCoachResponse(String message) {
-        String msgLower = message.toLowerCase();
+    private AiCoachResponse fallbackCoachResponse(String message, String userProfileContext) {
+        String msgLower = message != null ? message.toLowerCase(Locale.ROOT) : "";
         String reply;
         List<String> suggestions = new ArrayList<>();
         List<String> topics = new ArrayList<>();
         List<String> questions = new ArrayList<>();
 
-        if (msgLower.contains("java") || msgLower.contains("spring")) {
-            reply = "To excel in Java and Spring Boot interviews, interviewers heavily test internal JVM memory structures, multithreading synchronization, and Spring proxy mechanics (@Transactional, Bean lifecycles). Focus on explaining 'why' things work underneath rather than just reciting syntax.";
-            suggestions.add("Deep dive into ConcurrentHashMap, Volatile, and Java Memory Model.");
-            suggestions.add("Understand Spring Bean lifecycle and proxy creation under AOP.");
-            topics.addAll(List.of("JVM Garbage Collection", "Spring Security Filter Chain", "Microservices Resiliency"));
+        // Intent 1: "Tell me about yourself" / Introductions / Elevator Pitch
+        if (msgLower.contains("tell me about yourself") || msgLower.contains("introduce") 
+                || msgLower.contains("elevator pitch") || msgLower.contains("walk me through your resume")
+                || msgLower.contains("who are you") || msgLower.contains("about myself")) {
+            reply = "To answer 'Tell me about yourself' effectively, master the Present-Past-Future framework:\n\n"
+                    + "1. Present (30s): State your current engineering focus, primary tech stack, and your most impactful recent project or technical responsibility.\n"
+                    + "2. Past (45s): Highlight 1-2 pivotal past experiences—key achievements where you solved complex scalability, performance, or architectural challenges.\n"
+                    + "3. Future (15s): Connect your passions directly to this specific company and role, explaining why this team's technical mission excites you.\n\n"
+                    + "💡 Pro Tip: Aim for 90 to 120 seconds total. Never just read your resume chronologically—tell a structured story of engineering growth and business impact.";
+            suggestions.add("Draft a 90-second script focusing on your top 2 engineering achievements.");
+            suggestions.add("Anchor your pitch with measurable impact (e.g. 'reduced latency by 35%').");
+            suggestions.add("Conclude by stating why this specific team and challenge matches your career trajectory.");
+            topics.addAll(List.of("Elevator Pitch Structuring", "Present-Past-Future Model", "Executive Presence"));
             questions.addAll(List.of(
-                    "How does Java 21 Virtual Threads change high-concurrency backend design?",
-                    "What happens under the hood when @Transactional is declared on a private method?"
+                    "Walk me through a project you architected from inception to deployment.",
+                    "What motivated your transition into this particular engineering domain?"
             ));
-        } else if (msgLower.contains("react") || msgLower.contains("frontend")) {
-            reply = "In frontend developer interviews, senior evaluators look for deep mastery of the browser event loop, rendering reconciliation cycles, state management boundaries, and Core Web Vitals optimization.";
-            suggestions.add("Practice explaining Fiber architecture and reconciliation step-by-step.");
-            suggestions.add("Prepare an example where you solved an expensive re-render with profiling.");
-            topics.addAll(List.of("React 18 Concurrent Features", "Core Web Vitals (LCP, INP, CLS)", "Web Security (XSS, CSRF, CSP)"));
+
+        // Intent 2: Behavioral / STAR Framework / Conflict / Leadership / Mistakes
+        } else if (msgLower.contains("star") || msgLower.contains("behavioral") || msgLower.contains("conflict")
+                || msgLower.contains("disagree") || msgLower.contains("leadership") || msgLower.contains("mistake")
+                || msgLower.contains("failure") || msgLower.contains("deadline") || msgLower.contains("pressure")
+                || msgLower.contains("situation")) {
+            reply = "Behavioral and conflict questions evaluate your technical maturity, emotional intelligence, and communication rigor. Use the calibrated STAR method:\n\n"
+                    + "• Situation (15%): Briefly set the scene—team size, deadline, and the core constraint in 2 concise sentences.\n"
+                    + "• Task (15%): Clearly state what YOUR specific responsibility or challenge was—not just what the team did.\n"
+                    + "• Action (50%): This is the heart of your answer. Walk through your individual technical decisions, how you evaluated trade-offs, facilitated technical alignment, and led through code or consensus.\n"
+                    + "• Result (20%): Quantify the outcome with concrete data (e.g., 'zero-downtime deployment', 'delivered 3 days early', 'saved 40h/month in developer toil'), followed by your key engineering takeaway.\n\n"
+                    + "💡 Pro Tip: For technical disagreements, show that you relied on objective benchmarks, prototypes, or data rather than personal opinions.";
+            suggestions.add("Allocate 50% of your response time to the Action phase—use 'I decided', not just 'We'.");
+            suggestions.add("Always quantify Results with concrete metrics (latency, reliability, cost, adoption).");
+            suggestions.add("Prepare 4 anchor stories: a technical disagreement, a production outage, an ambiguous spec, and a tight deadline.");
+            topics.addAll(List.of("STAR Framework Mastery", "Conflict Resolution with Data", "Blameless Post-Mortems"));
             questions.addAll(List.of(
-                    "How does useTransition differ from standard setState batching?",
-                    "Explain how you would architect an offline-first mobile web experience."
+                    "Tell me about a time you had a technical disagreement with a senior engineer or team lead.",
+                    "Describe a production incident or bug you caused, and how you resolved and prevented it."
             ));
-        } else if (msgLower.contains("communication") || msgLower.contains("score")) {
-            reply = "Communication scores improve dramatically when you replace unstructured stream-of-consciousness explanations with the 3-Step Anchor method: 1) High-level Definition, 2) Technical Nuance / Trade-off, and 3) A quick 20-second production example.";
-            suggestions.add("Pause for 2-3 seconds before answering to outline 3 distinct bullet points in your mind.");
-            suggestions.add("Use clear transition phrases: 'First... Second... Finally...'");
-            topics.addAll(List.of("STAR Framework", "Whiteboard Architecture Communication", "Executive Summary Framing"));
+
+        // Intent 3: System Design / Architecture / Scalability / Bottlenecks / Caching
+        } else if (msgLower.contains("system design") || msgLower.contains("bottleneck") || msgLower.contains("scalab")
+                || msgLower.contains("caching") || msgLower.contains("kafka") || msgLower.contains("redis")
+                || msgLower.contains("microservice") || msgLower.contains("sharding") || msgLower.contains("partition")
+                || msgLower.contains("load balancer") || msgLower.contains("cap theorem") || msgLower.contains("latency")) {
+            reply = "System design interviews test how you reason through scale, trade-offs, and failure domains. Follow this 5-stage blueprint:\n\n"
+                    + "1. Scope & Scale (5m): Clarify functional requirements and estimate write/read QPS, bandwidth, and 5-year storage.\n"
+                    + "2. API & Data Model (5m): Define clear REST/gRPC endpoints and schema (SQL for ACID transactions vs NoSQL for flexible scale).\n"
+                    + "3. High-Level Design (10m): Draw the core data flow—Clients → CDN → Load Balancer → API Gateways → Services → DB.\n"
+                    + "4. Deep-Dive & Bottlenecks (15m):\n"
+                    + "   • Database bottlenecks: Mitigate with read replicas, composite B-tree indexing, and horizontal sharding by tenant/hash.\n"
+                    + "   • Hotspots & Cache: Implement Redis cache-aside with TTLs and distributed locks to prevent thundering herd spikes.\n"
+                    + "   • Async Decoupling: Use Kafka partitions for heavy writes, backpressure handling, and event-driven consumers.\n"
+                    + "5. Reliability & Failover (10m): Circuit breakers (Resilience4j), rate limiters (token bucket), and multi-region read replicas.";
+            suggestions.add("Always calculate read/write QPS and storage requirements in the first 5 minutes.");
+            suggestions.add("State your architectural trade-offs explicitly (e.g., eventual consistency vs latency under CAP).");
+            suggestions.add("Identify single points of failure (SPOFs) and explain how you eliminate them.");
+            topics.addAll(List.of("Distributed Caching Strategies", "Database Sharding & Replication", "Asynchronous Messaging with Kafka"));
             questions.addAll(List.of(
-                    "Tell me about a time you had a technical disagreement with a teammate.",
-                    "Explain a complex technical topic to a non-technical stakeholder."
+                    "How would you design a distributed URL shortener (like Bitly) handling 100M writes per day?",
+                    "How do you prevent cache penetration, cache breakdown, and cache avalanche in high-traffic APIs?"
             ));
+
+        // Intent 4: Coding / Algorithms / Data Structures / Problem Solving
+        } else if (msgLower.contains("coding") || msgLower.contains("algorithm") || msgLower.contains("data structure")
+                || msgLower.contains("leetcode") || msgLower.contains("dsa") || msgLower.contains("dynamic programming")
+                || msgLower.contains("time complexity") || msgLower.contains("space complexity") || msgLower.contains("big o")) {
+            reply = "In technical coding rounds, interviewers evaluate your problem-solving methodology far more than silent perfection. Execute this 5-step strategy:\n\n"
+                    + "1. Clarify Constraints (2m): Ask about data volume, ranges, duplicates, negatives, nulls, and expected time/space bounds.\n"
+                    + "2. Verbalize Brute Force (2m): State the obvious O(n²) or O(2ⁿ) approach out loud first. This establishes a functional baseline.\n"
+                    + "3. Optimize with Patterns (5m): Ask yourself:\n"
+                    + "   • Can I trade O(n) space for O(1) time using a Hash Map or Set?\n"
+                    + "   • Is the array sorted? Think Two Pointers or Binary Search (O(log n)).\n"
+                    + "   • Subarray / contiguous elements? Think Sliding Window.\n"
+                    + "   • Tree/Graph? Consider BFS (shortest path) vs DFS (exhaustive traversal).\n"
+                    + "4. Write Clean, Modular Code (15m): Use descriptive variable names, break complex logic into helper functions, and write production-grade code.\n"
+                    + "5. Dry-Run Systematically (5m): Trace through a small sample input and edge cases (empty array, single element, duplicates) line by line.";
+            suggestions.add("Think out loud continuously—explain why you chose a specific data structure.");
+            suggestions.add("Proactively state the Time Complexity and Space Complexity as soon as you finish coding.");
+            suggestions.add("Always dry-run your solution with boundary cases before declaring 'I'm done'.");
+            topics.addAll(List.of("Sliding Window & Two Pointers", "Graph Traversal (BFS / DFS)", "Time & Space Complexity Analysis"));
+            questions.addAll(List.of(
+                    "Given an array of integers, find the maximum sum of any contiguous subarray of size K in O(n) time.",
+                    "Design an LRU Cache supporting O(1) get and put operations using HashMap and Doubly LinkedList."
+            ));
+
+        // Intent 5: Java & Spring Boot Backend
+        } else if (msgLower.contains("java") || msgLower.contains("spring") || msgLower.contains("jvm")
+                || msgLower.contains("hibernate") || msgLower.contains("jpa") || msgLower.contains("multithread")) {
+            reply = "Java & Spring Boot technical rounds heavily test internal mechanics, thread safety, and production resilience:\n\n"
+                    + "• Core Java & Concurrency: Understand internal hash bucket collisions in ConcurrentHashMap (CAS + synchronized bin locks), volatile visibility vs atomic operations, and how Java 21 Virtual Threads eliminate carrier thread blocking for I/O-heavy workloads.\n"
+                    + "• Spring Internals: Spring Bean lifecycle (BeanPostProcessors, @PostConstruct), CGLIB vs JDK Dynamic Proxies, and why private methods annotated with @Transactional bypass proxy interception.\n"
+                    + "• Data Layer: Hibernate N+1 query problem mitigation (JOIN FETCH, EntityGraphs), transaction isolation levels (Read Committed vs Repeatable Read), and connection pool sizing via HikariCP.";
+            suggestions.add("Prepare to explain how ConcurrentHashMap achieves lock striping and segment locking.");
+            suggestions.add("Understand @Transactional rollback rules: unchecked (RuntimeException) rollbacks by default; checked exceptions require rollbackFor.");
+            suggestions.add("Explain Java 21 Virtual Threads and how they differ from OS platform threads.");
+            topics.addAll(List.of("JVM Garbage Collection (G1 / ZGC)", "Spring Security Architecture", "High-Concurrency Thread Safety"));
+            questions.addAll(List.of(
+                    "How do Java 21 Virtual Threads change high-concurrency Spring Boot microservices?",
+                    "What happens under the hood when a transaction rollbacks across multiple service boundaries?"
+            ));
+
+        // Intent 6: Frontend & React Architecture
+        } else if (msgLower.contains("react") || msgLower.contains("frontend") || msgLower.contains("javascript")
+                || msgLower.contains("typescript") || msgLower.contains("css") || msgLower.contains("dom")
+                || msgLower.contains("rendering") || msgLower.contains("vitals")) {
+            reply = "Modern frontend developer interviews focus on architectural patterns, browser performance, and reactivity:\n\n"
+                    + "• Rendering Lifecycle: Explain the browser Critical Rendering Path (DOM → CSSOM → Render Tree → Layout → Paint → Composite) and how React's Fiber reconciliation minimizes layout reflows.\n"
+                    + "• React 18 Concurrent Features: Understand automatic batching, useTransition for non-blocking UI updates, and useDeferredValue for responsive search/filtering.\n"
+                    + "• Web Performance & Core Web Vitals: Largest Contentful Paint (LCP < 2.5s via image preloading and SSR), Interaction to Next Paint (INP < 200ms via web workers/debouncing), and Cumulative Layout Shift (CLS < 0.1 via explicit aspect ratios).\n"
+                    + "• Security: Defending against XSS (sanitizing HTML, Content Security Policy), CSRF (SameSite cookies), and securing client auth state.";
+            suggestions.add("Master explaining the React Fiber architecture and how the reconciliation work loop yields to the browser.");
+            suggestions.add("Know how to diagnose expensive component re-renders using React Profiler.");
+            suggestions.add("Be ready to code a production-ready custom hook like useDebounce or useLocalStorage from scratch.");
+            topics.addAll(List.of("React 18 Concurrent Rendering", "Core Web Vitals Optimization", "Frontend State Management Architecture"));
+            questions.addAll(List.of(
+                    "How does useTransition differ from standard setState batching in React 18?",
+                    "How would you optimize an infinite scroll list with 50,000 items without causing frame drops?"
+            ));
+
+        // Intent 7: DevOps / Cloud / CI-CD / Docker / Kubernetes
+        } else if (msgLower.contains("devops") || msgLower.contains("docker") || msgLower.contains("kubernetes")
+                || msgLower.contains("k8s") || msgLower.contains("ci/cd") || msgLower.contains("terraform")
+                || msgLower.contains("aws") || msgLower.contains("gcp") || msgLower.contains("deploy")) {
+            reply = "Senior DevOps and Platform Engineering rounds evaluate infrastructure reliability, automation, and operational observability:\n\n"
+                    + "• Containerization: Multi-stage Docker builds for minimal attack surfaces, unprivileged non-root users, and image layer caching.\n"
+                    + "• Kubernetes Orchestration: Pod lifecycle, ReplicaSets, Horizontal Pod Autoscalers (HPA), Ingress controllers, and rolling update strategies with readiness and liveness probes.\n"
+                    + "• CI/CD & Deployments: Zero-downtime deployment patterns (Blue-Green and Canary with progressive traffic shifting), automated integration testing, and GitOps workflows via ArgoCD.\n"
+                    + "• Observability: The Three Pillars—Prometheus metrics (Golden Signals: Latency, Traffic, Errors, Saturation), centralized logging (Loki/ELK), and distributed tracing (OpenTelemetry).";
+            suggestions.add("Emphasize zero-downtime deployment mechanisms with rolling restarts and readiness probes.");
+            suggestions.add("Explain security guardrails: non-root containers, read-only filesystems, and strict network policies.");
+            suggestions.add("Discuss how you establish SLIs, SLOs, and error budgets for production workloads.");
+            topics.addAll(List.of("Kubernetes Ingress & Traffic Management", "Infrastructure as Code with Terraform", "Prometheus & Grafana Observability"));
+            questions.addAll(List.of(
+                    "How do you troubleshoot a CrashLoopBackOff error in a Kubernetes microservice?",
+                    "How do you design a zero-downtime database schema migration in an active CI/CD pipeline?"
+            ));
+
+        // Intent 8: Salary Negotiation & Offers
+        } else if (msgLower.contains("salary") || msgLower.contains("negotiat") || msgLower.contains("offer")
+                || msgLower.contains("compensation") || msgLower.contains("equity") || msgLower.contains("money")) {
+            reply = "Negotiating engineering offers requires strategic timing, market benchmarks, and professional framing:\n\n"
+                    + "1. Defer Salary Numbers Early: If asked about compensation early on, politely defer: 'I want to ensure this is the right mutual technical and team fit first. I'm confident we can agree on a fair market package when we reach that stage.'\n"
+                    + "2. Evaluate Total Compensation: Look at the complete picture—Base Salary, Sign-on Bonus, Equity (RSUs or options), Annual Performance Bonus, and remote allowances.\n"
+                    + "3. The 3-Step Counter-Offer:\n"
+                    + "   • Step 1: Express genuine enthusiasm for the team and mission.\n"
+                    + "   • Step 2: Anchor your counter using verified market data (Levels.fyi, verified industry salary ranges) or competing timeline offers.\n"
+                    + "   • Step 3: Ask collaboratively: 'Based on my experience delivering X, I was targeting $Y base. Is there flexibility to bridge that gap?'\n"
+                    + "4. Put Everything in Writing: Never verbally accept on a call; always ask for 48-72 hours to review the formal written letter.";
+            suggestions.add("Always negotiate over email or write down counter-proposals with clear market reasoning.");
+            suggestions.add("Focus on total compensation, especially equity vesting schedules and refresh grants.");
+            suggestions.add("Never say yes immediately on the phone; request 48-72 hours to review the written package.");
+            topics.addAll(List.of("Total Compensation Architecture", "Counter-Offer Formulations", "Competing Offer Leverage"));
+            questions.addAll(List.of(
+                    "What are your salary expectations for this software engineering position?",
+                    "How would you handle receiving multiple competing offers with conflicting deadlines?"
+            ));
+
+        // Intent 9: Dynamic Profile-Aware Fallback (Analyzes User Context & Specific Query)
         } else {
-            reply = "Great question! Building interview excellence is about compounding daily targeted practice. Based on platform patterns, candidates who practice 3-5 questions daily and study model answers see a 28% score improvement within two weeks.";
-            suggestions.add("Target your weakest skill category in a 5-question mock session today.");
-            suggestions.add("Review past feedback in your Performance Analytics tab.");
-            topics.addAll(List.of("System Design Fundamentals", "Behavioral Leadership", "Data Structures & Scalability"));
+            String roleHint = "";
+            if (userProfileContext != null && userProfileContext.contains("Target Role: ")) {
+                try {
+                    int start = userProfileContext.indexOf("Target Role: ") + 13;
+                    int end = userProfileContext.indexOf(",", start);
+                    if (end > start) {
+                        roleHint = userProfileContext.substring(start, end).trim();
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            reply = String.format(
+                    "Great question! For %s interviews, evaluators look for depth of reasoning, structured problem breakdown, and concrete production trade-offs.\n\n"
+                    + "To answer this with maximum technical authority:\n"
+                    + "1. Define the Concept with Precision: Start with a crisp 1-sentence architectural or functional definition—avoid vague generalizations.\n"
+                    + "2. Illustrate with a Concrete Scenario: Share how this applies in real-world systems, explaining data flow, constraints, or user impact.\n"
+                    + "3. Discuss Key Trade-offs: Every engineering decision has trade-offs (e.g. latency vs consistency, memory vs CPU, speed of delivery vs maintainability). Explicitly state why you chose this path.\n"
+                    + "4. Highlight Telemetry & Resilience: Senior engineers stand out by mentioning how they monitor performance, handle edge-case failures, and maintain system stability.",
+                    (!roleHint.isBlank() ? roleHint : "technical engineering")
+            );
+            suggestions.add("Frame your response using the 3-step anchor: Definition → Production Example → Trade-offs.");
+            suggestions.add("Practice articulating your thought process out loud to calibrate clarity and confidence.");
+            suggestions.add("Take a 5-question mock interview session to benchmark your technical score.");
+            topics.addAll(List.of("Structured Technical Communication", "Engineering Trade-Off Analysis", "Production Resilience"));
             questions.addAll(List.of(
-                    "How would you design a distributed caching layer?",
-                    "What is your approach to breaking down an ambiguous technical requirement?"
+                    "Can you walk me through a challenging technical problem you solved recently?",
+                    "How do you evaluate whether to build an internal solution vs adopting a third-party tool?"
             ));
         }
 
