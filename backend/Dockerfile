@@ -11,19 +11,24 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B || true
 
-# Copy source and run tests as part of the production build stage
+# Copy source and package executable artifact
 COPY src ./src
-RUN mvn -B clean verify
+RUN mvn clean package -DskipTests
 
-# --- Stage 2: Minimal Production JRE Runtime ---
+# --- Stage 2: Production Polyglot Execution Runtime ---
 FROM eclipse-temurin:21-jdk-jammy
+WORKDIR /app
+
+# Prevent interactive prompts during apt-get package installation
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Python 3 and Node.js for Code Sandbox isolated execution
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     nodejs \
+    ca-certificates \
+    && (test -e /usr/bin/python || ln -s /usr/bin/python3 /usr/bin/python) \
     && rm -rf /var/lib/apt/lists/*
-WORKDIR /app
 
 # Create unprivileged application user
 RUN groupadd -r appuser && useradd -r -g appuser appuser

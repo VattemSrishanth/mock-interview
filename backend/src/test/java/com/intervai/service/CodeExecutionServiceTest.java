@@ -4,12 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intervai.dto.CodeExecutionRequest;
 import com.intervai.dto.CodeExecutionResponse;
 import com.intervai.exception.BadRequestException;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -18,6 +21,15 @@ import static org.mockito.Mockito.*;
 class CodeExecutionServiceTest {
 
     private CodeExecutionService service;
+
+    private static boolean isCommandAvailable(String cmd) {
+        try {
+            Process p = new ProcessBuilder(cmd, "--version").start();
+            return p.waitFor(2, TimeUnit.SECONDS) && p.exitValue() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     @BeforeEach
     void setUp() {
@@ -68,6 +80,11 @@ class CodeExecutionServiceTest {
 
     @Test
     void executesPythonLocallyAndCapturesStdout() {
+        Assumptions.assumeTrue(
+                isCommandAvailable("python") || isCommandAvailable("python3"),
+                "Python interpreter not installed on host; skipping test"
+        );
+
         CodeExecutionRequest req = CodeExecutionRequest.builder()
                 .language("python")
                 .code("print('Antigravity Python Sandbox OK')")
@@ -83,6 +100,11 @@ class CodeExecutionServiceTest {
 
     @Test
     void executesJavaScriptLocallyAndCapturesStdout() {
+        Assumptions.assumeTrue(
+                isCommandAvailable("node"),
+                "Node.js runtime not installed on host; skipping test"
+        );
+
         CodeExecutionRequest req = CodeExecutionRequest.builder()
                 .language("javascript")
                 .code("console.log('Antigravity JS Sandbox OK');")
@@ -98,6 +120,11 @@ class CodeExecutionServiceTest {
 
     @Test
     void executesTypeScriptLocallyAndCapturesStdout() {
+        Assumptions.assumeTrue(
+                isCommandAvailable("node"),
+                "Node.js runtime not installed on host; skipping test"
+        );
+
         CodeExecutionRequest req = CodeExecutionRequest.builder()
                 .language("typescript")
                 .code("const msg: string = 'Antigravity TS Sandbox OK'; console.log(msg);")
@@ -113,6 +140,11 @@ class CodeExecutionServiceTest {
 
     @Test
     void executesJavaLocallyAndCapturesStdout() {
+        Assumptions.assumeTrue(
+                isCommandAvailable("javac"),
+                "javac compiler not installed on host; skipping test"
+        );
+
         String javaCode = """
                 public class Solution {
                     public static void main(String[] args) {
@@ -136,6 +168,11 @@ class CodeExecutionServiceTest {
 
     @Test
     void reportsJavaCompilationErrorWithDiagnostic() {
+        Assumptions.assumeTrue(
+                isCommandAvailable("javac"),
+                "javac compiler not installed on host; skipping test"
+        );
+
         String brokenJava = """
                 public class Solution {
                     public static void main(String[] args) {
@@ -159,6 +196,11 @@ class CodeExecutionServiceTest {
 
     @Test
     void passesStdinToProcess() {
+        Assumptions.assumeTrue(
+                isCommandAvailable("python") || isCommandAvailable("python3"),
+                "Python interpreter not installed on host; skipping test"
+        );
+
         CodeExecutionRequest req = CodeExecutionRequest.builder()
                 .language("python")
                 .code("import sys; line = sys.stdin.readline().strip(); print(f'ECHO: {line}')")
