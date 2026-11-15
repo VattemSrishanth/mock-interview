@@ -61,7 +61,7 @@ public class SecurityConfig {
                         .contentTypeOptions(org.springframework.security.config.Customizer.withDefaults())
                         .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
                         .referrerPolicy(referrer -> referrer.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                        .permissionsPolicy(permissions -> permissions.policy("camera=(), microphone=(self), geolocation=()"))
+                        .permissionsPolicy(permissions -> permissions.policy("camera=(self), microphone=(self), geolocation=()"))
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
