@@ -43,7 +43,6 @@ export default function RegisterPage() {
   const [codeCooldown, setCodeCooldown] = useState(0);
   const [codeStatus, setCodeStatus] = useState('');
   const [codeError, setCodeError] = useState('');
-  const [devCode, setDevCode] = useState('');
 
   const availableSkills = [
     'React', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'Tailwind CSS',
@@ -89,9 +88,6 @@ export default function RegisterPage() {
       setCodeSent(true);
       setCodeCooldown(30);
       setCodeStatus(res.message || 'Verification code sent to your email.');
-      if (res.devCode) {
-        setDevCode(res.devCode);
-      }
     } catch (err) {
       setCodeError(
         err.response?.data?.message || 'Failed to send verification code. The email may already be in use.'
@@ -206,7 +202,6 @@ export default function RegisterPage() {
                       setCodeSent(false);
                       setCodeStatus('');
                       setCodeError('');
-                      setDevCode('');
                     }}
                     placeholder="alex@example.com"
                     className="w-full bg-[#151f33] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition"
@@ -243,20 +238,9 @@ export default function RegisterPage() {
               )}
 
               {codeStatus && (
-                <div className="mt-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-2 text-[11px] text-emerald-400">
-                  <span className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                    <span>{codeStatus}</span>
-                  </span>
-                  {devCode && (
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, verificationCode: devCode })}
-                      className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] hover:bg-emerald-500/30 transition"
-                    >
-                      Fill: {devCode}
-                    </button>
-                  )}
+                <div className="mt-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2 text-[11px] text-emerald-400">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>{codeStatus}</span>
                 </div>
               )}
             </div>

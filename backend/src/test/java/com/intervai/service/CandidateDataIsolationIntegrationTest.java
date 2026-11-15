@@ -69,7 +69,8 @@ class CandidateDataIsolationIntegrationTest {
         String email = "verify-" + UUID.randomUUID() + "@example.com";
         SendVerificationCodeResponse codeResponse = emailVerificationService.sendVerificationCode(email);
         assertTrue(codeResponse.isSuccess());
-        assertNotNull(codeResponse.getDevCode());
+        String code = emailVerificationService.getCodeForTesting(email);
+        assertNotNull(code);
 
         // Attempting registration with wrong code must fail
         RegisterRequest invalidReq = RegisterRequest.builder()
@@ -88,7 +89,7 @@ class CandidateDataIsolationIntegrationTest {
                 .name("Valid Candidate")
                 .email(email)
                 .password("Password123!")
-                .verificationCode(codeResponse.getDevCode())
+                .verificationCode(code)
                 .skills(List.of("React"))
                 .build();
 
@@ -104,7 +105,8 @@ class CandidateDataIsolationIntegrationTest {
     @Test
     void newCandidateStartsAtPureZeroStateAndRequiresExplicitLogin() {
         String email = "candidate-" + UUID.randomUUID() + "@example.com";
-        SendVerificationCodeResponse codeResp = emailVerificationService.sendVerificationCode(email);
+        emailVerificationService.sendVerificationCode(email);
+        String code = emailVerificationService.getCodeForTesting(email);
 
         RegisterRequest registerReq = RegisterRequest.builder()
                 .name("Authentic Candidate")
@@ -114,7 +116,7 @@ class CandidateDataIsolationIntegrationTest {
                 .experience("1-3 years")
                 .careerGoal("Target Senior Engineer role")
                 .skills(List.of("Java", "Spring Boot", "SQL"))
-                .verificationCode(codeResp.getDevCode())
+                .verificationCode(code)
                 .build();
 
         AuthResponse auth = authService.register(registerReq);
@@ -140,7 +142,8 @@ class CandidateDataIsolationIntegrationTest {
     void strictlyIsolatesInterviewsAndAnalyticsBetweenDistinctCandidates() {
         // Candidate 1
         String emailA = "candidate-a-" + UUID.randomUUID() + "@example.com";
-        SendVerificationCodeResponse codeA = emailVerificationService.sendVerificationCode(emailA);
+        emailVerificationService.sendVerificationCode(emailA);
+        String codeA = emailVerificationService.getCodeForTesting(emailA);
         AuthResponse candidateA = authService.register(RegisterRequest.builder()
                 .name("Candidate Alpha")
                 .email(emailA)
@@ -149,12 +152,13 @@ class CandidateDataIsolationIntegrationTest {
                 .experience("Fresher")
                 .careerGoal("Frontend Specialist")
                 .skills(List.of("React", "TypeScript"))
-                .verificationCode(codeA.getDevCode())
+                .verificationCode(codeA)
                 .build());
 
         // Candidate 2
         String emailB = "candidate-b-" + UUID.randomUUID() + "@example.com";
-        SendVerificationCodeResponse codeB = emailVerificationService.sendVerificationCode(emailB);
+        emailVerificationService.sendVerificationCode(emailB);
+        String codeB = emailVerificationService.getCodeForTesting(emailB);
         AuthResponse candidateB = authService.register(RegisterRequest.builder()
                 .name("Candidate Beta")
                 .email(emailB)
@@ -163,7 +167,7 @@ class CandidateDataIsolationIntegrationTest {
                 .experience("3-5 years")
                 .careerGoal("Staff Architect")
                 .skills(List.of("Java", "Distributed Systems"))
-                .verificationCode(codeB.getDevCode())
+                .verificationCode(codeB)
                 .build());
 
         User userA = userRepository.findById(candidateA.getId()).orElseThrow();

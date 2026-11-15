@@ -3,18 +3,26 @@ package com.intervai.service;
 import com.intervai.dto.SendVerificationCodeResponse;
 import com.intervai.exception.BadRequestException;
 import com.intervai.repository.UserRepository;
+import jakarta.mail.internet.MimeMessage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -28,9 +36,23 @@ public class EmailVerificationService {
     private static final Duration RATE_LIMIT_INTERVAL = Duration.ofSeconds(30);
     private static final int MAX_ATTEMPTS = 5;
 
+    // Common disposable/burner email domains
+    private static final Set<String> DISPOSABLE_DOMAINS = Set.of(
+            "tempmail.com", "10minutemail.com", "mailinator.com", "guerrillamail.com",
+            "sharklasers.com", "getnada.com", "throwawaymail.com", "trashmail.com",
+            "yopmail.com", "fakeinbox.com", "dispostable.com", "maildrop.cc",
+            "mohmal.com", "temp-mail.org", "crazymailing.com", "burnermail.io",
+            "inboxkitten.com", "mailcatch.com", "emailondeck.com", "mytemp.email"
+    );
+
     private final UserRepository userRepository;
-    private final Environment environment;
     private final SecureRandom secureRandom = new SecureRandom();
+
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
+
+    @Value("${spring.mail.username:}")
+    private String mailFrom;
 
     private final Map<String, VerificationEntry> verificationCodes = new ConcurrentHashMap<>();
 
@@ -62,10 +84,22 @@ public class EmailVerificationService {
         String email = rawEmail.trim().toLowerCase(Locale.ROOT);
 
         if (!EMAIL_PATTERN.matcher(email).matches()) {
-            throw new BadRequestException("Please provide a valid email address with a valid domain format");
+            throw new BadRequestException("Please enter a valid email address with a domain (e.g. name@example.com).");
         }
 
-        // 1. Strict Duplicate Email Enforcement
+        String domain = email.substring(email.indexOf('@') + 1);
+
+        // 1. Reject disposable/temporary domains
+        if (DISPOSABLE_DOMAINS.contains(domain)) {
+            throw new BadRequestException("Disposable and temporary email addresses are not permitted. Please use your genuine email.");
+        }
+
+        // 2. Validate domain existence & active MX (mail exchange) records via DNS
+        if (!hasActiveMailExchange(domain)) {
+            throw new BadRequestException("The email domain '" + domain + "' does not exist or has no active mail servers. Please enter a valid, active email address.");
+        }
+
+        // 3. Strict Duplicate Email Enforcement
         if (userRepository.existsByEmail(email)) {
             throw new BadRequestException("An account with this email address already exists. Please sign in instead.");
         }
@@ -73,29 +107,93 @@ public class EmailVerificationService {
         Instant now = Instant.now();
         VerificationEntry existing = verificationCodes.get(email);
 
-        // 2. Anti-Spam Rate Limiting: 30 seconds between requests per email
+        // 4. Anti-Spam Rate Limiting: 30 seconds between requests per email
         if (existing != null && now.isBefore(existing.getLastSentAt().plus(RATE_LIMIT_INTERVAL))) {
             long waitSeconds = Duration.between(now, existing.getLastSentAt().plus(RATE_LIMIT_INTERVAL)).getSeconds();
             throw new BadRequestException("Please wait " + Math.max(1, waitSeconds) + " seconds before requesting a new verification code.");
         }
 
-        // 3. Generate Cryptographically Secure 6-Digit OTP Code
+        // 5. Generate Cryptographically Secure 6-Digit OTP Code
         int randomPin = 100000 + secureRandom.nextInt(900000);
         String code = String.valueOf(randomPin);
 
         VerificationEntry entry = new VerificationEntry(code, now, now.plus(CODE_EXPIRATION));
         verificationCodes.put(email, entry);
 
-        // 4. Log and Dispatch Verification Code
-        log.info("[EMAIL VERIFICATION CODE] Sent to {}: {}", email, code);
+        // 6. Deliver Code (Real SMTP delivery if configured; secure server log fallback)
+        deliverCode(email, code);
 
-        boolean isDevMode = environment.matchesProfiles("dev") || !environment.matchesProfiles("prod");
-
+        // Security: NEVER return the code in the API response
         return SendVerificationCodeResponse.builder()
                 .success(true)
-                .message("A 6-digit verification code has been sent to " + email + ". It will expire in 10 minutes.")
-                .devCode(isDevMode ? code : null)
+                .message("A 6-digit verification code has been sent to " + email + ". Please check your inbox and spam folder.")
                 .build();
+    }
+
+    private void deliverCode(String email, String code) {
+        if (mailSender != null && mailFrom != null && !mailFrom.isBlank()) {
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                helper.setFrom(mailFrom, "IntervAI Security");
+                helper.setTo(email);
+                helper.setSubject("Your IntervAI Verification Code: " + code);
+                helper.setText(buildHtmlEmail(email, code), true);
+                mailSender.send(message);
+                log.info("[EMAIL SERVICE] Verification email successfully delivered via SMTP to {}", email);
+                return;
+            } catch (Exception e) {
+                log.error("[EMAIL SERVICE] Failed to deliver email via SMTP to {}: {}", email, e.getMessage());
+            }
+        }
+
+        // If SMTP is not yet configured with credentials, log securely to server console only
+        log.warn("[EMAIL SECURITY] SMTP is not configured. In production, configure SPRING_MAIL_USERNAME and SPRING_MAIL_PASSWORD to send to inboxes. Internal code for {}: {}", email, code);
+    }
+
+    private boolean hasActiveMailExchange(String domain) {
+        // Skip external DNS resolution for local/test mock domains during offline/testing
+        if (domain.equalsIgnoreCase("localhost") || domain.endsWith(".test") || domain.endsWith(".example")) {
+            return true;
+        }
+
+        try {
+            Hashtable<String, String> env = new Hashtable<>();
+            env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
+            DirContext ictx = new InitialDirContext(env);
+            Attributes attrs = ictx.getAttributes(domain, new String[]{"MX"});
+            Attribute attr = attrs.get("MX");
+            if (attr != null && attr.size() > 0) {
+                return true;
+            }
+
+            // Fallback: Check A (address) records if domain acts as mail endpoint
+            Attributes aAttrs = ictx.getAttributes(domain, new String[]{"A"});
+            Attribute aAttr = aAttrs.get("A");
+            return aAttr != null && aAttr.size() > 0;
+        } catch (NamingException e) {
+            log.warn("DNS check failed for email domain '{}': {}", domain, e.getMessage());
+            return false;
+        }
+    }
+
+    private String buildHtmlEmail(String recipient, String code) {
+        return "<!DOCTYPE html>"
+                + "<html>"
+                + "<head><meta charset='UTF-8'></head>"
+                + "<body style='margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;background-color:#070b14;color:#f1f5f9;'>"
+                + "<table align='center' border='0' cellpadding='0' cellspacing='0' width='100%' style='max-width:520px;background-color:#0d1322;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:32px;'>"
+                + "<tr><td align='center'>"
+                + "<div style='font-size:20px;font-weight:700;color:#6366f1;letter-spacing:-0.5px;'>IntervAI Platform</div>"
+                + "<h2 style='margin-top:16px;margin-bottom:8px;font-size:22px;font-weight:700;color:#ffffff;'>Verify Your Email Address</h2>"
+                + "<p style='margin:0 0 24px;font-size:13px;line-height:1.5;color:#94a3b8;'>Use the verification code below to complete your registration for <strong>" + recipient + "</strong>. This code will expire in 10 minutes.</p>"
+                + "<div style='background-color:#151f33;border:1px dashed #6366f1;border-radius:12px;padding:18px 24px;margin:16px 0;letter-spacing:8px;font-size:32px;font-weight:800;color:#38bdf8;font-family:monospace;text-align:center;'>"
+                + code
+                + "</div>"
+                + "<p style='margin:20px 0 0;font-size:11px;color:#64748b;'>If you did not request this code, you can safely ignore this email. Someone may have entered your email by mistake.</p>"
+                + "</td></tr>"
+                + "</table>"
+                + "</body></html>";
     }
 
     public boolean verifyAndConsume(String rawEmail, String code) {
@@ -111,7 +209,7 @@ public class EmailVerificationService {
 
         VerificationEntry entry = verificationCodes.get(email);
         if (entry == null) {
-            throw new BadRequestException("No verification code was requested for this email. Please request a code first.");
+            throw new BadRequestException("No verification code was requested for this email. Please click 'Send Code' first.");
         }
 
         if (Instant.now().isAfter(entry.getExpiresAt())) {

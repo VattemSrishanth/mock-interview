@@ -19,3 +19,4 @@ public class SendVerificationCodeRequest {
     )
     private String email;
 }
+

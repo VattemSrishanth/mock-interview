@@ -70,11 +70,10 @@ describe('RegisterPage - Email Verification & Explicit Login Flow', () => {
     expect(authApi.sendVerificationCode).not.toHaveBeenCalled();
   });
 
-  it('sends verification code successfully and displays dev code autofill', async () => {
+  it('sends verification code securely without exposing the code on screen', async () => {
     authApi.sendVerificationCode.mockResolvedValueOnce({
       success: true,
-      message: 'Verification code sent to candidate@example.com',
-      devCode: '849201'
+      message: 'Verification code sent to candidate@example.com'
     });
 
     render(
@@ -97,13 +96,8 @@ describe('RegisterPage - Email Verification & Explicit Login Flow', () => {
       await screen.findByText(/verification code sent to candidate@example.com/i)
     ).toBeTruthy();
 
-    // Dev code banner and autofill
-    expect(screen.getByText(/fill: 849201/i)).toBeTruthy();
-    const autofillBtn = screen.getByRole('button', { name: /fill: 849201/i });
-    fireEvent.click(autofillBtn);
-
-    const codeInput = screen.getByPlaceholderText(/enter 6-digit code/i);
-    expect(codeInput.value).toBe('849201');
+    // Security: Ensure no 'Fill: ' button exists
+    expect(screen.queryByText(/fill:/i)).toBeNull();
   });
 
   it('shows error if duplicate email is rejected by the server', async () => {
@@ -135,8 +129,7 @@ describe('RegisterPage - Email Verification & Explicit Login Flow', () => {
   it('submits registration with verification code and redirects to /login (requires explicit login)', async () => {
     authApi.sendVerificationCode.mockResolvedValueOnce({
       success: true,
-      message: 'Verification code sent',
-      devCode: '654321'
+      message: 'Verification code sent'
     });
 
     mockRegister.mockResolvedValueOnce({
@@ -159,7 +152,7 @@ describe('RegisterPage - Email Verification & Explicit Login Flow', () => {
     fireEvent.click(screen.getByRole('button', { name: /send code/i }));
     await screen.findByText(/verification code sent/i);
 
-    // Enter verification code
+    // Enter verification code manually
     const codeInput = screen.getByPlaceholderText(/enter 6-digit code/i);
     fireEvent.change(codeInput, { target: { value: '654321' } });
 

@@ -9,5 +9,4 @@ import lombok.*;
 public class SendVerificationCodeResponse {
     private boolean success;
     private String message;
-    private String devCode;
 }
