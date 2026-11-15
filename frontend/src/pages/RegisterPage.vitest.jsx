@@ -180,4 +180,41 @@ describe('RegisterPage - Email Verification & Explicit Login Flow', () => {
       });
     });
   });
+
+  it('restores draft form data from localStorage so candidate details are not lost', () => {
+    localStorage.setItem(
+      'intervai_reg_draft_v1',
+      JSON.stringify({
+        name: 'Sarah Connor',
+        email: 'sarah.connor@sky.net',
+        targetRole: 'Full Stack Engineer'
+      })
+    );
+
+    render(
+      <MemoryRouter>
+        <RegisterPage />
+      </MemoryRouter>
+    );
+
+    const nameInput = screen.getByPlaceholderText(/alex chen/i);
+    const emailInput = screen.getByPlaceholderText(/alex@example.com/i);
+    expect(nameInput.value).toBe('Sarah Connor');
+    expect(emailInput.value).toBe('sarah.connor@sky.net');
+  });
+
+  it('applies email and verification code when visiting via one-click link params', async () => {
+    render(
+      <MemoryRouter initialEntries={['/register?email=candidate%40mail.com&code=123456']}>
+        <RegisterPage />
+      </MemoryRouter>
+    );
+
+    const emailInput = screen.getByPlaceholderText(/alex@example.com/i);
+    const codeInput = screen.getByPlaceholderText(/enter 6-digit code/i);
+
+    expect(emailInput.value).toBe('candidate@mail.com');
+    expect(codeInput.value).toBe('123456');
+    expect(await screen.findByText(/verification code applied from your email link/i)).toBeTruthy();
+  });
 });

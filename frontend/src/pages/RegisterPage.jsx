@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/auth';
 import {
@@ -17,14 +17,32 @@ import {
   CheckCircle2,
   ShieldCheck,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
 
-export default function RegisterPage() {
-  const { register } = useAuth();
-  const navigate = useNavigate();
+const REG_DRAFT_KEY = 'intervai_reg_draft_v1';
 
-  const [formData, setFormData] = useState({
+const getInitialFormData = () => {
+  try {
+    const saved = localStorage.getItem(REG_DRAFT_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        name: parsed.name || '',
+        email: parsed.email || '',
+        password: parsed.password || '',
+        verificationCode: parsed.verificationCode || '',
+        targetRole: parsed.targetRole || 'Frontend Developer',
+        experience: parsed.experience || 'Fresher',
+        careerGoal: parsed.careerGoal || 'Secure a full-time software engineering role',
+        skills: Array.isArray(parsed.skills) && parsed.skills.length > 0 ? parsed.skills : ['React', 'JavaScript']
+      };
+    }
+  } catch (e) {
+    // Ignore storage parse error
+  }
+  return {
     name: '',
     email: '',
     password: '',
@@ -33,7 +51,15 @@ export default function RegisterPage() {
     experience: 'Fresher',
     careerGoal: 'Secure a full-time software engineering role',
     skills: ['React', 'JavaScript']
-  });
+  };
+};
+
+export default function RegisterPage() {
+  const { register } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const [formData, setFormData] = useState(getInitialFormData);
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,6 +85,32 @@ export default function RegisterPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [codeCooldown]);
+
+  // Auto-save form draft so user name, email, role, and skills are never lost when opening inbox
+  useEffect(() => {
+    try {
+      localStorage.setItem(REG_DRAFT_KEY, JSON.stringify(formData));
+    } catch (e) {
+      // Ignore quota errors
+    }
+  }, [formData]);
+
+  // One-click email verification link support (e.g. ?email=...&code=...)
+  useEffect(() => {
+    const qEmail = searchParams.get('email');
+    const qCode = searchParams.get('code');
+    if (qEmail || qCode) {
+      setFormData((prev) => ({
+        ...prev,
+        email: qEmail ? qEmail.trim() : prev.email,
+        verificationCode: qCode ? qCode.trim() : prev.verificationCode
+      }));
+      if (qCode) {
+        setCodeSent(true);
+        setCodeStatus('Verification code applied from your email link. Set your password and click Complete Registration!');
+      }
+    }
+  }, [searchParams]);
 
   const toggleSkill = (skill) => {
     setFormData((prev) => {
@@ -124,6 +176,11 @@ export default function RegisterPage() {
         email: formData.email.trim(),
         verificationCode: formData.verificationCode.trim()
       });
+
+      // Clear draft from storage on successful registration
+      try {
+        localStorage.removeItem(REG_DRAFT_KEY);
+      } catch (e) {}
 
       // Security requirement: redirect to login and require explicit authentication
       navigate('/login', {
