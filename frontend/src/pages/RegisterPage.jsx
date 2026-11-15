@@ -31,7 +31,7 @@ const getInitialFormData = () => {
       return {
         name: parsed.name || '',
         email: parsed.email || '',
-        password: parsed.password || '',
+        password: '',
         verificationCode: parsed.verificationCode || '',
         targetRole: parsed.targetRole || 'Frontend Developer',
         experience: parsed.experience || 'Fresher',
@@ -86,10 +86,11 @@ export default function RegisterPage() {
     return () => clearInterval(timer);
   }, [codeCooldown]);
 
-  // Auto-save form draft so user name, email, role, and skills are never lost when opening inbox
+  // Auto-save form draft (excluding password for security) so user name, email, role, and skills are never lost
   useEffect(() => {
     try {
-      localStorage.setItem(REG_DRAFT_KEY, JSON.stringify(formData));
+      const { password, ...safeDraft } = formData;
+      localStorage.setItem(REG_DRAFT_KEY, JSON.stringify(safeDraft));
     } catch (e) {
       // Ignore quota errors
     }
