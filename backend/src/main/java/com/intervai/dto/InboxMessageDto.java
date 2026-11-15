@@ -19,3 +19,4 @@ public class InboxMessageDto {
     private Instant sentAt;
     private boolean read;
 }
+
