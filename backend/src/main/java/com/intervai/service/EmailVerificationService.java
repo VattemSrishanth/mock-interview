@@ -114,6 +114,19 @@ public class EmailVerificationService {
         }
 
         Instant now = Instant.now();
+
+        // Evict expired verification codes to protect system memory
+        verificationCodes.entrySet().removeIf(e -> now.isAfter(e.getValue().getExpiresAt()));
+        if (verificationCodes.size() > 5000) {
+            java.util.Iterator<String> it = verificationCodes.keySet().iterator();
+            int toRemove = verificationCodes.size() - 5000;
+            while (it.hasNext() && toRemove > 0) {
+                it.next();
+                it.remove();
+                toRemove--;
+            }
+        }
+
         VerificationEntry existing = verificationCodes.get(email);
 
         // 4. Anti-Spam Rate Limiting: 30 seconds between requests per email
@@ -184,13 +197,13 @@ public class EmailVerificationService {
     }
 
     public List<InboxMessageDto> getInboxMessages(String email) {
-        if (email != null && !email.isBlank()) {
-            String target = email.trim().toLowerCase(Locale.ROOT);
-            return mailbox.stream()
-                    .filter(m -> m.getTo().equalsIgnoreCase(target))
-                    .toList();
+        if (email == null || email.isBlank()) {
+            throw new BadRequestException("An explicit candidate email address is required to query mailbox messages.");
         }
-        return Collections.unmodifiableList(mailbox);
+        String target = email.trim().toLowerCase(Locale.ROOT);
+        return mailbox.stream()
+                .filter(m -> m.getTo().equalsIgnoreCase(target))
+                .toList();
     }
 
     public void clearInbox() {
@@ -224,6 +237,10 @@ public class EmailVerificationService {
     }
 
     private String buildHtmlEmail(String recipient, String code, String verificationLink) {
+        String safeRecipient = org.springframework.web.util.HtmlUtils.htmlEscape(recipient != null ? recipient : "");
+        String safeCode = org.springframework.web.util.HtmlUtils.htmlEscape(code != null ? code : "");
+        String safeLink = org.springframework.web.util.HtmlUtils.htmlEscape(verificationLink != null ? verificationLink : "");
+
         return "<!DOCTYPE html>"
                 + "<html>"
                 + "<head><meta charset='UTF-8'></head>"
@@ -232,19 +249,19 @@ public class EmailVerificationService {
                 + "<tr><td align='center'>"
                 + "<div style='font-size:22px;font-weight:800;color:#6366f1;letter-spacing:-0.5px;'>IntervAI Platform</div>"
                 + "<h2 style='margin-top:16px;margin-bottom:8px;font-size:22px;font-weight:700;color:#ffffff;'>Verify Your Email Address</h2>"
-                + "<p style='margin:0 0 20px;font-size:13px;line-height:1.6;color:#94a3b8;'>Click the button below to verify your email address and continue setting up your interview profile for <strong>" + recipient + "</strong>.</p>"
+                + "<p style='margin:0 0 20px;font-size:13px;line-height:1.6;color:#94a3b8;'>Click the button below to verify your email address and continue setting up your interview profile for <strong>" + safeRecipient + "</strong>.</p>"
                 + "<div style='margin:24px 0;'>"
-                + "<a href='" + verificationLink + "' target='_blank' style='background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:14px;font-weight:700;display:inline-block;letter-spacing:0.3px;box-shadow:0 4px 14px rgba(99,102,241,0.4);'>Verify Email &amp; Continue &rarr;</a>"
+                + "<a href='" + safeLink + "' target='_blank' style='background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:14px;font-weight:700;display:inline-block;letter-spacing:0.3px;box-shadow:0 4px 14px rgba(99,102,241,0.4);'>Verify Email &amp; Continue &rarr;</a>"
                 + "</div>"
                 + "<div style='border-top:1px solid rgba(255,255,255,0.08);margin:24px 0;padding-top:20px;'>"
                 + "<p style='margin:0 0 8px;font-size:12px;color:#94a3b8;'>Or manually enter this 6-digit verification code:</p>"
                 + "<div style='background-color:#151f33;border:1px dashed #6366f1;border-radius:12px;padding:14px 20px;margin:8px 0 16px;letter-spacing:8px;font-size:30px;font-weight:800;color:#38bdf8;font-family:monospace;text-align:center;'>"
-                + code
+                + safeCode
                 + "</div>"
                 + "</div>"
                 + "<p style='margin:16px 0 0;font-size:11px;color:#64748b;line-height:1.5;word-break:break-all;'>"
                 + "Link not clicking? Paste this URL into your browser:<br/>"
-                + "<a href='" + verificationLink + "' style='color:#818cf8;text-decoration:underline;'>" + verificationLink + "</a>"
+                + "<a href='" + safeLink + "' style='color:#818cf8;text-decoration:underline;'>" + safeLink + "</a>"
                 + "</p>"
                 + "<p style='margin:20px 0 0;font-size:11px;color:#475569;'>This code and link expire in 10 minutes. If you did not request this, you can safely ignore this email.</p>"
                 + "</td></tr>"

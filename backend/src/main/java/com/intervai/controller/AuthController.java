@@ -45,7 +45,10 @@ public class AuthController {
 
     @org.springframework.web.bind.annotation.GetMapping("/inbox")
     public ResponseEntity<java.util.List<com.intervai.dto.InboxMessageDto>> getInbox(
-            @org.springframework.web.bind.annotation.RequestParam(value = "email", required = false) String email) {
+            @org.springframework.web.bind.annotation.RequestParam("email") String email) {
+        if (email == null || email.isBlank()) {
+            throw new com.intervai.exception.BadRequestException("Email address is required to query candidate mailbox");
+        }
         return ResponseEntity.ok(emailVerificationService.getInboxMessages(email));
     }
 
