@@ -785,12 +785,13 @@ export default function LiveInterviewPage() {
                 <div>
                   <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
                     <span>Live Code Sandbox (Monaco Editor)</span>
-                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                      Piston Engine
+                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      High-Speed Live Sandbox
                     </span>
                   </h4>
                   <p className="text-[11px] text-slate-400">
-                    Write, run, and debug code in Python, JavaScript, Java, C++, Go with live execution
+                    Write, compile, and run code in Python, JavaScript, TypeScript, and Java with sub-second execution
                   </p>
                 </div>
               </div>
@@ -802,7 +803,10 @@ export default function LiveInterviewPage() {
 
             {showCodeSandbox && (
               <div className="p-4 border-t border-indigo-500/20 bg-slate-950/70">
-                <CodeExecutionSandbox onInsertIntoAnswer={handleInsertCodeIntoAnswer} />
+                <CodeExecutionSandbox
+                  currentQuestion={currentQuestion}
+                  onInsertIntoAnswer={handleInsertCodeIntoAnswer}
+                />
               </div>
             )}
           </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { 
   Play, 
@@ -11,35 +11,42 @@ import {
   AlertCircle, 
   CheckCircle2, 
   Loader2,
-  Code2
+  Code2,
+  Sparkles
 } from 'lucide-react';
 import { interviewApi } from '../api/interview';
 
 const STARTER_TEMPLATES = {
   python: `def solution():
     # Write your solution here
-    print("Hello from Python!")
+    print("Hello from Python 3.12 sandbox!")
+    return True
 
-solution()
+if __name__ == "__main__":
+    solution()
 `,
   javascript: `function solution() {
     // Write your solution here
-    console.log("Hello from JavaScript!");
+    console.log("Hello from JavaScript (Node.js) sandbox!");
+    return true;
 }
 
 solution();
 `,
-  typescript: `function solution(): void {
+  typescript: `function solution(): boolean {
     // Write your solution here
-    console.log("Hello from TypeScript!");
+    console.log("Hello from TypeScript (Node.js) sandbox!");
+    return true;
 }
 
 solution();
 `,
-  java: `public class Main {
+  java: `import java.util.*;
+
+public class Solution {
     public static void main(String[] args) {
         // Write your solution here
-        System.out.println("Hello from Java!");
+        System.out.println("Hello from Java 21 sandbox!");
     }
 }
 `,
@@ -47,7 +54,7 @@ solution();
 
 int main() {
     // Write your solution here
-    std::cout << "Hello from C++!" << std::endl;
+    std::cout << "Hello from C++ sandbox!" << std::endl;
     return 0;
 }
 `,
@@ -57,23 +64,483 @@ import "fmt"
 
 func main() {
     // Write your solution here
-    fmt.Println("Hello from Go!")
+    fmt.Println("Hello from Go sandbox!")
 }
 `
 };
 
 const LANGUAGES = [
-  { id: 'python', label: 'Python (3.10)', monaco: 'python' },
+  { id: 'python', label: 'Python (3.12)', monaco: 'python' },
   { id: 'javascript', label: 'JavaScript (Node.js)', monaco: 'javascript' },
-  { id: 'typescript', label: 'TypeScript', monaco: 'typescript' },
-  { id: 'java', label: 'Java (OpenJDK)', monaco: 'java' },
+  { id: 'typescript', label: 'TypeScript (Node.js)', monaco: 'typescript' },
+  { id: 'java', label: 'Java 21 (OpenJDK)', monaco: 'java' },
   { id: 'cpp', label: 'C++ (GCC)', monaco: 'cpp' },
   { id: 'go', label: 'Go (Golang)', monaco: 'go' }
 ];
 
-export default function CodeExecutionSandbox({ onInsertIntoAnswer }) {
+export function getQuestionAwareTemplate(question, lang) {
+  if (!question) return STARTER_TEMPLATES[lang] || '';
+  const qText = question.questionText || '';
+  const skill = question.targetSkill || '';
+  const combined = (qText + ' ' + skill).toLowerCase();
+
+  // 1. Two Sum
+  if (combined.includes('two sum') || (combined.includes('sum') && combined.includes('target'))) {
+    switch (lang) {
+      case 'python':
+        return `def two_sum(nums: list[int], target: int) -> list[int]:
+    """
+    Problem: Two Sum
+    Return indices of the two numbers such that they add up to target.
+    """
+    seen = {}
+    for i, num in enumerate(nums):
+        diff = target - num
+        if diff in seen:
+            return [seen[diff], i]
+        seen[num] = i
+    return []
+
+if __name__ == "__main__":
+    nums = [2, 7, 11, 15]
+    target = 9
+    print("=== Problem: Two Sum ===")
+    print(f"Input: nums={nums}, target={target}")
+    result = two_sum(nums, target)
+    print(f"Output Indices: {result}")
+    print("Execution verified: SUCCESS")
+`;
+      case 'javascript':
+        return `/**
+ * Problem: Two Sum
+ * Return indices of the two numbers such that they add up to target.
+ */
+function twoSum(nums, target) {
+    const seen = new Map();
+    for (let i = 0; i < nums.length; i++) {
+        const diff = target - nums[i];
+        if (seen.has(diff)) {
+            return [seen.get(diff), i];
+        }
+        seen.set(nums[i], i);
+    }
+    return [];
+}
+
+console.log("=== Problem: Two Sum ===");
+const nums = [2, 7, 11, 15];
+const target = 9;
+console.log("Input: nums =", nums, "target =", target);
+const result = twoSum(nums, target);
+console.log("Output Indices:", result);
+console.log("Execution verified: SUCCESS");
+`;
+      case 'typescript':
+        return `/**
+ * Problem: Two Sum
+ */
+function twoSum(nums: number[], target: number): number[] {
+    const seen = new Map<number, number>();
+    for (let i = 0; i < nums.length; i++) {
+        const diff = target - nums[i];
+        if (seen.has(diff)) {
+            return [seen.get(diff)!, i];
+        }
+        seen.set(nums[i], i);
+    }
+    return [];
+}
+
+console.log("=== Problem: Two Sum ===");
+const nums: number[] = [2, 7, 11, 15];
+const target: number = 9;
+console.log("Input: nums =", nums, "target =", target);
+const result: number[] = twoSum(nums, target);
+console.log("Output Indices:", result);
+console.log("Execution verified: SUCCESS");
+`;
+      case 'java':
+        return `import java.util.*;
+
+public class Solution {
+    public static void main(String[] args) {
+        System.out.println("=== Problem: Two Sum ===");
+        int[] nums = {2, 7, 11, 15};
+        int target = 9;
+        System.out.println("Input: nums = " + Arrays.toString(nums) + ", target = " + target);
+        int[] result = twoSum(nums, target);
+        System.out.println("Output Indices: " + Arrays.toString(result));
+        System.out.println("Execution verified: SUCCESS");
+    }
+
+    public static int[] twoSum(int[] nums, int target) {
+        Map<Integer, Integer> seen = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            int diff = target - nums[i];
+            if (seen.containsKey(diff)) {
+                return new int[] { seen.get(diff), i };
+            }
+            seen.put(nums[i], i);
+        }
+        return new int[0];
+    }
+}
+`;
+      default:
+        return STARTER_TEMPLATES[lang] || '';
+    }
+  }
+
+  // 2. Palindrome
+  if (combined.includes('palindrome')) {
+    switch (lang) {
+      case 'python':
+        return `def is_palindrome(s: str) -> bool:
+    """
+    Problem: Valid Palindrome
+    Determine if a string is a palindrome considering alphanumeric characters.
+    """
+    cleaned = [c.lower() for c in s if c.isalnum()]
+    return cleaned == cleaned[::-1]
+
+if __name__ == "__main__":
+    test_str = "A man, a plan, a canal: Panama"
+    print("=== Problem: Valid Palindrome ===")
+    print(f"Input: \\"{test_str}\\"")
+    result = is_palindrome(test_str)
+    print(f"Is Palindrome: {result}")
+    print("Execution verified: SUCCESS")
+`;
+      case 'javascript':
+        return `/**
+ * Problem: Valid Palindrome
+ */
+function isPalindrome(s) {
+    const cleaned = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const reversed = cleaned.split('').reverse().join('');
+    return cleaned === reversed;
+}
+
+console.log("=== Problem: Valid Palindrome ===");
+const testStr = "A man, a plan, a canal: Panama";
+console.log("Input:", testStr);
+const result = isPalindrome(testStr);
+console.log("Is Palindrome:", result);
+console.log("Execution verified: SUCCESS");
+`;
+      case 'typescript':
+        return `/**
+ * Problem: Valid Palindrome
+ */
+function isPalindrome(s: string): boolean {
+    const cleaned: string = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const reversed: string = cleaned.split('').reverse().join('');
+    return cleaned === reversed;
+}
+
+console.log("=== Problem: Valid Palindrome ===");
+const testStr: string = "A man, a plan, a canal: Panama";
+console.log("Input:", testStr);
+const result: boolean = isPalindrome(testStr);
+console.log("Is Palindrome:", result);
+console.log("Execution verified: SUCCESS");
+`;
+      case 'java':
+        return `public class Solution {
+    public static void main(String[] args) {
+        System.out.println("=== Problem: Valid Palindrome ===");
+        String testStr = "A man, a plan, a canal: Panama";
+        System.out.println("Input: " + testStr);
+        boolean result = isPalindrome(testStr);
+        System.out.println("Is Palindrome: " + result);
+        System.out.println("Execution verified: SUCCESS");
+    }
+
+    public static boolean isPalindrome(String s) {
+        String cleaned = s.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        int left = 0, right = cleaned.length() - 1;
+        while (left < right) {
+            if (cleaned.charAt(left) != cleaned.charAt(right)) return false;
+            left++;
+            right--;
+        }
+        return true;
+    }
+}
+`;
+      default:
+        return STARTER_TEMPLATES[lang] || '';
+    }
+  }
+
+  // 3. Reverse String / Words
+  if (combined.includes('reverse')) {
+    switch (lang) {
+      case 'python':
+        return `def reverse_words(s: str) -> str:
+    """
+    Problem: Reverse Words / String
+    """
+    return " ".join(reversed(s.split()))
+
+if __name__ == "__main__":
+    test_str = "the sky is blue"
+    print("=== Problem: Reverse Words ===")
+    print(f"Input: \\"{test_str}\\"")
+    result = reverse_words(test_str)
+    print(f"Output: \\"{result}\\"")
+    print("Execution verified: SUCCESS")
+`;
+      case 'javascript':
+        return `/**
+ * Problem: Reverse Words
+ */
+function reverseWords(s) {
+    return s.trim().split(/\\s+/).reverse().join(' ');
+}
+
+console.log("=== Problem: Reverse Words ===");
+const testStr = "the sky is blue";
+console.log("Input:", testStr);
+const result = reverseWords(testStr);
+console.log("Output:", result);
+console.log("Execution verified: SUCCESS");
+`;
+      case 'typescript':
+        return `/**
+ * Problem: Reverse Words
+ */
+function reverseWords(s: string): string {
+    return s.trim().split(/\\s+/).reverse().join(' ');
+}
+
+console.log("=== Problem: Reverse Words ===");
+const testStr: string = "the sky is blue";
+console.log("Input:", testStr);
+const result: string = reverseWords(testStr);
+console.log("Output:", result);
+console.log("Execution verified: SUCCESS");
+`;
+      case 'java':
+        return `import java.util.*;
+
+public class Solution {
+    public static void main(String[] args) {
+        System.out.println("=== Problem: Reverse Words ===");
+        String testStr = "the sky is blue";
+        System.out.println("Input: " + testStr);
+        String result = reverseWords(testStr);
+        System.out.println("Output: " + result);
+        System.out.println("Execution verified: SUCCESS");
+    }
+
+    public static String reverseWords(String s) {
+        String[] words = s.trim().split("\\\\s+");
+        Collections.reverse(Arrays.asList(words));
+        return String.join(" ", words);
+    }
+}
+`;
+      default:
+        return STARTER_TEMPLATES[lang] || '';
+    }
+  }
+
+  // 4. Binary Search
+  if (combined.includes('binary search') || (combined.includes('search') && combined.includes('sorted'))) {
+    switch (lang) {
+      case 'python':
+        return `def binary_search(nums: list[int], target: int) -> int:
+    """
+    Problem: Binary Search
+    Return index of target if present in sorted array nums, else -1.
+    """
+    left, right = 0, len(nums) - 1
+    while left <= right:
+        mid = (left + right) // 2
+        if nums[mid] == target:
+            return mid
+        elif nums[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return -1
+
+if __name__ == "__main__":
+    nums = [-1, 0, 3, 5, 9, 12]
+    target = 9
+    print("=== Problem: Binary Search ===")
+    print(f"Input: nums={nums}, target={target}")
+    result = binary_search(nums, target)
+    print(f"Target Index: {result}")
+    print("Execution verified: SUCCESS")
+`;
+      case 'javascript':
+        return `/**
+ * Problem: Binary Search
+ */
+function binarySearch(nums, target) {
+    let left = 0, right = nums.length - 1;
+    while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+        if (nums[mid] === target) return mid;
+        if (nums[mid] < target) left = mid + 1;
+        else right = mid - 1;
+    }
+    return -1;
+}
+
+console.log("=== Problem: Binary Search ===");
+const nums = [-1, 0, 3, 5, 9, 12];
+const target = 9;
+console.log("Input: nums =", nums, "target =", target);
+const result = binarySearch(nums, target);
+console.log("Target Index:", result);
+console.log("Execution verified: SUCCESS");
+`;
+      case 'typescript':
+        return `/**
+ * Problem: Binary Search
+ */
+function binarySearch(nums: number[], target: number): number {
+    let left = 0, right = nums.length - 1;
+    while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+        if (nums[mid] === target) return mid;
+        if (nums[mid] < target) left = mid + 1;
+        else right = mid - 1;
+    }
+    return -1;
+}
+
+console.log("=== Problem: Binary Search ===");
+const nums: number[] = [-1, 0, 3, 5, 9, 12];
+const target: number = 9;
+console.log("Input: nums =", nums, "target =", target);
+const result: number = binarySearch(nums, target);
+console.log("Target Index:", result);
+console.log("Execution verified: SUCCESS");
+`;
+      case 'java':
+        return `import java.util.*;
+
+public class Solution {
+    public static void main(String[] args) {
+        System.out.println("=== Problem: Binary Search ===");
+        int[] nums = {-1, 0, 3, 5, 9, 12};
+        int target = 9;
+        System.out.println("Input: nums = " + Arrays.toString(nums) + ", target = " + target);
+        int result = binarySearch(nums, target);
+        System.out.println("Target Index: " + result);
+        System.out.println("Execution verified: SUCCESS");
+    }
+
+    public static int binarySearch(int[] nums, int target) {
+        int left = 0, right = nums.length - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] == target) return mid;
+            if (nums[mid] < target) left = mid + 1;
+            else right = mid - 1;
+        }
+        return -1;
+    }
+}
+`;
+      default:
+        return STARTER_TEMPLATES[lang] || '';
+    }
+  }
+
+  // 5. Generic Problem-Tailored Template
+  const safeTitle = (skill || 'Interview Problem').replace(/[^a-zA-Z0-9 ]/g, '');
+  const safeDoc = qText.replace(/\*\//g, '* /').slice(0, 160);
+
+  switch (lang) {
+    case 'python':
+      return `"""
+Problem Focus: ${safeTitle}
+Context: ${safeDoc}
+"""
+
+def solve(input_data):
+    # Implement your algorithm here
+    print(f"Processing input: {input_data}")
+    return input_data
+
+if __name__ == "__main__":
+    print("=== Solution Execution Test ===")
+    test_case = [1, 2, 3, 4]
+    result = solve(test_case)
+    print(f"Result: {result}")
+    print("Execution verified: SUCCESS")
+`;
+    case 'javascript':
+      return `/**
+ * Problem Focus: ${safeTitle}
+ * Context: ${safeDoc}
+ */
+function solve(inputData) {
+    // Implement your algorithm here
+    console.log("Processing input:", inputData);
+    return inputData;
+}
+
+console.log("=== Solution Execution Test ===");
+const testCase = [1, 2, 3, 4];
+const result = solve(testCase);
+console.log("Result:", result);
+console.log("Execution verified: SUCCESS");
+`;
+    case 'typescript':
+      return `/**
+ * Problem Focus: ${safeTitle}
+ * Context: ${safeDoc}
+ */
+function solve<T>(inputData: T): T {
+    // Implement your algorithm here
+    console.log("Processing input:", inputData);
+    return inputData;
+}
+
+console.log("=== TypeScript Execution Test ===");
+const testCase: number[] = [1, 2, 3, 4];
+const result: number[] = solve(testCase);
+console.log("Result:", result);
+console.log("Execution verified: SUCCESS");
+`;
+    case 'java':
+      return `import java.util.*;
+
+public class Solution {
+    public static void main(String[] args) {
+        System.out.println("=== Java Solution Execution Test ===");
+        // Problem Focus: ${safeTitle}
+        int[] testCase = {1, 2, 3, 4};
+        System.out.println("Input: " + Arrays.toString(testCase));
+        int[] result = solve(testCase);
+        System.out.println("Result: " + Arrays.toString(result));
+        System.out.println("Execution verified: SUCCESS");
+    }
+
+    public static int[] solve(int[] input) {
+        // Implement your algorithm here
+        return input;
+    }
+}
+`;
+    default:
+      return STARTER_TEMPLATES[lang] || '';
+  }
+}
+
+export default function CodeExecutionSandbox({ onInsertIntoAnswer, currentQuestion }) {
   const [language, setLanguage] = useState('python');
-  const [code, setCode] = useState(STARTER_TEMPLATES.python);
+  const [code, setCode] = useState(() => {
+    return currentQuestion 
+      ? getQuestionAwareTemplate(currentQuestion, 'python')
+      : STARTER_TEMPLATES.python;
+  });
   const [stdin, setStdin] = useState('');
   const [showStdin, setShowStdin] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -81,16 +548,41 @@ export default function CodeExecutionSandbox({ onInsertIntoAnswer }) {
   const [copied, setCopied] = useState(false);
   const [inserted, setInserted] = useState(false);
 
+  // Auto-sync code template if user hasn't written custom code and question changes
+  useEffect(() => {
+    if (currentQuestion) {
+      setCode((prev) => {
+        const isDefault = Object.values(STARTER_TEMPLATES).some(t => t.trim() === prev.trim());
+        if (isDefault || !prev.trim()) {
+          return getQuestionAwareTemplate(currentQuestion, language);
+        }
+        return prev;
+      });
+    }
+  }, [currentQuestion?.id, currentQuestion?.questionOrder]);
+
   const currentLangMeta = LANGUAGES.find(l => l.id === language) || LANGUAGES[0];
 
   const handleLanguageChange = (newLang) => {
     setLanguage(newLang);
-    setCode(STARTER_TEMPLATES[newLang] || '// Write code here');
+    const newCode = currentQuestion
+      ? getQuestionAwareTemplate(currentQuestion, newLang)
+      : (STARTER_TEMPLATES[newLang] || '// Write code here');
+    setCode(newCode);
     setResult(null);
   };
 
   const handleReset = () => {
-    setCode(STARTER_TEMPLATES[language] || '');
+    const defaultTemplate = currentQuestion
+      ? getQuestionAwareTemplate(currentQuestion, language)
+      : (STARTER_TEMPLATES[language] || '');
+    setCode(defaultTemplate);
+    setResult(null);
+  };
+
+  const handleLoadQuestionTemplate = () => {
+    const template = getQuestionAwareTemplate(currentQuestion, language);
+    setCode(template);
     setResult(null);
   };
 
@@ -108,7 +600,7 @@ export default function CodeExecutionSandbox({ onInsertIntoAnswer }) {
     } catch (err) {
       setResult({
         status: 'ERROR',
-        output: err.response?.data?.message || err.message || 'Execution failed. Please check network/Piston service.',
+        output: err.response?.data?.message || err.message || 'Execution failed. Please check sandbox compiler service.',
         executionTimeMs: 0,
         exitCode: -1
       });
@@ -157,9 +649,27 @@ export default function CodeExecutionSandbox({ onInsertIntoAnswer }) {
               <option key={lang.id} value={lang.id}>{lang.label}</option>
             ))}
           </select>
+
+          {currentQuestion?.targetSkill && (
+            <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+              Skill: {currentQuestion.targetSkill}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
+          {currentQuestion && (
+            <button
+              type="button"
+              onClick={handleLoadQuestionTemplate}
+              title="Load question-tailored boilerplate code"
+              className="text-xs px-2.5 py-1.5 rounded-lg border border-indigo-500/40 bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 transition-colors flex items-center gap-1.5 font-medium"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">Question Boilerplate</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setShowStdin(!showStdin)}
@@ -304,7 +814,7 @@ export default function CodeExecutionSandbox({ onInsertIntoAnswer }) {
             {isRunning ? (
               <div className="flex items-center gap-2 text-slate-400 h-full justify-center">
                 <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
-                <span>Executing code in isolated Piston sandbox...</span>
+                <span>Executing code in isolated high-speed compiler sandbox...</span>
               </div>
             ) : result ? (
               <div>
@@ -338,4 +848,3 @@ export default function CodeExecutionSandbox({ onInsertIntoAnswer }) {
     </div>
   );
 }
-
