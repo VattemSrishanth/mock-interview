@@ -206,8 +206,17 @@ public class EmailVerificationService {
                 .toList();
     }
 
-    public void clearInbox() {
+    public void clearInbox(String email) {
+        if (email == null || email.isBlank()) {
+            throw new BadRequestException("An explicit candidate email address is required to clear mailbox messages.");
+        }
+        String target = email.trim().toLowerCase(Locale.ROOT);
+        mailbox.removeIf(m -> m.getTo().equalsIgnoreCase(target));
+    }
+
+    public void clearAllForTesting() {
         mailbox.clear();
+        verificationCodes.clear();
     }
 
     private boolean hasActiveMailExchange(String domain) {

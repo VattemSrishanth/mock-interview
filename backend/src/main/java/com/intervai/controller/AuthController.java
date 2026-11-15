@@ -53,8 +53,12 @@ public class AuthController {
     }
 
     @org.springframework.web.bind.annotation.DeleteMapping("/inbox")
-    public ResponseEntity<Void> clearInbox() {
-        emailVerificationService.clearInbox();
+    public ResponseEntity<Void> clearInbox(
+            @org.springframework.web.bind.annotation.RequestParam("email") String email) {
+        if (email == null || email.isBlank()) {
+            throw new com.intervai.exception.BadRequestException("Email address is required to clear candidate mailbox");
+        }
+        emailVerificationService.clearInbox(email);
         return ResponseEntity.noContent().build();
     }
 }
