@@ -306,6 +306,10 @@ public class EmailVerificationService {
 
         if (!entry.getCode().equals(trimmedCode)) {
             entry.setAttempts(entry.getAttempts() + 1);
+            if (entry.getAttempts() >= MAX_ATTEMPTS) {
+                verificationCodes.remove(email);
+                throw new BadRequestException("Too many failed attempts. Verification code has been invalidated. Please request a new code.");
+            }
             int remaining = MAX_ATTEMPTS - entry.getAttempts();
             throw new BadRequestException("Invalid verification code. " + remaining + " attempts remaining.");
         }
