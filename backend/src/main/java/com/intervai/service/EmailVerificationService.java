@@ -56,6 +56,12 @@ public class EmailVerificationService {
     @Value("${spring.mail.username:}")
     private String mailFrom;
 
+    @Value("${app.frontend.url:}")
+    private String configuredFrontendUrl;
+
+    @Value("${app.cors.allowed-origins:}")
+    private String corsAllowedOrigins;
+
     private final Map<String, VerificationEntry> verificationCodes = new ConcurrentHashMap<>();
     private final List<InboxMessageDto> mailbox = new CopyOnWriteArrayList<>();
 
@@ -123,8 +129,9 @@ public class EmailVerificationService {
         VerificationEntry entry = new VerificationEntry(code, now, now.plus(CODE_EXPIRATION));
         verificationCodes.put(email, entry);
 
+        String baseUrl = resolveFrontendBaseUrl();
         String encodedEmail = java.net.URLEncoder.encode(email, java.nio.charset.StandardCharsets.UTF_8);
-        String verificationLink = "http://localhost:5173/register?email=" + encodedEmail + "&code=" + code;
+        String verificationLink = baseUrl + "/register?email=" + encodedEmail + "&code=" + code;
 
         String htmlBody = buildHtmlEmail(email, code, verificationLink);
 
@@ -280,6 +287,25 @@ public class EmailVerificationService {
         // Code matches successfully: consume so it cannot be re-used
         verificationCodes.remove(email);
         return true;
+    }
+
+    public String resolveFrontendBaseUrl() {
+        if (configuredFrontendUrl != null && !configuredFrontendUrl.isBlank()) {
+            return configuredFrontendUrl.trim().replaceAll("/+$", "");
+        }
+        if (corsAllowedOrigins != null && !corsAllowedOrigins.isBlank()) {
+            String[] origins = corsAllowedOrigins.split(",");
+            for (String origin : origins) {
+                String clean = origin.trim();
+                if (!clean.isBlank() && !clean.contains("localhost") && !clean.contains("127.0.0.1")) {
+                    return clean.replaceAll("/+$", "");
+                }
+            }
+            if (origins.length > 0 && !origins[0].isBlank()) {
+                return origins[0].trim().replaceAll("/+$", "");
+            }
+        }
+        return "http://localhost:5173";
     }
 
     public String getCodeForTesting(String email) {

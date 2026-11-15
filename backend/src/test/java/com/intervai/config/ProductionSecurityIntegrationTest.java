@@ -45,6 +45,7 @@ class ProductionSecurityIntegrationTest {
     @Autowired UserRepository users;
     @Autowired @Qualifier("corsConfigurationSource") CorsConfigurationSource corsSource;
     @Autowired Environment environment;
+    @Autowired com.intervai.service.EmailVerificationService emailVerificationService;
 
     @Test
     void productionDisablesConsoleSkipsDemoAccountsAndKeepsConfiguredAdmin() {
@@ -63,16 +64,22 @@ class ProductionSecurityIntegrationTest {
 
     @Test
     void registrationLoginAndAdminRoleAuthorizationRemainAvailable() throws Exception {
-        String registration = mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"name":"Security Test","email":"security-test@example.com","password":"test-password"}
-                                """))
-                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
-        String userToken = new com.fasterxml.jackson.databind.ObjectMapper().readTree(registration).get("token").asText();
+        emailVerificationService.sendVerificationCode("security-test@example.com");
+        String code = emailVerificationService.getCodeForTesting("security-test@example.com");
 
-        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(String.format("""
+                                {"name":"Security Test","email":"security-test@example.com","password":"test-password","verificationCode":"%s"}
+                                """, code)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.requiresLogin").value(true));
+
+        String userLogin = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"security-test@example.com\",\"password\":\"test-password\"}"))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.token").isNotEmpty());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.token").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+        String userToken = new com.fasterxml.jackson.databind.ObjectMapper().readTree(userLogin).get("token").asText();
+
         mvc.perform(get("/api/admin/stats").header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isForbidden());
 
