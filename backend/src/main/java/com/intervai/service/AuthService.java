@@ -68,7 +68,7 @@ public class AuthService {
                 .avatarUrl("https://api.dicebear.com/7.x/bottts/svg?seed=" + request.getName().replaceAll("\\s+", ""))
                 .roles(roles)
                 .skills(skills)
-                .interviewStreak(1)
+                .interviewStreak(0)
                 .build();
 
         User savedUser = userRepository.save(user);
