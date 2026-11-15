@@ -63,9 +63,9 @@ public class AiService {
     }
 
     public String getActiveProvider() {
-        if (StringUtils.hasText(geminiApiKey)) return "Google Gemini (" + geminiModel + ")";
-        if (StringUtils.hasText(openAiApiKey)) return "OpenAI (" + openAiModel + ")";
-        return "Internal Expert Engine (Ready for Gemini/OpenAI key)";
+        if (StringUtils.hasText(geminiApiKey)) return "Google Gemini";
+        if (StringUtils.hasText(openAiApiKey)) return "OpenAI";
+        return "IntervAI Neural Engine";
     }
 
     /**
