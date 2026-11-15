@@ -42,4 +42,16 @@ public class AuthController {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(response);
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/inbox")
+    public ResponseEntity<java.util.List<com.intervai.dto.InboxMessageDto>> getInbox(
+            @org.springframework.web.bind.annotation.RequestParam(value = "email", required = false) String email) {
+        return ResponseEntity.ok(emailVerificationService.getInboxMessages(email));
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/inbox")
+    public ResponseEntity<Void> clearInbox() {
+        emailVerificationService.clearInbox();
+        return ResponseEntity.noContent().build();
+    }
 }

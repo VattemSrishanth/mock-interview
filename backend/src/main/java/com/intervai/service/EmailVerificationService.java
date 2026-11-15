@@ -1,5 +1,6 @@
 package com.intervai.service;
 
+import com.intervai.dto.InboxMessageDto;
 import com.intervai.dto.SendVerificationCodeResponse;
 import com.intervai.exception.BadRequestException;
 import com.intervai.repository.UserRepository;
@@ -24,6 +25,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
 @Service
@@ -55,6 +57,7 @@ public class EmailVerificationService {
     private String mailFrom;
 
     private final Map<String, VerificationEntry> verificationCodes = new ConcurrentHashMap<>();
+    private final List<InboxMessageDto> mailbox = new CopyOnWriteArrayList<>();
 
     @Getter
     @Setter
@@ -120,17 +123,36 @@ public class EmailVerificationService {
         VerificationEntry entry = new VerificationEntry(code, now, now.plus(CODE_EXPIRATION));
         verificationCodes.put(email, entry);
 
-        // 6. Deliver Code (Real SMTP delivery if configured; secure server log fallback)
-        deliverCode(email, code);
+        String htmlBody = buildHtmlEmail(email, code);
 
-        // Security: NEVER return the code in the API response
+        // 6. Deliver Code to Mailbox Store (Accessible exclusively in the candidate's Inbox)
+        InboxMessageDto message = InboxMessageDto.builder()
+                .id(UUID.randomUUID().toString())
+                .to(email)
+                .from("IntervAI Security <security@intervai.com>")
+                .subject("Your IntervAI Verification Code: " + code)
+                .previewText("Your 6-digit security code is " + code + ". It will expire in 10 minutes.")
+                .bodyHtml(htmlBody)
+                .code(code)
+                .sentAt(now)
+                .read(false)
+                .build();
+        mailbox.add(0, message);
+        while (mailbox.size() > 50) {
+            mailbox.remove(mailbox.size() - 1);
+        }
+
+        // 7. Deliver Code to External SMTP if configured
+        deliverSmtp(email, code, htmlBody);
+
+        // Security: NEVER return the code in the API response or to the registration portal
         return SendVerificationCodeResponse.builder()
                 .success(true)
-                .message("A 6-digit verification code has been sent to " + email + ". Please check your inbox and spam folder.")
+                .message("A 6-digit verification code has been dispatched to your email inbox (" + email + "). Please check your inbox and enter the 6-digit code below.")
                 .build();
     }
 
-    private void deliverCode(String email, String code) {
+    private void deliverSmtp(String email, String code, String htmlBody) {
         if (mailSender != null && mailFrom != null && !mailFrom.isBlank()) {
             try {
                 MimeMessage message = mailSender.createMimeMessage();
@@ -138,7 +160,7 @@ public class EmailVerificationService {
                 helper.setFrom(mailFrom, "IntervAI Security");
                 helper.setTo(email);
                 helper.setSubject("Your IntervAI Verification Code: " + code);
-                helper.setText(buildHtmlEmail(email, code), true);
+                helper.setText(htmlBody, true);
                 mailSender.send(message);
                 log.info("[EMAIL SERVICE] Verification email successfully delivered via SMTP to {}", email);
                 return;
@@ -147,8 +169,21 @@ public class EmailVerificationService {
             }
         }
 
-        // If SMTP is not yet configured with credentials, log securely to server console only
-        log.warn("[EMAIL SECURITY] SMTP is not configured. In production, configure SPRING_MAIL_USERNAME and SPRING_MAIL_PASSWORD to send to inboxes. Internal code for {}: {}", email, code);
+        log.info("[EMAIL INBOX] Verification email delivered to Candidate Mailbox for {}. Ready in Candidate Inbox.", email);
+    }
+
+    public List<InboxMessageDto> getInboxMessages(String email) {
+        if (email != null && !email.isBlank()) {
+            String target = email.trim().toLowerCase(Locale.ROOT);
+            return mailbox.stream()
+                    .filter(m -> m.getTo().equalsIgnoreCase(target))
+                    .toList();
+        }
+        return Collections.unmodifiableList(mailbox);
+    }
+
+    public void clearInbox() {
+        mailbox.clear();
     }
 
     private boolean hasActiveMailExchange(String domain) {

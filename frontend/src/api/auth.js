@@ -5,6 +5,15 @@ export const authApi = {
     const response = await api.post('/auth/send-verification-code', { email });
     return response.data;
   },
+  getInbox: async (email) => {
+    const params = email ? { email } : {};
+    const response = await api.get('/auth/inbox', { params });
+    return response.data;
+  },
+  clearInbox: async () => {
+    const response = await api.delete('/auth/inbox');
+    return response.data;
+  },
   login: async (credentials) => {
     const response = await api.post('/auth/login', credentials);
     return response.data;

@@ -12,7 +12,8 @@ import {
   PlayCircle, 
   Bot,
   Menu,
-  X
+  X,
+  Mail
 } from 'lucide-react';
 
 export default function Navbar({ onOpenCoach }) {
@@ -132,6 +133,14 @@ export default function Navbar({ onOpenCoach }) {
               </>
             ) : (
               <div className="flex items-center gap-3">
+                <Link
+                  to="/inbox"
+                  className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg flex items-center gap-1.5 transition"
+                  title="Open Candidate Verification Mailbox"
+                >
+                  <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Mailbox</span>
+                </Link>
                 <Link
                   to="/login"
                   className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition"

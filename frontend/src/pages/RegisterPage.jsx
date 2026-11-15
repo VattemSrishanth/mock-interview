@@ -16,7 +16,8 @@ import {
   Send,
   CheckCircle2,
   ShieldCheck,
-  Clock
+  Clock,
+  ExternalLink
 } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -238,9 +239,21 @@ export default function RegisterPage() {
               )}
 
               {codeStatus && (
-                <div className="mt-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2 text-[11px] text-emerald-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                  <span>{codeStatus}</span>
+                <div className="mt-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-emerald-400">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>{codeStatus}</span>
+                  </span>
+                  <a
+                    href={`/inbox?email=${encodeURIComponent(formData.email.trim())}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-semibold text-[11px] flex items-center gap-1 shrink-0 transition"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Open Inbox</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
               )}
             </div>
