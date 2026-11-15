@@ -16,6 +16,7 @@ public class InboxMessageDto {
     private String previewText;
     private String bodyHtml;
     private String code;
+    private String verificationLink;
     private Instant sentAt;
     private boolean read;
 }

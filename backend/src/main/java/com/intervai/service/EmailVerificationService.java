@@ -123,7 +123,10 @@ public class EmailVerificationService {
         VerificationEntry entry = new VerificationEntry(code, now, now.plus(CODE_EXPIRATION));
         verificationCodes.put(email, entry);
 
-        String htmlBody = buildHtmlEmail(email, code);
+        String encodedEmail = java.net.URLEncoder.encode(email, java.nio.charset.StandardCharsets.UTF_8);
+        String verificationLink = "http://localhost:5173/register?email=" + encodedEmail + "&code=" + code;
+
+        String htmlBody = buildHtmlEmail(email, code, verificationLink);
 
         // 6. Deliver Code to Mailbox Store (Accessible exclusively in the candidate's Inbox)
         InboxMessageDto message = InboxMessageDto.builder()
@@ -131,9 +134,10 @@ public class EmailVerificationService {
                 .to(email)
                 .from("IntervAI Security <security@intervai.com>")
                 .subject("Your IntervAI Verification Code: " + code)
-                .previewText("Your 6-digit security code is " + code + ". It will expire in 10 minutes.")
+                .previewText("Your 6-digit security code is " + code + ". Or click the verification link inside to verify.")
                 .bodyHtml(htmlBody)
                 .code(code)
+                .verificationLink(verificationLink)
                 .sentAt(now)
                 .read(false)
                 .build();
@@ -212,20 +216,30 @@ public class EmailVerificationService {
         }
     }
 
-    private String buildHtmlEmail(String recipient, String code) {
+    private String buildHtmlEmail(String recipient, String code, String verificationLink) {
         return "<!DOCTYPE html>"
                 + "<html>"
                 + "<head><meta charset='UTF-8'></head>"
                 + "<body style='margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;background-color:#070b14;color:#f1f5f9;'>"
-                + "<table align='center' border='0' cellpadding='0' cellspacing='0' width='100%' style='max-width:520px;background-color:#0d1322;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:32px;'>"
+                + "<table align='center' border='0' cellpadding='0' cellspacing='0' width='100%' style='max-width:540px;background-color:#0d1322;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,0.5);'>"
                 + "<tr><td align='center'>"
-                + "<div style='font-size:20px;font-weight:700;color:#6366f1;letter-spacing:-0.5px;'>IntervAI Platform</div>"
+                + "<div style='font-size:22px;font-weight:800;color:#6366f1;letter-spacing:-0.5px;'>IntervAI Platform</div>"
                 + "<h2 style='margin-top:16px;margin-bottom:8px;font-size:22px;font-weight:700;color:#ffffff;'>Verify Your Email Address</h2>"
-                + "<p style='margin:0 0 24px;font-size:13px;line-height:1.5;color:#94a3b8;'>Use the verification code below to complete your registration for <strong>" + recipient + "</strong>. This code will expire in 10 minutes.</p>"
-                + "<div style='background-color:#151f33;border:1px dashed #6366f1;border-radius:12px;padding:18px 24px;margin:16px 0;letter-spacing:8px;font-size:32px;font-weight:800;color:#38bdf8;font-family:monospace;text-align:center;'>"
+                + "<p style='margin:0 0 20px;font-size:13px;line-height:1.6;color:#94a3b8;'>Click the button below to verify your email address and continue setting up your interview profile for <strong>" + recipient + "</strong>.</p>"
+                + "<div style='margin:24px 0;'>"
+                + "<a href='" + verificationLink + "' target='_blank' style='background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:14px;font-weight:700;display:inline-block;letter-spacing:0.3px;box-shadow:0 4px 14px rgba(99,102,241,0.4);'>Verify Email &amp; Continue &rarr;</a>"
+                + "</div>"
+                + "<div style='border-top:1px solid rgba(255,255,255,0.08);margin:24px 0;padding-top:20px;'>"
+                + "<p style='margin:0 0 8px;font-size:12px;color:#94a3b8;'>Or manually enter this 6-digit verification code:</p>"
+                + "<div style='background-color:#151f33;border:1px dashed #6366f1;border-radius:12px;padding:14px 20px;margin:8px 0 16px;letter-spacing:8px;font-size:30px;font-weight:800;color:#38bdf8;font-family:monospace;text-align:center;'>"
                 + code
                 + "</div>"
-                + "<p style='margin:20px 0 0;font-size:11px;color:#64748b;'>If you did not request this code, you can safely ignore this email. Someone may have entered your email by mistake.</p>"
+                + "</div>"
+                + "<p style='margin:16px 0 0;font-size:11px;color:#64748b;line-height:1.5;word-break:break-all;'>"
+                + "Link not clicking? Paste this URL into your browser:<br/>"
+                + "<a href='" + verificationLink + "' style='color:#818cf8;text-decoration:underline;'>" + verificationLink + "</a>"
+                + "</p>"
+                + "<p style='margin:20px 0 0;font-size:11px;color:#475569;'>This code and link expire in 10 minutes. If you did not request this, you can safely ignore this email.</p>"
                 + "</td></tr>"
                 + "</table>"
                 + "</body></html>";
