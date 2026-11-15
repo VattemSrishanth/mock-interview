@@ -149,12 +149,25 @@ public class CodeExecutionService {
                 || "typescript".equals(language) || "java".equals(language);
     }
 
+    private Path resolveSandboxBaseDir() {
+        Path eTemp = Path.of("E:/Temp/intervai_sandbox");
+        if (Files.exists(eTemp)) {
+            return eTemp;
+        }
+        try {
+            if (Path.of("E:/").toFile().exists()) {
+                return Files.createDirectories(eTemp);
+            }
+        } catch (Exception ignored) {}
+        return Path.of(System.getProperty("java.io.tmpdir", "."));
+    }
+
     private CodeExecutionResponse executeLocally(String language, String code, String stdin) {
         long start = System.currentTimeMillis();
         Path tempDir = null;
 
         try {
-            tempDir = Files.createTempDirectory("intervai_sandbox_");
+            tempDir = Files.createTempDirectory(resolveSandboxBaseDir(), "run_");
             String fileName;
             List<String> command;
             String versionLabel;
