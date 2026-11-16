@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { shareApi } from '../api/share';
 import { analyzeSpeechTelemetry } from '../utils/speechTelemetry';
+import ReportQrCode from '../components/ReportQrCode';
 import {
   AlertTriangle, Award, BookOpen, Check, Clipboard, FileDown,
   Flag, ShieldCheck, Zap, Activity, Gauge, MessageSquare, Sparkles,
@@ -212,6 +213,9 @@ export default function PublicInterviewReportPage() {
                 <span className="text-base text-zinc-600 font-normal ml-1">/ 100</span>
               </div>
               <ScoreBadge score={providerScored ? result.overallScore : null} />
+              <div className="mt-3 flex justify-center">
+                <ReportQrCode value={typeof window !== 'undefined' ? window.location.href : ''} size={70} label="Verification QR" />
+              </div>
             </div>
           </div>
         </header>

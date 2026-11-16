@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { shareApi } from '../api/share';
 import {
-  Share2, Link2, Copy, Check, ExternalLink, Globe, Lock, RefreshCw, X
+  Share2, Link2, Copy, Check, ExternalLink, Globe, Lock, RefreshCw, X, QrCode
 } from 'lucide-react';
+import ReportQrCode from './ReportQrCode';
 
 export default function ShareInterviewModal({ interviewId, isOpen, onClose }) {
   const [shareStatus, setShareStatus] = useState(null);
@@ -153,6 +154,10 @@ export default function ShareInterviewModal({ interviewId, isOpen, onClose }) {
                     Open public report in new tab
                   </a>
                   <span className="font-mono text-[10px] text-zinc-500">token: {shareStatus.shareToken.slice(0, 8)}…</span>
+                </div>
+
+                <div className="flex items-center justify-center p-3 rounded-xl bg-zinc-950 border border-zinc-800">
+                  <ReportQrCode value={getFullShareUrl()} size={100} label="Scan to open report on mobile" />
                 </div>
               </div>
             )}
