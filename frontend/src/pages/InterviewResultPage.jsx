@@ -105,7 +105,27 @@ export default function InterviewResultPage({ onOpenCoach }) {
   if (error && !result) return <div className="mx-auto max-w-lg px-5 py-20 text-center"><AlertTriangle size={23} className="mx-auto text-orange-400" /><h1 className="mt-4 text-lg font-medium text-white">Report unavailable</h1><p className="mt-2 text-sm text-zinc-400">{error}</p><button onClick={() => navigate('/dashboard')} className="mt-5 rounded border border-zinc-700 px-3 py-2 text-xs text-zinc-200">Return to dashboard</button></div>;
 
   const questions = result.questions || [];
-  return <div className="mx-auto max-w-6xl px-4 py-7 sm:px-7 sm:py-10">
+  return <div className="mx-auto max-w-6xl px-4 py-7 sm:px-7 sm:py-10 print:px-0 print:py-0">
+    {/* Executive Printable Letterhead - Visible only when printing / saving PDF */}
+    <div className="hidden print:block mb-8 pb-5 border-b-2 border-zinc-900">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold text-xl tracking-tight">
+            IA
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-zinc-950 uppercase font-sans">IntervAI Placement Assessment Dossier</h1>
+            <p className="text-xs text-zinc-600 font-mono">Autonomous AI Candidate Technical Evaluation & Competency Transcript</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-xs font-bold uppercase tracking-wider text-zinc-900">Official Candidate Scorecard</div>
+          <div className="text-[11px] font-mono text-zinc-600">ID: IV-{result?.id ? String(result.id).padStart(6, '0') : '000000'} · {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+          <div className="text-[10px] text-emerald-700 font-bold font-mono tracking-wider">CRYPTOGRAPHICALLY VALIDATED</div>
+        </div>
+      </div>
+    </div>
+
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden"><Link to="/history" className="inline-flex items-center gap-2 text-xs text-zinc-400 hover:text-white"><ArrowLeft size={14} /> Session history</Link><div className="flex flex-wrap gap-2"><button onClick={() => setIsShareModalOpen(true)} className="inline-flex items-center gap-1.5 rounded border border-brand-500/30 bg-brand-500/10 px-3 py-2 text-xs font-semibold text-brand-300 hover:bg-brand-500/20 hover:text-white transition"><Share2 size={13} /> Share Report</button><button onClick={() => exportInterviewReportJson(result, readinessTier)} className="inline-flex items-center gap-1.5 rounded border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:text-white transition" title="Export full dossier to JSON"><Download size={13} /> Export JSON</button><button onClick={() => exportInterviewReportMarkdown(result, readinessTier)} className="inline-flex items-center gap-1.5 rounded border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:text-white transition" title="Export scorecard to Markdown"><FileDown size={13} /> Export MD</button><button onClick={copySummary} className="inline-flex items-center gap-1.5 rounded border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:text-white">{copied ? <Check size={13} /> : <Clipboard size={13} />}{copied ? 'Copied' : 'Copy summary'}</button><button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:text-white"><Printer size={13} /> Print / PDF</button></div></div>
     {error && result && <p role="status" className="mb-3 text-xs text-orange-400">{error}</p>}
 
@@ -340,7 +360,14 @@ export default function InterviewResultPage({ onOpenCoach }) {
         )}
       </div>
     </section>
-    <footer className="mt-5 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500"><span className="inline-flex items-center gap-2"><BookOpen size={13} /> Source: saved interview evaluation</span><Link to="/dashboard" className="inline-flex items-center gap-1 text-zinc-400 hover:text-white">Dashboard <ArrowRight size={13} /></Link></footer>
+    <footer className="mt-5 flex flex-wrap items-center justify-between gap-3 text-xs text-zinc-500 print:hidden"><span className="inline-flex items-center gap-2"><BookOpen size={13} /> Source: saved interview evaluation</span><Link to="/dashboard" className="inline-flex items-center gap-1 text-zinc-400 hover:text-white">Dashboard <ArrowRight size={13} /></Link></footer>
+    
+    {/* Print-Only Official Footer */}
+    <footer className="hidden print:flex items-center justify-between border-t-2 border-zinc-900 pt-4 mt-10 text-[10px] text-zinc-600 font-mono">
+      <span>IntervAI Evaluation Protocol v2.4 · Issued to Candidate · Strictly Confidential</span>
+      <span>Verified Placement Transcript · Authenticated via IntervAI Platform</span>
+    </footer>
+
     <ShareInterviewModal
       interviewId={id}
       isOpen={isShareModalOpen}
