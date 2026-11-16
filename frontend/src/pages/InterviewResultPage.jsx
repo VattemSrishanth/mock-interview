@@ -6,6 +6,7 @@ import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, Clipboard, FileD
 import ShareInterviewModal from '../components/ShareInterviewModal';
 import PlacementCompetencyMatrix from '../components/PlacementCompetencyMatrix';
 import PeerBenchmarkCard from '../components/PeerBenchmarkCard';
+import AudioAnswerPlaybackCard from '../components/AudioAnswerPlaybackCard';
 import ModelAnswerComparisonModal from '../components/ModelAnswerComparisonModal';
 import { analyzeSpeechTelemetry } from '../utils/speechTelemetry';
 import { exportInterviewReportJson, exportInterviewReportMarkdown } from '../utils/reportExportUtils';
@@ -322,6 +323,12 @@ export default function InterviewResultPage({ onOpenCoach }) {
                     <Sparkles size={12} className="text-orange-400" /> Deep Comparative Model Breakdown
                   </button>
                 </div>
+
+                {candidateWords > 0 && (
+                  <div className="mt-3">
+                    <AudioAnswerPlaybackCard question={question} index={index} />
+                  </div>
+                )}
 
                 {notes.length > 0 && (
                   <div className="mt-2.5 border-l-2 border-orange-500/60 pl-3">
