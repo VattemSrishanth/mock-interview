@@ -580,6 +580,37 @@ public class InterviewService {
                 .build();
     }
 
+    public Map<String, Object> verifyCertificateSignature(String shareToken, String clientSignature) {
+        Map<String, Object> res = new HashMap<>();
+        Optional<Interview> opt = interviewRepository.findByShareToken(shareToken);
+        if (opt.isEmpty()) {
+            res.put("valid", false);
+            res.put("message", "Certificate token not found");
+            return res;
+        }
+
+        Interview interview = opt.get();
+        if (!Boolean.TRUE.equals(interview.getIsPubliclyShared())) {
+            res.put("valid", false);
+            res.put("message", "This certificate has been revoked or marked private by the candidate");
+            return res;
+        }
+
+        String expectedSignature = generateCertificateSignature(interview);
+        boolean isValid = clientSignature != null && clientSignature.equalsIgnoreCase(expectedSignature);
+
+        res.put("valid", isValid);
+        res.put("certificateId", "IV-CERT-" + String.format("%06d", interview.getId()));
+        res.put("candidateName", interview.getUser() != null ? interview.getUser().getName() : "Candidate");
+        res.put("jobRole", interview.getJobRole());
+        res.put("overallScore", interview.getOverallScore());
+        res.put("interviewType", interview.getInterviewType());
+        res.put("verifiedAt", LocalDateTime.now().toString());
+        res.put("issuer", "IntervAI Cryptographic Verification Authority");
+
+        return res;
+    }
+
     private String generateShareToken() {
         byte[] bytes = new byte[32];
         new SecureRandom().nextBytes(bytes);

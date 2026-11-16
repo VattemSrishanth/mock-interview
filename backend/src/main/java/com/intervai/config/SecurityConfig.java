@@ -80,6 +80,7 @@ public class SecurityConfig {
                                 "/api/tts/personas",
                                 "/api/interviews/public/**",
                                 "/api/interviews/certificate/**",
+                                "/api/interviews/verify-signature",
                                 "/api/v1/health"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

@@ -43,4 +43,12 @@ public class ShareInterviewController {
     public ResponseEntity<InterviewCertificateDto> getCertificate(@PathVariable String shareToken) {
         return ResponseEntity.ok(interviewService.getInterviewCertificate(shareToken));
     }
+
+    // Public: Verify cryptographic signature of a certificate
+    @GetMapping("/api/interviews/verify-signature")
+    public ResponseEntity<java.util.Map<String, Object>> verifySignature(
+            @RequestParam String token,
+            @RequestParam(required = false) String sig) {
+        return ResponseEntity.ok(interviewService.verifyCertificateSignature(token, sig));
+    }
 }
