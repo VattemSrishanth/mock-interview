@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { interviewApi } from '../api/interview';
+import ScorecardQuickPreviewModal from '../components/ScorecardQuickPreviewModal';
 import { 
   History, 
   Search, 
@@ -23,6 +24,7 @@ export default function HistoryPage() {
   const [filterDifficulty, setFilterDifficulty] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [sortBy, setSortBy] = useState('NEWEST');
+  const [previewInterview, setPreviewInterview] = useState(null);
 
   useEffect(() => {
     fetchHistory();
@@ -299,6 +301,19 @@ export default function HistoryPage() {
                     )}
 
                     <div className="flex items-center gap-2">
+                      {isCompleted && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewInterview(item);
+                          }}
+                          className="px-2.5 py-1 text-xs font-semibold text-brand-300 hover:text-white bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/25 rounded-lg transition"
+                          title="Quick Scorecard Preview"
+                        >
+                          Quick View
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={(e) => handleDelete(item.id, e)}
@@ -317,6 +332,12 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
+
+      <ScorecardQuickPreviewModal
+        isOpen={Boolean(previewInterview)}
+        onClose={() => setPreviewInterview(null)}
+        interview={previewInterview}
+      />
     </div>
   );
 }
