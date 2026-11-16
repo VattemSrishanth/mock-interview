@@ -6,6 +6,7 @@ import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, Clipboard, FileD
 import ShareInterviewModal from '../components/ShareInterviewModal';
 import PlacementCompetencyMatrix from '../components/PlacementCompetencyMatrix';
 import PeerBenchmarkCard from '../components/PeerBenchmarkCard';
+import RecruiterPlacementRecommendation from '../components/RecruiterPlacementRecommendation';
 import AudioAnswerPlaybackCard from '../components/AudioAnswerPlaybackCard';
 import ModelAnswerComparisonModal from '../components/ModelAnswerComparisonModal';
 import { analyzeSpeechTelemetry } from '../utils/speechTelemetry';
@@ -171,6 +172,7 @@ export default function InterviewResultPage({ onOpenCoach }) {
       <section className="mt-4 space-y-4">
         <PlacementCompetencyMatrix result={result} />
         <PeerBenchmarkCard result={result} />
+        <RecruiterPlacementRecommendation result={result} />
       </section>
     )}
 

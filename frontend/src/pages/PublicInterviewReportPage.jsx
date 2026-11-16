@@ -5,6 +5,7 @@ import { shareApi } from '../api/share';
 import { analyzeSpeechTelemetry } from '../utils/speechTelemetry';
 import ReportQrCode from '../components/ReportQrCode';
 import PeerBenchmarkCard from '../components/PeerBenchmarkCard';
+import RecruiterPlacementRecommendation from '../components/RecruiterPlacementRecommendation';
 import {
   AlertTriangle, Award, BookOpen, Check, Clipboard, FileDown,
   Flag, ShieldCheck, Zap, Activity, Gauge, MessageSquare, Sparkles,
@@ -239,8 +240,9 @@ export default function PublicInterviewReportPage() {
         </header>
 
         {providerScored && (
-          <div className="mt-5">
+          <div className="mt-5 space-y-4">
             <PeerBenchmarkCard result={result} />
+            <RecruiterPlacementRecommendation result={result} />
           </div>
         )}
 
