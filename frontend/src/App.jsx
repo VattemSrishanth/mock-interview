@@ -20,6 +20,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const PublicInterviewReportPage = lazy(() => import('./pages/PublicInterviewReportPage'));
+const CertificateVerificationPage = lazy(() => import('./pages/CertificateVerificationPage'));
 const InboxPage = lazy(() => import('./pages/InboxPage'));
 
 function RouteFallback() {
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/report/:shareToken" element={<PublicInterviewReportPage />} />
+          <Route path="/verify/:shareToken" element={<CertificateVerificationPage />} />
 
           {/* Protected Candidate Routes */}
           <Route
