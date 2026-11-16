@@ -85,6 +85,7 @@ All API routes are under `/api`.
 | History | `GET /history` | Authenticated interview history |
 | Analytics | `GET /analytics` | Current user’s aggregates and trends |
 | AI coach | `POST /ai/coach`, `GET /ai/status` | Coach response and active provider status |
+| Public Share & Verification | `POST /api/interviews/{id}/share`, `GET /api/interviews/{id}/share`, `GET /api/interviews/public/{shareToken}`, `GET /api/interviews/certificate/{shareToken}`, `GET /api/interviews/verify-signature` | Share management, public scorecards, and cryptographic SHA-256 certificate verification |
 | AI key configuration | `POST /ai/configure-key` | Administrator only; sets Gemini or OpenAI key at runtime |
 | Administration | `GET /admin/stats`, `GET /admin/users`, `GET /admin/interviews` | Administrator only |
 
@@ -202,3 +203,20 @@ render.yaml             Backend Render service declaration
 README.md               Existing setup and product overview
 ```
 
+
+
+## 14. Phase 3 Release Notes: Diagnostic Scorecard & Viral 1-Click PDF Report
+
+Phase 3 introduces an executive-grade placement evaluation engine designed for campus candidates, recruiters, and mentors:
+
+1. **Pixel-Perfect Printable Assessment Dossier**: Clean `@media print` layout with executive letterhead, candidate credential header, session verification ID, watermark, and clean page-break formatting.
+2. **5-Axis Placement Competency Matrix**: Radar visualization mapping Technical Depth, Communication, Relevance, STAR Structure, and Cadence with benchmark overlays.
+3. **Deep Comparative Model Answer Breakdown**: Side-by-side comparison of candidate submissions vs. AI reference answers with STAR technique feedback.
+4. **Cryptographic Certificate Verification (`/verify/:shareToken`)**: SHA-256 digital certificate signature generator and public validation API preventing client tampering.
+5. **Dynamic Vector QR Code Integration**: Embedded SVG QR codes for 1-click mobile verification on screens and printed PDFs.
+6. **1-Click Viral LinkedIn & WhatsApp Sharing**: Instant social achievement sharing with pre-formatted placement copy and public scorecard URLs.
+7. **Dynamic Peer Percentile Benchmark Engine**: Mathematical normal CDF percentile calculation comparing candidates against peer cohorts.
+8. **Audio Answer Playback Telemetry**: Interactive speech rate (WPM) scrubber and verbal pacing analysis per question.
+9. **Recruiter Placement Verdict & 7-Day Plan**: Automated hiring recommendation (Strong Hire, Lean Hire, Re-evaluate) and personalized study roadmap.
+10. **Candidate Profile Credentials Portfolio**: Tabbed credentials view in Profile showcasing all verified mock interview transcripts.
+11. **Session History Quick-Preview Modal**: 1-click scorecard preview, JSON/Markdown export, and print trigger without navigation.

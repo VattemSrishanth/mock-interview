@@ -182,3 +182,18 @@ npm run build
 ```
 
 The GitHub Actions workflow runs these backend and frontend checks on pushes and pull requests. The backend Docker build also runs Maven verification before producing the runtime image.
+
+
+---
+
+## 🏆 Phase 3: Diagnostic Scorecard & Viral 1-Click PDF Report Engine
+
+- **Printable Executive Assessment Dossier**: Optimized `@media print` layout formatting clean A4 PDF reports with executive letterhead, candidate badges, and cryptographic validation headers.
+- **5-Axis Placement Skill Matrix**: Real-time radar visualization with campus recruitment benchmark overlays.
+- **Side-by-Side Model Answer Comparison**: Detailed comparison between candidate submissions and AI reference answers with STAR technique feedback.
+- **Cryptographic Verification Service**: Tamper-proof SHA-256 digital certificate signatures verified via public endpoint `/api/interviews/verify-signature` and dedicated portal `/verify/:shareToken`.
+- **Dynamic Vector QR Code Integration**: Embedded SVG QR codes for 1-click mobile camera scanning and authenticity verification.
+- **1-Click Viral Sharing**: Direct formatted social sharing to LinkedIn, WhatsApp, and Twitter/X with placement achievement copy.
+- **Dynamic Peer Percentile Ranking**: Mathematical normal CDF percentile calculation comparing candidates against peer cohorts.
+- **Audio Cadence Scrubber**: Interactive verbal pacing review with Words-Per-Minute (WPM) telemetry per question.
+- **Candidate Credentials Portfolio**: Verified interview certificates and scorecards displayed on the candidate profile.
