@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/auth';
+import { interviewApi } from '../api/interview';
+import { Link } from 'react-router-dom';
 import { 
   User, 
   GraduationCap, 
@@ -10,7 +12,13 @@ import {
   Trophy, 
   Flame, 
   Search,
-  X
+  X,
+  ShieldCheck,
+  Award,
+  ExternalLink,
+  Share2,
+  Copy,
+  Check
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -32,6 +40,9 @@ export default function ProfilePage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [leaderboardSearch, setLeaderboardSearch] = useState('');
+  const [credentials, setCredentials] = useState([]);
+  const [loadingCredentials, setLoadingCredentials] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
 
   const jobRoles = [
     'Frontend Developer',
@@ -81,6 +92,15 @@ export default function ProfilePage() {
         .then((data) => setLeaderboard(Array.isArray(data) ? data : []))
         .catch((err) => console.error("Leaderboard fetch failed:", err))
         .finally(() => setLoadingLeaderboard(false));
+    } else if (activeTab === 'credentials') {
+      setLoadingCredentials(true);
+      interviewApi.getAll()
+        .then((data) => {
+          const list = Array.isArray(data) ? data : [];
+          setCredentials(list.filter((i) => i.status === 'COMPLETED'));
+        })
+        .catch((err) => console.error("Credentials fetch failed:", err))
+        .finally(() => setLoadingCredentials(false));
     }
   }, [activeTab]);
 
@@ -192,6 +212,18 @@ export default function ProfilePage() {
         >
           <Trophy className="w-4 h-4 text-amber-400" />
           <span>Platform Leaderboard</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('credentials')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition ${
+            activeTab === 'credentials'
+              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <span>Verified Credentials & Reports</span>
         </button>
       </div>
 
@@ -453,6 +485,109 @@ export default function ProfilePage() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tab 3: Verified Credentials & Reports */}
+      {activeTab === 'credentials' && (
+        <div className="space-y-6">
+          <div className="p-6 rounded-2xl bg-[#0d1322] border border-white/10 shadow-xl space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+              <div>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 font-bold">
+                  <ShieldCheck size={14} /> Verified Placement Credentials Portfolio
+                </span>
+                <h3 className="text-lg font-bold text-white mt-1">Autonomous Mock Interview Transcripts</h3>
+                <p className="text-xs text-slate-400">
+                  Completed mock interviews with verified competency scores, STAR assessments, and shareable verification tokens.
+                </p>
+              </div>
+              <span className="font-mono text-xs text-slate-400">
+                {credentials.length} Completed Credentials
+              </span>
+            </div>
+
+            {loadingCredentials ? (
+              <div className="py-12 text-center text-xs font-mono text-slate-500">
+                Loading verified transcripts...
+              </div>
+            ) : credentials.length === 0 ? (
+              <div className="py-12 text-center space-y-3">
+                <Award className="w-10 h-10 text-slate-600 mx-auto" />
+                <p className="text-sm text-slate-400">No completed mock interview transcripts yet.</p>
+                <Link
+                  to="/create"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-500 text-slate-950 font-bold text-xs hover:bg-brand-400 transition"
+                >
+                  Start Your First Interview Session
+                </Link>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {credentials.map((item) => {
+                  const score = item.overallScore;
+                  const isScored = score != null;
+                  const shareUrl = item.shareToken ? `${window.location.origin}/report/${item.shareToken}` : null;
+                  const dateStr = item.completedAt ? new Date(item.completedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Completed';
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-xl border border-white/10 bg-slate-900/60 p-4 space-y-3 hover:border-white/20 transition flex flex-col justify-between"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-[10px] text-slate-400 uppercase">
+                            ID: IV-{String(item.id).padStart(6, '0')} · {dateStr}
+                          </span>
+                          <span className={`font-mono font-bold px-2 py-0.5 rounded text-xs ${
+                            isScored && score >= 85 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                            isScored && score >= 70 ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20' :
+                            'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          }`}>
+                            {isScored ? `${score}%` : 'Practice'}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm font-bold text-white">
+                          {item.jobRole || 'Technical Interview'}
+                        </h4>
+
+                        <div className="flex flex-wrap gap-2 text-[11px] font-mono text-slate-400">
+                          <span>{item.interviewType || 'General'}</span>
+                          <span>•</span>
+                          <span>{item.difficulty || 'Standard'}</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                        <Link
+                          to={`/interviews/${item.id}/result`}
+                          className="text-brand-400 hover:text-brand-300 font-semibold flex items-center gap-1 transition"
+                        >
+                          View Dossier <ExternalLink size={12} />
+                        </Link>
+
+                        {shareUrl && (
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(shareUrl);
+                              setCopiedId(item.id);
+                              setTimeout(() => setCopiedId(null), 1500);
+                            }}
+                            className="text-slate-400 hover:text-white flex items-center gap-1 transition text-[11px]"
+                          >
+                            {copiedId === item.id ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                            {copiedId === item.id ? 'Copied' : 'Share URL'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
