@@ -4,6 +4,7 @@ import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadius
 import { interviewApi } from '../api/interview';
 import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, Clipboard, FileDown, Flag, RotateCcw, Zap, Activity, Gauge, MessageSquare, Sparkles, Share2, Award, Download, Printer } from 'lucide-react';
 import ShareInterviewModal from '../components/ShareInterviewModal';
+import PlacementCompetencyMatrix from '../components/PlacementCompetencyMatrix';
 import { analyzeSpeechTelemetry } from '../utils/speechTelemetry';
 import { exportInterviewReportJson, exportInterviewReportMarkdown } from '../utils/reportExportUtils';
 
@@ -162,10 +163,11 @@ export default function InterviewResultPage({ onOpenCoach }) {
 
     {!providerScored && <div className="mt-3 border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-xs leading-5 text-zinc-300"><span className="font-mono text-orange-400">Guidance only</span><span className="ml-2">{result.evaluationSource === 'HEURISTIC' ? 'A provider evaluation was unavailable. This session has qualitative practice guidance and no answer quality score.' : 'No provider evaluation score was saved for this session.'}</span></div>}
 
-    {providerScored && <section className="mt-4 grid gap-4 lg:grid-cols-[.9fr_1.1fr]">
-      <article className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4"><div className="flex items-center justify-between"><div><p className={mono + ' text-zinc-500'}>Competency map</p><h2 className="mt-1 text-base font-medium text-white">Saved rubric scores</h2></div><span className={mono + ' text-orange-400'}>5 dimensions</span></div><div className="mt-2 h-[270px] w-full"><CompetencyRadar data={chartData} /></div></article>
-      <article className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4"><p className={mono + ' text-zinc-500'}>Dimension detail</p><h2 className="mt-1 text-base font-medium text-white">Evaluation breakdown</h2><div className="mt-5 space-y-4">{dimensions.map(([label, key]) => { const score = Number(result[key]) || 0; return <div key={key}><div className="mb-1.5 flex items-center justify-between text-xs"><span className="text-zinc-300">{label}</span><span className="font-mono tabular-nums text-orange-400">{score}</span></div><div className="h-1 bg-zinc-800"><div className="h-full bg-orange-500" style={{ width: `${Math.max(0, Math.min(100, score))}%` }} /></div></div>; })}</div></article>
-    </section>}
+    {providerScored && (
+      <section className="mt-4">
+        <PlacementCompetencyMatrix result={result} />
+      </section>
+    )}
 
     {(result.strengths?.length || (result.weaknesses || result.improvements)?.length || (result.recommendations || result.suggestions)?.length) ? <section className="mt-4 grid gap-3 md:grid-cols-3">{[["Observed strengths", result.strengths, 'text-orange-400'], ['Areas to develop', result.weaknesses || result.improvements, 'text-zinc-300'], ['Next practice', result.recommendations || result.suggestions, 'text-zinc-300']].map(([title, list, accent]) => list?.length ? <article key={title} className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4"><p className={`${mono} ${accent}`}>{title}</p><ul className="mt-3 space-y-2 text-xs leading-5 text-zinc-400">{list.map((entry, index) => <li key={`${title}-${index}`} className="flex gap-2"><span className="font-mono text-zinc-600">{String(index + 1).padStart(2, '0')}</span><span>{entry}</span></li>)}</ul></article> : null)}</section> : null}
 
