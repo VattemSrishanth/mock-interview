@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { shareApi } from '../api/share';
 import {
-  Share2, Link2, Copy, Check, ExternalLink, Globe, Lock, RefreshCw, X, QrCode
+  Share2, Link2, Copy, Check, ExternalLink, Globe, Lock, RefreshCw, X, QrCode, Linkedin, MessageCircle
 } from 'lucide-react';
 import ReportQrCode from './ReportQrCode';
+import { openLinkedInShare, openWhatsAppShare, openTwitterShare } from '../utils/socialShareUtils';
 
 export default function ShareInterviewModal({ interviewId, isOpen, onClose }) {
   const [shareStatus, setShareStatus] = useState(null);
@@ -158,6 +159,39 @@ export default function ShareInterviewModal({ interviewId, isOpen, onClose }) {
 
                 <div className="flex items-center justify-center p-3 rounded-xl bg-zinc-950 border border-zinc-800">
                   <ReportQrCode value={getFullShareUrl()} size={100} label="Scan to open report on mobile" />
+                </div>
+
+                {/* 1-Click Viral Social Share Buttons */}
+                <div className="space-y-1.5 pt-1">
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 block">
+                    Share Achievement
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => openLinkedInShare({ shareUrl: getFullShareUrl() })}
+                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-[#0077b5]/15 hover:bg-[#0077b5]/25 text-[#70b5f9] border border-[#0077b5]/30 text-xs font-semibold transition"
+                      title="Share to LinkedIn"
+                    >
+                      <Linkedin size={13} />
+                      <span>LinkedIn</span>
+                    </button>
+                    <button
+                      onClick={() => openWhatsAppShare({ shareUrl: getFullShareUrl() })}
+                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-[#25d366]/15 hover:bg-[#25d366]/25 text-[#4ade80] border border-[#25d366]/30 text-xs font-semibold transition"
+                      title="Share to WhatsApp"
+                    >
+                      <MessageCircle size={13} />
+                      <span>WhatsApp</span>
+                    </button>
+                    <button
+                      onClick={() => openTwitterShare({ shareUrl: getFullShareUrl() })}
+                      className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-semibold transition"
+                      title="Share on X / Twitter"
+                    >
+                      <Share2 size={13} />
+                      <span>Twitter / X</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

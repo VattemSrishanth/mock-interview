@@ -7,8 +7,9 @@ import ReportQrCode from '../components/ReportQrCode';
 import {
   AlertTriangle, Award, BookOpen, Check, Clipboard, FileDown,
   Flag, ShieldCheck, Zap, Activity, Gauge, MessageSquare, Sparkles,
-  ExternalLink, Lock
+  ExternalLink, Lock, Linkedin, MessageCircle, Share2
 } from 'lucide-react';
+import { openLinkedInShare, openWhatsAppShare } from '../utils/socialShareUtils';
 
 const mono = 'font-mono text-[10px] uppercase tracking-wider';
 const dimensions = [
@@ -141,6 +142,22 @@ export default function PublicInterviewReportPage() {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => openLinkedInShare({ shareUrl: window.location.href, jobRole: result?.jobRole, overallScore: result?.overallScore })}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#0077b5]/40 bg-[#0077b5]/15 px-2.5 py-1.5 text-xs text-[#70b5f9] hover:bg-[#0077b5]/25 transition print:hidden"
+              title="Share to LinkedIn"
+            >
+              <Linkedin className="w-3.5 h-3.5" />
+              <span>LinkedIn</span>
+            </button>
+            <button
+              onClick={() => openWhatsAppShare({ shareUrl: window.location.href, jobRole: result?.jobRole, overallScore: result?.overallScore, interviewType: result?.interviewType })}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#25d366]/40 bg-[#25d366]/15 px-2.5 py-1.5 text-xs text-[#4ade80] hover:bg-[#25d366]/25 transition print:hidden"
+              title="Share to WhatsApp"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>WhatsApp</span>
+            </button>
             <button
               onClick={handleCopyLink}
               className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:text-white hover:border-zinc-500 transition"
