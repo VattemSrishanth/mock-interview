@@ -5,6 +5,7 @@ import { interviewApi } from '../api/interview';
 import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, Clipboard, FileDown, Flag, RotateCcw, Zap, Activity, Gauge, MessageSquare, Sparkles, Share2, Award, Download, Printer } from 'lucide-react';
 import ShareInterviewModal from '../components/ShareInterviewModal';
 import PlacementCompetencyMatrix from '../components/PlacementCompetencyMatrix';
+import ModelAnswerComparisonModal from '../components/ModelAnswerComparisonModal';
 import { analyzeSpeechTelemetry } from '../utils/speechTelemetry';
 import { exportInterviewReportJson, exportInterviewReportMarkdown } from '../utils/reportExportUtils';
 
@@ -38,6 +39,7 @@ export default function InterviewResultPage({ onOpenCoach }) {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [selectedComparison, setSelectedComparison] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -310,6 +312,15 @@ export default function InterviewResultPage({ onOpenCoach }) {
                   </div>
                 </div>
 
+                <div className="mt-2.5 flex items-center justify-between print:hidden">
+                  <button 
+                    onClick={() => setSelectedComparison({ question, index })}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-[11px] font-medium transition"
+                  >
+                    <Sparkles size={12} className="text-orange-400" /> Deep Comparative Model Breakdown
+                  </button>
+                </div>
+
                 {notes.length > 0 && (
                   <div className="mt-2.5 border-l-2 border-orange-500/60 pl-3">
                     <p className={`${mono} text-zinc-500`}>Saved feedback</p>
@@ -369,6 +380,13 @@ export default function InterviewResultPage({ onOpenCoach }) {
       <span>IntervAI Evaluation Protocol v2.4 · Issued to Candidate · Strictly Confidential</span>
       <span>Verified Placement Transcript · Authenticated via IntervAI Platform</span>
     </footer>
+
+    <ModelAnswerComparisonModal
+      isOpen={Boolean(selectedComparison)}
+      onClose={() => setSelectedComparison(null)}
+      question={selectedComparison?.question}
+      questionIndex={selectedComparison?.index ?? 0}
+    />
 
     <ShareInterviewModal
       interviewId={id}
