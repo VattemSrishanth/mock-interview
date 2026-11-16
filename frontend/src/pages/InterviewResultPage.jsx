@@ -5,6 +5,7 @@ import { interviewApi } from '../api/interview';
 import { AlertTriangle, ArrowLeft, ArrowRight, BookOpen, Check, Clipboard, FileDown, Flag, RotateCcw, Zap, Activity, Gauge, MessageSquare, Sparkles, Share2, Award, Download, Printer } from 'lucide-react';
 import ShareInterviewModal from '../components/ShareInterviewModal';
 import PlacementCompetencyMatrix from '../components/PlacementCompetencyMatrix';
+import PeerBenchmarkCard from '../components/PeerBenchmarkCard';
 import ModelAnswerComparisonModal from '../components/ModelAnswerComparisonModal';
 import { analyzeSpeechTelemetry } from '../utils/speechTelemetry';
 import { exportInterviewReportJson, exportInterviewReportMarkdown } from '../utils/reportExportUtils';
@@ -166,8 +167,9 @@ export default function InterviewResultPage({ onOpenCoach }) {
     {!providerScored && <div className="mt-3 border border-orange-500/20 bg-orange-500/5 px-4 py-3 text-xs leading-5 text-zinc-300"><span className="font-mono text-orange-400">Guidance only</span><span className="ml-2">{result.evaluationSource === 'HEURISTIC' ? 'A provider evaluation was unavailable. This session has qualitative practice guidance and no answer quality score.' : 'No provider evaluation score was saved for this session.'}</span></div>}
 
     {providerScored && (
-      <section className="mt-4">
+      <section className="mt-4 space-y-4">
         <PlacementCompetencyMatrix result={result} />
+        <PeerBenchmarkCard result={result} />
       </section>
     )}
 
