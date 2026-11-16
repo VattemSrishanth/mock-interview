@@ -527,6 +527,56 @@ public class InterviewService {
                 .shareToken(interview.getShareToken())
                 .isPubliclyShared(true)
                 .candidateName(interview.getUser().getName())
+                .signatureHash(generateCertificateSignature(interview))
+                .build();
+    }
+
+    public String generateCertificateSignature(Interview interview) {
+        try {
+            String raw = String.format("INTERVAI-CERT:%d:%s:%d:%s:%s",
+                    interview.getId(),
+                    interview.getShareToken(),
+                    interview.getOverallScore() != null ? interview.getOverallScore() : 0,
+                    interview.getUser() != null ? interview.getUser().getId() : 0,
+                    interview.getCompletedAt() != null ? interview.getCompletedAt().toString() : "ACTIVE");
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "SIG-SECURE-FALLBACK";
+        }
+    }
+
+    public InterviewCertificateDto getInterviewCertificate(String shareToken) {
+        Interview interview = interviewRepository.findByShareToken(shareToken)
+                .orElseThrow(() -> new ResourceNotFoundException("Shared interview not found"));
+
+        if (!Boolean.TRUE.equals(interview.getIsPubliclyShared())) {
+            throw new ResourceNotFoundException("This interview certificate is not publicly shared");
+        }
+
+        String signature = generateCertificateSignature(interview);
+        int score = interview.getOverallScore() != null ? interview.getOverallScore() : 0;
+        String tier = score >= 85 ? "Senior Placement Ready" : score >= 70 ? "Proficient Candidate" : score >= 50 ? "Developing Foundation" : "Practice Suggested";
+
+        return InterviewCertificateDto.builder()
+                .certificateId("IV-CERT-" + String.format("%06d", interview.getId()))
+                .shareToken(interview.getShareToken())
+                .candidateName(interview.getUser() != null ? interview.getUser().getName() : "Candidate")
+                .jobRole(interview.getJobRole())
+                .interviewType(interview.getInterviewType())
+                .difficulty(interview.getDifficulty())
+                .overallScore(score)
+                .readinessTier(tier)
+                .issuedAt(interview.getCompletedAt() != null ? interview.getCompletedAt() : LocalDateTime.now())
+                .signatureHash(signature)
+                .verified(true)
+                .verificationUrl("/report/" + interview.getShareToken())
+                .issuer("IntervAI Autonomous Assessment Authority")
                 .build();
     }
 

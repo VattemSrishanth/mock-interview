@@ -79,6 +79,7 @@ public class SecurityConfig {
                                 "/api/leaderboard/public",
                                 "/api/tts/personas",
                                 "/api/interviews/public/**",
+                                "/api/interviews/certificate/**",
                                 "/api/v1/health"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

@@ -1,5 +1,6 @@
 package com.intervai.controller;
 
+import com.intervai.dto.InterviewCertificateDto;
 import com.intervai.dto.InterviewResultDto;
 import com.intervai.dto.ShareInterviewResponse;
 import com.intervai.security.UserPrincipal;
@@ -35,5 +36,11 @@ public class ShareInterviewController {
     @GetMapping("/api/interviews/public/{shareToken}")
     public ResponseEntity<InterviewResultDto> getPublicReport(@PathVariable String shareToken) {
         return ResponseEntity.ok(interviewService.getPublicInterviewResult(shareToken));
+    }
+
+    // Public: View verified certificate metadata (no auth required)
+    @GetMapping("/api/interviews/certificate/{shareToken}")
+    public ResponseEntity<InterviewCertificateDto> getCertificate(@PathVariable String shareToken) {
+        return ResponseEntity.ok(interviewService.getInterviewCertificate(shareToken));
     }
 }

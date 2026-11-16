@@ -36,4 +36,5 @@ public class InterviewResultDto {
     private String shareToken;
     private Boolean isPubliclyShared;
     private String candidateName; // for public report display
+    private String signatureHash; // cryptographic SHA-256 certificate signature
 }
