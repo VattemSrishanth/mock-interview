@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import java.security.SecureRandom;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class InterviewService {
 
@@ -36,11 +35,54 @@ public class InterviewService {
     private final AiService aiService;
     private final AiRateLimiter aiRateLimiter;
     private final ObjectMapper objectMapper;
+    private final CreditWalletService creditWalletService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public InterviewService(
+            InterviewRepository interviewRepository,
+            InterviewQuestionRepository questionRepository,
+            AnswerRepository answerRepository,
+            FeedbackRepository feedbackRepository,
+            UserRepository userRepository,
+            PerformanceRepository performanceRepository,
+            AiService aiService,
+            AiRateLimiter aiRateLimiter,
+            ObjectMapper objectMapper,
+            @org.springframework.beans.factory.annotation.Autowired(required = false) CreditWalletService creditWalletService) {
+        this.interviewRepository = interviewRepository;
+        this.questionRepository = questionRepository;
+        this.answerRepository = answerRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.userRepository = userRepository;
+        this.performanceRepository = performanceRepository;
+        this.aiService = aiService;
+        this.aiRateLimiter = aiRateLimiter;
+        this.objectMapper = objectMapper;
+        this.creditWalletService = creditWalletService;
+    }
+
+    public InterviewService(
+            InterviewRepository interviewRepository,
+            InterviewQuestionRepository questionRepository,
+            AnswerRepository answerRepository,
+            FeedbackRepository feedbackRepository,
+            UserRepository userRepository,
+            PerformanceRepository performanceRepository,
+            AiService aiService,
+            AiRateLimiter aiRateLimiter,
+            ObjectMapper objectMapper) {
+        this(interviewRepository, questionRepository, answerRepository, feedbackRepository,
+                userRepository, performanceRepository, aiService, aiRateLimiter, objectMapper, null);
+    }
 
     @Transactional
     public InterviewDto createInterview(Long userId, CreateInterviewRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (creditWalletService != null) {
+            creditWalletService.consumeInterviewQuota(userId);
+        }
 
         String skillsString = request.getSkills() != null ? String.join(",", request.getSkills()) : "";
 

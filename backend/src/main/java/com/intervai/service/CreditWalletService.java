@@ -24,6 +24,9 @@ public class CreditWalletService {
     private final UserRepository userRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
+    @org.springframework.beans.factory.annotation.Value("${app.billing.enforce-credits:true}")
+    private boolean enforceCredits = true;
+
     /**
      * Retrieves or lazily creates a persistent credit wallet for a user.
      * New candidate wallets are seeded with 1 free technical interview and a unique referral code.
@@ -84,10 +87,12 @@ public class CreditWalletService {
             wallet.setCreditsBalance(wallet.getCreditsBalance() - 1);
             wallet.setTotalInterviewsCompleted((wallet.getTotalInterviewsCompleted() != null ? wallet.getTotalInterviewsCompleted() : 0) + 1);
             log.info("Consumed 1 paid credit for user {}. Remaining balance: {}", userId, wallet.getCreditsBalance());
-        } else {
+        } else if (enforceCredits) {
             throw new InsufficientCreditsException(
                     "You have 0 mock interview credits remaining. Please recharge via UPI to continue practicing."
             );
+        } else {
+            log.warn("Credit enforcement bypassed for user {} (enforceCredits=false)", userId);
         }
 
         walletRepository.save(wallet);

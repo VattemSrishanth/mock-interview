@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { interviewApi } from '../api/interview';
 import { useAuth } from '../context/AuthContext';
+import { useWallet } from '../context/WalletContext';
 import { 
   Layers, 
   Check, 
@@ -78,6 +79,7 @@ export default function CreateInterviewPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { wallet, totalCredits, canStartInterview, openPricingModal, refreshWallet } = useWallet();
   const preset = location.state || {};
 
   // Source selection: 'PRESET', 'RESUME', 'JOB_DESCRIPTION', 'RESUME_AND_JD'
@@ -244,6 +246,12 @@ export default function CreateInterviewPage() {
       return;
     }
 
+    // Credit quota enforcement gate
+    if (!canStartInterview) {
+      openPricingModal('STARTER_PACK_149');
+      return;
+    }
+
     setError('');
     setIsGenerating(true);
     setGenerationStep(1);
@@ -268,13 +276,19 @@ export default function CreateInterviewPage() {
       });
 
       clearInterval(stepInterval);
+      refreshWallet();
       navigate(`/interviews/${createdInterview.id}/lobby`);
     } catch (err) {
       clearInterval(stepInterval);
       setIsGenerating(false);
-      setError(
-        err.response?.data?.message || 'Failed to generate interview questions. Please verify your backend connection.'
-      );
+      if (err.response?.status === 402) {
+        openPricingModal('STARTER_PACK_149');
+        setError('Insufficient mock interview credits. Please recharge via UPI to continue.');
+      } else {
+        setError(
+          err.response?.data?.message || 'Failed to generate interview questions. Please verify your backend connection.'
+        );
+      }
     }
   };
 
@@ -842,8 +856,56 @@ export default function CreateInterviewPage() {
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="pt-2">
+        {/* Credit Quota Banner & Action Button */}
+        <div className="pt-2 space-y-4">
+          {wallet && (
+            <div
+              className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-4 text-xs ${
+                totalCredits === 0
+                  ? 'border-rose-500/40 bg-rose-950/30 text-rose-200'
+                  : 'border-white/10 bg-[#0d1322] text-slate-300'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                    totalCredits === 0
+                      ? 'bg-rose-500/20 text-rose-400'
+                      : 'bg-orange-500/15 text-orange-400'
+                  }`}
+                >
+                  <Zap className="h-4 w-4 fill-current" />
+                </div>
+                <div>
+                  <p className="font-bold text-white">
+                    {totalCredits === 0
+                      ? '0 Interview Credits Remaining'
+                      : wallet.freeInterviewsRemaining > 0
+                      ? `Free Trial Active • ${totalCredits} ${totalCredits === 1 ? 'Credit' : 'Credits'} Available`
+                      : `Consumes 1 Mock Credit • ${totalCredits} Remaining`}
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    {totalCredits === 0
+                      ? 'Top up via UPI starting at ₹49 to launch unlimited mock drills.'
+                      : 'Includes full PDF executive scorecard, code sandbox & peer rank.'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => openPricingModal('STARTER_PACK_149')}
+                className={`shrink-0 rounded-lg px-3.5 py-2 text-xs font-bold transition ${
+                  totalCredits === 0
+                    ? 'bg-orange-500 text-black hover:bg-orange-400 shadow-md shadow-orange-500/20'
+                    : 'bg-white/5 text-orange-400 hover:bg-white/10 border border-orange-500/30'
+                }`}
+              >
+                {totalCredits === 0 ? 'Recharge via UPI (₹49+)' : '+ Top Up Credits'}
+              </button>
+            </div>
+          )}
+
           {isGenerating ? (
             <div className="p-6 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-center space-y-3">
               <div className="w-8 h-8 rounded-full border-2 border-brand-500/20 border-t-brand-400 animate-spin mx-auto" />
