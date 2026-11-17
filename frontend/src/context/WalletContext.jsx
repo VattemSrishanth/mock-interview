@@ -114,10 +114,29 @@ export function WalletProvider({ children }) {
   );
 }
 
+const FALLBACK_WALLET_CTX = {
+  wallet: null,
+  plans: [],
+  loading: false,
+  error: null,
+  totalCredits: 1,
+  canStartInterview: true,
+  isLowBalance: false,
+  refreshWallet: async () => null,
+  isPricingModalOpen: false,
+  highlightedTier: 'STARTER_PACK_149',
+  openPricingModal: () => {},
+  closePricingModal: () => {},
+  activeOrder: null,
+  startUpiCheckout: () => {},
+  closeUpiCheckout: () => {},
+  handlePaymentSuccess: () => {},
+};
+
 export function useWallet() {
   const ctx = useContext(WalletContext);
   if (!ctx) {
-    throw new Error('useWallet must be used within a WalletProvider');
+    return FALLBACK_WALLET_CTX;
   }
   return ctx;
 }
