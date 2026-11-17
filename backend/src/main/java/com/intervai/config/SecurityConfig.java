@@ -81,7 +81,8 @@ public class SecurityConfig {
                                 "/api/interviews/public/**",
                                 "/api/interviews/certificate/**",
                                 "/api/interviews/verify-signature",
-                                "/api/v1/health"
+                                "/api/v1/health",
+                                "/api/billing/plans"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
