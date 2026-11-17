@@ -11,4 +11,5 @@ public interface UserCreditWalletRepository extends JpaRepository<UserCreditWall
     Optional<UserCreditWallet> findByUserId(Long userId);
     Optional<UserCreditWallet> findByReferralCode(String referralCode);
     boolean existsByReferralCode(String referralCode);
+    long countByReferredByCode(String referredByCode);
 }

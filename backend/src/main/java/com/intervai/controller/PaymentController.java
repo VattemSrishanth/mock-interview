@@ -25,6 +25,29 @@ public class PaymentController {
 
     private final CreditWalletService creditWalletService;
     private final PaymentService paymentService;
+    private final com.intervai.service.ReferralService referralService;
+
+    /**
+     * Validates campus referral code and computes instant discount deduction.
+     */
+    @PostMapping("/referral/validate")
+    public ResponseEntity<ReferralValidationDto> validateReferral(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody ValidateReferralRequest request) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : null;
+        return ResponseEntity.ok(referralService.validateReferralCode(userId, request));
+    }
+
+    /**
+     * Retrieves referral performance statistics and personal invite link.
+     */
+    @GetMapping("/referral/stats")
+    public ResponseEntity<ReferralStatsDto> getReferralStats(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+        if (userPrincipal == null) {
+            throw new UnauthorizedException("Authentication is required");
+        }
+        return ResponseEntity.ok(referralService.getReferralStats(userPrincipal.getId()));
+    }
 
     /**
      * Returns real-time interview credit balance, remaining free trials, and referral codes.

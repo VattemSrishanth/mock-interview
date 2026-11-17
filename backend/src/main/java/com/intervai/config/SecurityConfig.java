@@ -82,7 +82,8 @@ public class SecurityConfig {
                                 "/api/interviews/certificate/**",
                                 "/api/interviews/verify-signature",
                                 "/api/v1/health",
-                                "/api/billing/plans"
+                                "/api/billing/plans",
+                                "/api/billing/referral/validate"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()

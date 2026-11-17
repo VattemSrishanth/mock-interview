@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Long> {
     Optional<PaymentTransaction> findByOrderId(String orderId);
     List<PaymentTransaction> findByUserIdOrderByCreatedAtDesc(Long userId);
+    long countByAppliedReferralCodeAndStatus(String appliedReferralCode, com.intervai.entity.PaymentStatus status);
 }
