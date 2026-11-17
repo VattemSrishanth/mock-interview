@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import AiCoachDrawer from './components/AiCoachDrawer';
 import PricingPlansModal from './components/PricingPlansModal';
+import UpiCheckoutModal from './components/UpiCheckoutModal';
 import { useAuth } from './context/AuthContext';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -163,6 +164,9 @@ export default function App() {
 
       {/* UPI Micro-Monetization Pricing & Recharge Modal */}
       <PricingPlansModal />
+
+      {/* Interactive UPI QR & Verification Checkout Modal */}
+      <UpiCheckoutModal />
     </div>
   );
 }
