@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/auth';
 import { interviewApi } from '../api/interview';
 import { Link } from 'react-router-dom';
+import BillingAndReferralsTab from '../components/BillingAndReferralsTab';
 import { 
   User, 
   GraduationCap, 
@@ -18,7 +19,8 @@ import {
   ExternalLink,
   Share2,
   Copy,
-  Check
+  Check,
+  Zap
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -224,6 +226,18 @@ export default function ProfilePage() {
         >
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
           <span>Verified Credentials & Reports</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('billing')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition ${
+            activeTab === 'billing'
+              ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Zap className="w-4 h-4 text-orange-400" />
+          <span>Billing & Campus Referrals</span>
         </button>
       </div>
 
@@ -589,6 +603,11 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Tab 4: UPI Billing & Referrals Ledger */}
+      {activeTab === 'billing' && (
+        <BillingAndReferralsTab />
       )}
     </div>
   );
