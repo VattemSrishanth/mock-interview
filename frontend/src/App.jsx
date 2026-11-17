@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import AiCoachDrawer from './components/AiCoachDrawer';
+import PricingPlansModal from './components/PricingPlansModal';
 import { useAuth } from './context/AuthContext';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -159,6 +160,9 @@ export default function App() {
         isOpen={isCoachOpen}
         onClose={() => setIsCoachOpen(false)}
       />
+
+      {/* UPI Micro-Monetization Pricing & Recharge Modal */}
+      <PricingPlansModal />
     </div>
   );
 }
