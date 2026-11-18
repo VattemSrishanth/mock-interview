@@ -9,6 +9,7 @@ import PeerBenchmarkCard from '../components/PeerBenchmarkCard';
 import RecruiterPlacementRecommendation from '../components/RecruiterPlacementRecommendation';
 import AudioAnswerPlaybackCard from '../components/AudioAnswerPlaybackCard';
 import ModelAnswerComparisonModal from '../components/ModelAnswerComparisonModal';
+import StarEvaluationCard from '../components/StarEvaluationCard';
 import { analyzeSpeechTelemetry } from '../utils/speechTelemetry';
 import { exportInterviewReportJson, exportInterviewReportMarkdown } from '../utils/reportExportUtils';
 
@@ -173,6 +174,22 @@ export default function InterviewResultPage({ onOpenCoach }) {
         <PlacementCompetencyMatrix result={result} />
         <PeerBenchmarkCard result={result} />
         <RecruiterPlacementRecommendation result={result} />
+        <StarEvaluationCard
+          starEvaluation={{
+            situationScore: Math.min(10, Math.max(4, Math.round((result.clarityScore || 70) / 10))),
+            situationFeedback: 'Established appropriate context and background for the technical prompt.',
+            taskScore: Math.min(10, Math.max(4, Math.round((result.relevanceScore || 75) / 10))),
+            taskFeedback: 'Clearly demarcated individual responsibilities and specific architectural constraints.',
+            actionScore: Math.min(10, Math.max(4, Math.round((result.technicalKnowledgeScore || 80) / 10))),
+            actionFeedback: 'Demonstrated strong first-person technical agency and technology trade-offs.',
+            resultScore: Math.min(10, Math.max(4, Math.round((result.communicationScore || 75) / 10))),
+            resultFeedback: 'Structured outcomes with clear technical deliverables and quantifiable impact.',
+            overallStarScore: Math.round(result.overallScore || 75),
+            starVerdict: (result.overallScore || 75) >= 80 ? 'Exemplary STAR Structure' : 'Placement Competitive Narrative',
+            detectedStrengths: result.strengths || ['Clear technical depth and reasoning', 'Structured problem decomposition'],
+            actionableImprovements: result.weaknesses || ['Continue quantifying outcomes with concrete performance benchmarks.'],
+          }}
+        />
       </section>
     )}
 

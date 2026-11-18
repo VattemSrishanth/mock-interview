@@ -3,7 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { interviewApi } from '../api/interview';
 import { analyticsApi } from '../api/analytics';
-import { Activity, ArrowRight, AudioLines, BarChart3, CalendarDays, ChevronRight, CircleDot, Clock3, Layers3, Play, Plus, RotateCcw, Target } from 'lucide-react';
+import { Activity, ArrowRight, AudioLines, BarChart3, CalendarDays, ChevronRight, CircleDot, Clock3, Layers3, Play, Plus, RotateCcw, Target, Building2, FileText, Bookmark } from 'lucide-react';
+import PlacementCompanySelectorModal from '../components/PlacementCompanySelectorModal';
+import ResumeAlignmentDrawer from '../components/ResumeAlignmentDrawer';
+import QuestionBookmarkDeckModal from '../components/QuestionBookmarkDeckModal';
 
 const mono = 'font-mono text-[10px] uppercase tracking-wider';
 const toDay = (date) => new Date(date).toLocaleDateString('en-CA');
@@ -14,6 +17,17 @@ export default function DashboardPage({ onOpenCoach }) {
   const [interviews, setInterviews] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [placementModalOpen, setPlacementModalOpen] = useState(false);
+  const [resumeDrawerOpen, setResumeDrawerOpen] = useState(false);
+  const [bookmarkDeckOpen, setBookmarkDeckOpen] = useState(false);
+
+  const handleSelectCompany = (company) => {
+    navigate('/create', { state: { prefillRole: company.targetRole, companySlug: company.slug } });
+  };
+
+  const handleLaunchTrackFromResume = (track, difficulty) => {
+    navigate('/create', { state: { prefillRole: track, difficulty } });
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -95,6 +109,38 @@ export default function DashboardPage({ onOpenCoach }) {
         </div>
       </header>
 
+      {/* Phase 5 Placement Suite Banner */}
+      <section className="mt-5 p-4 rounded-xl border border-orange-500/20 bg-gradient-to-r from-orange-500/10 via-zinc-900 to-zinc-950 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span className="text-[10px] font-mono uppercase tracking-wider text-orange-400 block font-bold">
+            Phase 5 Enterprise Suite • Campus Placement Ready
+          </span>
+          <h2 className="text-sm font-bold text-white mt-0.5">
+            Target Company Drives, Resume ATS Match & Question Flashcard Deck
+          </h2>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setPlacementModalOpen(true)}
+            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-white flex items-center gap-1.5 transition"
+          >
+            <Building2 size={13} className="text-orange-400" /> Company Drives
+          </button>
+          <button
+            onClick={() => setResumeDrawerOpen(true)}
+            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-white flex items-center gap-1.5 transition"
+          >
+            <FileText size={13} className="text-emerald-400" /> Resume ATS Match
+          </button>
+          <button
+            onClick={() => setBookmarkDeckOpen(true)}
+            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-white flex items-center gap-1.5 transition"
+          >
+            <Bookmark size={13} className="text-amber-400" /> Revision Deck
+          </button>
+        </div>
+      </section>
+
       <section className="grid gap-3 py-5 sm:grid-cols-2 xl:grid-cols-4" aria-label="Practice telemetry">
         {metrics.map(({ label, value, unit, Icon, note }, index) => <article key={label} className="min-w-0 rounded-md border border-zinc-800 bg-zinc-900/60 p-4"><div className="flex items-center justify-between"><span className={`${mono} text-zinc-500`}>{label}</span><Icon size={15} className="text-orange-400" /></div><div className="mt-5 flex min-h-9 items-baseline gap-2"><strong className="truncate font-mono text-2xl font-medium tabular-nums text-zinc-100">{value}</strong><span className="text-xs text-zinc-500">{unit}</span></div><div className="mt-3 border-t border-zinc-800 pt-2 font-mono text-[10px] text-zinc-600">{note}</div><div className="mt-3 h-0.5 bg-zinc-800"><div className="h-full bg-orange-500" style={{ width: `${index === 1 && average ? Math.max(2, Math.min(100, average)) : Math.min(100, Number(value) || 4)}%` }} /></div></article>)}
       </section>
@@ -146,6 +192,22 @@ export default function DashboardPage({ onOpenCoach }) {
         ) : ( <div className="overflow-x-auto"><table className="w-full min-w-[660px] text-left text-xs"><thead className={`${mono} text-zinc-600`}><tr><th className="px-5 py-3 font-normal">Role / track</th><th className="px-3 py-3 font-normal">Level</th><th className="px-3 py-3 font-normal">Date</th><th className="px-3 py-3 font-normal">Duration</th><th className="px-3 py-3 font-normal">Status</th><th className="px-3 py-3 font-normal">Score</th><th className="px-5 py-3 text-right font-normal">Open</th></tr></thead><tbody>{sessions.map((item) => { const done = item.status === 'COMPLETED'; const score = item.overallScore; return <tr key={item.id} className="border-t border-zinc-800/80 hover:bg-zinc-800/20"><td className="px-5 py-3.5"><span className="block font-medium text-zinc-200">{item.jobRole || 'Technical interview'}</span><span className="mt-1 flex items-center gap-1.5 text-[10px] text-zinc-500">{item.interviewType || 'General'}{item.interviewSource && item.interviewSource !== 'PRESET' && <span className="text-orange-400 font-mono text-[9px] px-1 py-0.5 rounded bg-orange-500/10 border border-orange-500/20">{item.interviewSource === 'RESUME' ? 'RESUME' : item.interviewSource === 'JOB_DESCRIPTION' ? 'JD' : 'RESUME+JD'}</span>}</span></td><td className="px-3 py-3 text-zinc-400">{item.experience || item.difficulty || '—'}</td><td className="px-3 py-3 font-mono tabular-nums text-zinc-400">{item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</td><td className="px-3 py-3 font-mono tabular-nums text-zinc-400">{item.durationSeconds ? `${Math.round(item.durationSeconds / 60)}m` : '—'}</td><td className="px-3 py-3"><span className={`inline-flex items-center gap-1.5 font-mono text-[10px] ${done ? 'text-orange-400' : 'text-zinc-500'}`}><i className={`h-1.5 w-1.5 rounded-full ${done ? 'bg-orange-500' : 'bg-zinc-600'}`} />{done ? (score == null ? 'NEEDS REVIEW' : 'COMPLETED') : 'IN PROGRESS'}</span></td><td className="px-3 py-3"><div className="flex items-center gap-2"><span className="w-9 font-mono tabular-nums text-zinc-300">{score == null ? '—' : score}</span><div className="h-1 w-16 bg-zinc-800"><div className="h-full bg-orange-500" style={{ width: `${Math.max(0, Math.min(100, score || 0))}%` }} /></div></div></td><td className="px-5 py-3 text-right"><button onClick={() => navigate(done ? `/interviews/${item.id}/result` : `/interviews/${item.id}`)} className="rounded border border-zinc-800 px-2.5 py-1.5 text-zinc-400 hover:border-zinc-600 hover:text-white">{done ? 'Review' : 'Resume'}</button></td></tr>; })}</tbody></table></div>)}
       </section>
       <p className="mt-3 flex items-center gap-1.5 text-[10px] text-zinc-600"><Clock3 size={11} /> Summary values reflect saved interview and evaluation records.</p>
+
+      {/* Phase 5 Placement Modals & Drawers */}
+      <PlacementCompanySelectorModal
+        isOpen={placementModalOpen}
+        onClose={() => setPlacementModalOpen(false)}
+        onSelectCompany={handleSelectCompany}
+      />
+      <ResumeAlignmentDrawer
+        isOpen={resumeDrawerOpen}
+        onClose={() => setResumeDrawerOpen(false)}
+        onLaunchTrack={handleLaunchTrackFromResume}
+      />
+      <QuestionBookmarkDeckModal
+        isOpen={bookmarkDeckOpen}
+        onClose={() => setBookmarkDeckOpen(false)}
+      />
     </div>
   );
 }
