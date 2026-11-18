@@ -220,3 +220,24 @@ Phase 3 introduces an executive-grade placement evaluation engine designed for c
 9. **Recruiter Placement Verdict & 7-Day Plan**: Automated hiring recommendation (Strong Hire, Lean Hire, Re-evaluate) and personalized study roadmap.
 10. **Candidate Profile Credentials Portfolio**: Tabbed credentials view in Profile showcasing all verified mock interview transcripts.
 11. **Session History Quick-Preview Modal**: 1-click scorecard preview, JSON/Markdown export, and print trigger without navigation.
+
+## 15. Phase 4 Release Notes: UPI Micro-Transaction Monetization & Campus Referrals
+
+Phase 4 establishes real-world monetization and virality across Indian engineering campuses:
+1. **NPCI UPI Deep-Link Checkout Engine**: Instant dynamic QR code and VPA intent generator supporting PhonePe, Google Pay, and Paytm.
+2. **User Credit Wallet & Micro-Ledger**: JPA persistence tracking credits balance, transactions ledger, and quota enforcement.
+3. **Campus Referral Engine with Viral Incentives**: Bi-directional reward loop granting ₹50 instant discounts to referred friends and bonus interview credits to referrers.
+4. **Cryptographic Payment Signature Verification**: SHA-256 HMAC verification ensuring zero client tampering in transaction settlement.
+5. **Interview Creation Quota Gate**: Seamless low-balance alerts and 1-click modal recharges before starting interview sessions.
+
+## 16. Phase 5 Release Notes: Enterprise Placement Drive & Multi-Round Assessment Suite
+
+Phase 5 equips candidates with corporate-calibrated placement prep tailored for 2026 campus recruitment:
+
+1. **Company Placement Drive Catalogs**: Pre-calibrated mock drives for Tier-1 FAANG (Google, Amazon, Microsoft), Tier-2 Unicorns (Swiggy, Zomato), and Tier-3 Enterprise IT (TCS Digital, Infosys SP) with custom cutoff thresholds and round structures.
+2. **Behavioral STAR Technique Evaluator**: NLP scoring engine grading candidate answers on Situation (20%), Task (20%), Action (35%), and Quantifiable Results (25%) with targeted recruiter feedback.
+3. **Resume ATS & Track Aligner**: Intelligent resume parser analyzing tech stacks against target job profiles, computing match percentages, and offering 1-click mock track launch.
+4. **Question Revision Flashcard Deck**: Interactive spaced-repetition card deck allowing candidates to bookmark challenging questions, flip to reveal model answers, and track mastered versus revision-needed questions.
+5. **Real-Time Proctoring & Focus Monitor**: Client-side tab visibility and blur telemetry tracking candidate window focus during high-stakes placement practice.
+6. **Live Pacing HUD Integration**: Seamless `InterviewTimerBadge` displaying introductory, optimal (60-150s), and wrap-up response windows.
+

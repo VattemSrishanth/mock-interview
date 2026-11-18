@@ -197,3 +197,14 @@ The GitHub Actions workflow runs these backend and frontend checks on pushes and
 - **Dynamic Peer Percentile Ranking**: Mathematical normal CDF percentile calculation comparing candidates against peer cohorts.
 - **Audio Cadence Scrubber**: Interactive verbal pacing review with Words-Per-Minute (WPM) telemetry per question.
 - **Candidate Credentials Portfolio**: Verified interview certificates and scorecards displayed on the candidate profile.
+
+---
+
+## 🚀 Phase 5: Enterprise Placement Drive & Multi-Round Assessment Suite
+
+- **Company Placement Drive Tracks**: Curated mock tracks for top campus recruiters (Google, Amazon, Microsoft, TCS Digital, Infosys SP) featuring exact round sequences, typical questions, and hiring bar cutoffs.
+- **Behavioral STAR Methodology Evaluator**: Specialized scoring engine measuring Situation, Task, Action, and Quantifiable Results to train candidates for Amazon Leadership Principles and behavioral rounds.
+- **Resume ATS Alignment Drawer**: Instant keyword extraction and role readiness evaluation mapping candidate resumes to tailored interview tracks.
+- **Spaced-Repetition Question Deck**: Bookmark challenging interview questions to review model answers, track revision status, and build placement confidence.
+- **Proctoring Focus Telemetry**: Integrated tab switch detection and integrity monitoring paired with the real-time response pacing HUD.
+
