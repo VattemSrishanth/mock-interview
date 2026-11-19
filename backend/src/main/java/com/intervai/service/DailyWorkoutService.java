@@ -9,6 +9,15 @@ import java.util.List;
 @Service
 public class DailyWorkoutService {
 
+    public DailyWorkoutDto getTodayWorkout() {
+        return getTodaysWorkout();
+    }
+
+    public boolean validateAnswer(int selectedOptionIndex) {
+        DailyWorkoutDto today = getTodaysWorkout();
+        return today.getCorrectOptionIndex() == selectedOptionIndex;
+    }
+
     public DailyWorkoutDto getTodaysWorkout() {
         LocalDate today = LocalDate.now();
         int dayIndex = Math.abs(today.hashCode() % 3);

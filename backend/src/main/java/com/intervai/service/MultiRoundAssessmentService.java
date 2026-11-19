@@ -16,6 +16,19 @@ public class MultiRoundAssessmentService {
 
     private final Map<String, MultiRoundAssessmentDto> pipelineStorage = new ConcurrentHashMap<>();
 
+    public MultiRoundAssessmentDto createPipeline(String candidateName, String targetCompany, String roleTitle) {
+        PlacementCompanyTier tier = PlacementCompanyTier.TIER_1_PRODUCT;
+        if (targetCompany != null) {
+            String lower = targetCompany.toLowerCase();
+            if (lower.contains("tcs") || lower.contains("infosys") || lower.contains("wipro") || lower.contains("cognizant")) {
+                tier = PlacementCompanyTier.TIER_3_ENTERPRISE;
+            } else if (lower.contains("swiggy") || lower.contains("zomato") || lower.contains("razorpay") || lower.contains("cred")) {
+                tier = PlacementCompanyTier.TIER_2_GROWTH;
+            }
+        }
+        return startPipeline(targetCompany, tier, roleTitle);
+    }
+
     public MultiRoundAssessmentDto startPipeline(String companyName, PlacementCompanyTier companyTier, String targetRole) {
         String pipelineId = "PIPE-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         double cutoff = getCutoffForTier(companyTier);
@@ -23,7 +36,7 @@ public class MultiRoundAssessmentService {
         MultiRoundAssessmentDto pipeline = new MultiRoundAssessmentDto(
                 pipelineId,
                 companyName != null && !companyName.isBlank() ? companyName : "Target Enterprise",
-                companyTier != null ? companyTier : PlacementCompanyTier.TIER_2_UNIFIED,
+                companyTier != null ? companyTier : PlacementCompanyTier.TIER_2_GROWTH,
                 targetRole != null && !targetRole.isBlank() ? targetRole : "Software Development Engineer",
                 4, // 4 standard recruitment rounds
                 cutoff
@@ -36,12 +49,22 @@ public class MultiRoundAssessmentService {
     public MultiRoundAssessmentDto getPipeline(String pipelineId) {
         MultiRoundAssessmentDto pipeline = pipelineStorage.get(pipelineId);
         if (pipeline == null) {
-            // Seed a dynamic realistic pipeline if not found
-            pipeline = startPipeline("Tech Placement Assessment", PlacementCompanyTier.TIER_2_UNIFIED, "Full Stack SDE");
+            pipeline = startPipeline("Tech Placement Assessment", PlacementCompanyTier.TIER_2_GROWTH, "Full Stack SDE");
             pipeline.setPipelineId(pipelineId);
             pipelineStorage.put(pipelineId, pipeline);
         }
         return pipeline;
+    }
+
+    public MultiRoundAssessmentDto recordRoundResult(String pipelineId, AssessmentRoundResultDto result) {
+        return submitRoundResult(
+                pipelineId,
+                result.getRoundType(),
+                result.getScore(),
+                result.getKeyStrengths(),
+                result.getAreasForImprovement(),
+                result.getRoundTags()
+        );
     }
 
     public MultiRoundAssessmentDto submitRoundResult(String pipelineId, AssessmentRoundType roundType, int score,
@@ -93,10 +116,9 @@ public class MultiRoundAssessmentService {
     public double getCutoffForTier(PlacementCompanyTier tier) {
         if (tier == null) return 70.0;
         return switch (tier) {
-            case TIER_1_FAANG -> 82.0;
-            case TIER_2_UNIFIED -> 72.0;
-            case TIER_3_ENTERPRISE_IT -> 62.0;
-            default -> 70.0;
+            case TIER_1_PRODUCT -> 82.0;
+            case TIER_2_GROWTH -> 72.0;
+            case TIER_3_ENTERPRISE -> 62.0;
         };
     }
 }

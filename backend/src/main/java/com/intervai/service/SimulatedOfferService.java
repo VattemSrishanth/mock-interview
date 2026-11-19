@@ -15,8 +15,12 @@ import java.util.UUID;
 @Service
 public class SimulatedOfferService {
 
+    public SimulatedOfferDto generateOffer(MultiRoundAssessmentDto pipeline) {
+        return generateOffer(pipeline, "Qualified Candidate");
+    }
+
     public SimulatedOfferDto generateOffer(MultiRoundAssessmentDto pipeline, String candidateName) {
-        PlacementCompanyTier tier = pipeline.getCompanyTier() != null ? pipeline.getCompanyTier() : PlacementCompanyTier.TIER_2_UNIFIED;
+        PlacementCompanyTier tier = pipeline.getCompanyTier() != null ? pipeline.getCompanyTier() : PlacementCompanyTier.TIER_2_GROWTH;
         String name = candidateName != null && !candidateName.isBlank() ? candidateName : "Qualified Candidate";
         String company = pipeline.getCompanyName();
         double score = pipeline.getCumulativeScore();
@@ -31,7 +35,7 @@ public class SimulatedOfferService {
         offer.setOfferExpiryDate(LocalDate.now().plusDays(14));
 
         switch (tier) {
-            case TIER_1_FAANG -> {
+            case TIER_1_PRODUCT -> {
                 offer.setDesignation("Software Development Engineer I (L3 / SDE-1)");
                 offer.setWorkLocation("Bengaluru / Hyderabad, India (Hybrid)");
                 offer.setBaseSalaryPaise(240000000L); // 24 LPA in paise
@@ -47,7 +51,7 @@ public class SimulatedOfferService {
                         "Unlimited Access to Professional Certifications & Tech Conferences"
                 ));
             }
-            case TIER_2_UNIFIED -> {
+            case TIER_2_GROWTH -> {
                 offer.setDesignation("Member of Technical Staff / Software Engineer");
                 offer.setWorkLocation("Bengaluru / Pune, India (Hybrid)");
                 offer.setBaseSalaryPaise(150000000L); // 15 LPA
@@ -63,7 +67,7 @@ public class SimulatedOfferService {
                         "ESOP Wealth-Creation Pool Vesting"
                 ));
             }
-            case TIER_3_ENTERPRISE_IT -> {
+            case TIER_3_ENTERPRISE -> {
                 offer.setDesignation("Digital Software Engineer / Specialist Programmer");
                 offer.setWorkLocation("Hyderabad / Chennai, India");
                 offer.setBaseSalaryPaise(70000000L); // 7 LPA
@@ -78,17 +82,6 @@ public class SimulatedOfferService {
                         "Global Project Rotational Mobility Program",
                         "Performance-Linked Retention Incentive"
                 ));
-            }
-            default -> {
-                offer.setDesignation("Graduate Software Trainee");
-                offer.setWorkLocation("Hyderabad, India");
-                offer.setBaseSalaryPaise(60000000L);
-                offer.setVariableBonusPaise(5000000L);
-                offer.setJoiningBonusPaise(0L);
-                offer.setRsuStockGrantPaise(0L);
-                offer.setTotalCompensationPaise(65000000L);
-                offer.setFormattedTotalCtc("₹6,50,000 INR (6.5 LPA)");
-                offer.setBenefitsAndPerks(List.of("Standard Corporate Health Insurance", "Learning Portal Access"));
             }
         }
 
