@@ -7,6 +7,7 @@ import { Activity, ArrowRight, AudioLines, BarChart3, CalendarDays, ChevronRight
 import PlacementCompanySelectorModal from '../components/PlacementCompanySelectorModal';
 import ResumeAlignmentDrawer from '../components/ResumeAlignmentDrawer';
 import QuestionBookmarkDeckModal from '../components/QuestionBookmarkDeckModal';
+import DailyPracticeWorkoutWidget from '../components/DailyPracticeWorkoutWidget';
 
 const mono = 'font-mono text-[10px] uppercase tracking-wider';
 const toDay = (date) => new Date(date).toLocaleDateString('en-CA');
@@ -120,6 +121,12 @@ export default function DashboardPage({ onOpenCoach }) {
           </h2>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            to="/assessment"
+            className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-xs font-semibold text-indigo-300 flex items-center gap-1.5 transition"
+          >
+            <Building2 size={13} className="text-indigo-400" /> Assessment Center
+          </Link>
           <button
             onClick={() => setPlacementModalOpen(true)}
             className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-white flex items-center gap-1.5 transition"
@@ -153,6 +160,11 @@ export default function DashboardPage({ onOpenCoach }) {
         </section>
 
         <section className="rounded-md border border-zinc-800 bg-zinc-900/50 p-4 sm:p-5"><div className="flex items-center justify-between"><div><p className={`${mono} text-zinc-500`}>Next action</p><h2 className="mt-2 text-lg font-medium text-white">Keep the loop focused.</h2></div><RotateCcw size={16} className="text-orange-400" /></div><p className="mt-3 text-sm leading-6 text-zinc-400">Choose a role and interview track. Your completed sessions and provider scores will build the record below.</p><div className="mt-5 space-y-2"><Link to="/create" className="flex items-center justify-between rounded border border-zinc-800 bg-zinc-950/70 px-3 py-3 text-sm text-zinc-200 hover:border-zinc-600"><span className="flex items-center gap-2"><Play size={14} className="text-orange-400" /> Configure a practice interview</span><ChevronRight size={15} /></Link><Link to="/analytics" className="flex items-center justify-between rounded border border-zinc-800 px-3 py-3 text-sm text-zinc-400 hover:text-zinc-200"><span className="flex items-center gap-2"><BarChart3 size={14} /> View all recorded analytics</span><ChevronRight size={15} /></Link></div></section>
+      </div>
+
+      {/* Daily Interview Workout & Practice Streak */}
+      <div className="mt-4">
+        <DailyPracticeWorkoutWidget />
       </div>
 
       <section className="mt-4 rounded-md border border-zinc-800 bg-zinc-900/50">

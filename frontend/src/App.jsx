@@ -24,6 +24,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const PublicInterviewReportPage = lazy(() => import('./pages/PublicInterviewReportPage'));
 const CertificateVerificationPage = lazy(() => import('./pages/CertificateVerificationPage'));
 const InboxPage = lazy(() => import('./pages/InboxPage'));
+const MultiRoundAssessmentPage = lazy(() => import('./pages/MultiRoundAssessmentPage'));
 
 function RouteFallback() {
   return (
@@ -61,6 +62,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage onOpenCoach={() => setIsCoachOpen(true)} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/assessment"
+            element={
+              <ProtectedRoute>
+                <MultiRoundAssessmentPage />
               </ProtectedRoute>
             }
           />
