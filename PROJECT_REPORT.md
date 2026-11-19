@@ -241,3 +241,27 @@ Phase 5 equips candidates with corporate-calibrated placement prep tailored for 
 5. **Real-Time Proctoring & Focus Monitor**: Client-side tab visibility and blur telemetry tracking candidate window focus during high-stakes placement practice.
 6. **Live Pacing HUD Integration**: Seamless `InterviewTimerBadge` displaying introductory, optimal (60-150s), and wrap-up response windows.
 
+## 17. Phase 6 Release Notes: Virtual Multi-Round Assessment Center & Engineering Habit Engine
+
+Phase 6 completes the transition from single-session mock interviews into a full-fidelity corporate virtual assessment experience:
+
+1. **Virtual Multi-Round Assessment Center (`/assessment`)**: End-to-end recruitment pipeline simulating all 4 standard corporate rounds:
+   - *Round 1*: Online Coding Assessment (OA) — Algorithmic speed, boundary constraints, and memory limits.
+   - *Round 2*: Live Technical Deep-Dive — Idiomatic syntax, multi-language solutions (JS, Python, Java, C++), and complexity invariants.
+   - *Round 3*: Distributed System Architecture — Concurrency, caching strategies (LRU, TTL), and high-throughput data partitioning.
+   - *Round 4*: Bar Raiser & Architectural Leadership — Distributed migration scenarios, CAP theorem trade-offs, and CDC architectures.
+2. **Adaptive AI Hint Ladder (`AdaptiveHintLadderDrawer`)**: Progressive 3-tier scaffolding engine mirroring real-world senior interview guidance:
+   - *Tier 1*: High-Level Conceptual Clue (-5 pts deduction).
+   - *Tier 2*: Algorithmic & Data Structure Blueprint (-10 pts deduction).
+   - *Tier 3*: Pseudocode & Implementation Blueprint (-20 pts deduction).
+3. **Simulated Corporate Offer Generator (`SimulatedOfferLetterModal`)**: Realistic placement offer letter engine unlocked upon clearing all 4 stages above the hiring cutoff:
+   - Verifiable compensation breakdowns (Base Salary, Variable Target, Signing Bonus, Equity RSUs / ESOPs, Total Annual CTC).
+   - Tiered packages calibrated to actual 2026 compensation bands (₹32 LPA for Tier-1 FAANG, ₹18 LPA for Tier-2 Unicorns, ₹8.5 LPA for Tier-3 Enterprise IT).
+   - Digital SHA-256 verification seal and `@media print` 1-click PDF download.
+4. **Daily Interview Practice Workout Widget (`DailyPracticeWorkoutWidget`)**: Rapid-fire micro-learning dashboard habit system featuring:
+   - Daily architectural flash questions with instant explanation feedback.
+   - Optional 5-minute micro coding prompts with starter snippets.
+   - Habit streak counter with fire flames (`🔥 X Day Streak`) and XP progression tiers (`Apprentice` → `FAANG Ready`).
+5. **Multi-Round Pipeline HUD (`MultiRoundPipelineHUD`)**: Real-time stage stepper tracking cutoff thresholds, stage progress, and cumulative candidate performance metrics.
+
+

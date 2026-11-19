@@ -208,3 +208,14 @@ The GitHub Actions workflow runs these backend and frontend checks on pushes and
 - **Spaced-Repetition Question Deck**: Bookmark challenging interview questions to review model answers, track revision status, and build placement confidence.
 - **Proctoring Focus Telemetry**: Integrated tab switch detection and integrity monitoring paired with the real-time response pacing HUD.
 
+---
+
+## 🎯 Phase 6: Virtual Multi-Round Assessment Center & Engineering Habit Engine
+
+- **Virtual Multi-Round Assessment Center (`/assessment`)**: End-to-end recruitment pipeline simulating 4 enterprise stages: Online Assessment (OA), Live Technical Deep-Dive, Distributed System Architecture, and Bar Raiser.
+- **Adaptive AI Hint Ladder**: 3-tier progressive problem guidance with realistic scoring calibration deductions (-5 pts conceptual, -10 pts algorithmic, -20 pts implementation).
+- **Simulated Corporate Offer Generator**: Generates verifiable placement offer letters with market CTC breakdowns (Base, Variable, Joining, RSUs) and printable PDF support.
+- **Daily Practice Workout Widget**: Micro-learning habit engine with streak flames, architectural flash quizzes, and XP progression ranks.
+- **Multi-Round Pipeline HUD**: Live visual stage stepper displaying cumulative scores against enterprise hiring cutoff thresholds.
+
+
