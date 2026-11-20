@@ -4,7 +4,7 @@
   "private": true,
   "description": "IntervAI root workspace for multi-service builds",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build",
+    "build": "cd frontend && npm install && npm run build && node -e \"const fs=require('fs'); try{if(!fs.existsSync('../dist')) fs.cpSync('dist', '../dist', {recursive:true});}catch(e){}\"",
     "start": "cd frontend && npm run preview",
     "test": "cd frontend && npm test"
   }
