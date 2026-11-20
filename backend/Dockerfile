@@ -25,19 +25,19 @@ WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Python 3 and Node.js for Code Sandbox isolated execution
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN (apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     nodejs \
     ca-certificates \
     && (test -e /usr/bin/python || ln -s /usr/bin/python3 /usr/bin/python) \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*) || true
 
 # Copy artifact from build stage
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/backend-1.0.0.jar app.jar
 
 ENV PORT=8080
 ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE ${PORT}
 
 # Container-aware memory tuning to prevent OOM kills on 512MB RAM instances
-ENTRYPOINT ["sh", "-c", "java -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom -Dserver.port=${PORT} -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom -Dserver.port=${PORT:-8080} -Dserver.address=0.0.0.0 -jar app.jar"]
