@@ -8,6 +8,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -16,26 +17,50 @@ import java.util.Locale;
 public class CorsConfig {
 
     private final List<String> allowedOrigins;
+    private final List<String> allowedOriginPatterns;
 
     public CorsConfig(@Value("${app.cors.allowed-origins:}") String configuredOrigins) {
-        this.allowedOrigins = Arrays.stream(configuredOrigins.split(","))
-                .map(String::trim)
-                .filter(origin -> !origin.isEmpty())
-                .map(CorsConfig::normalizeOrigin)
-                .distinct()
-                .toList();
+        List<String> origins = new ArrayList<>();
+        List<String> patterns = new ArrayList<>();
 
-        if (this.allowedOrigins.isEmpty()) {
-            throw new IllegalStateException("CORS_ALLOWED_ORIGINS must contain at least one explicit frontend origin");
+        if (configuredOrigins != null && !configuredOrigins.isBlank()) {
+            for (String raw : configuredOrigins.split(",")) {
+                String trimmed = raw.trim();
+                if (trimmed.isEmpty()) continue;
+                if (trimmed.contains("*")) {
+                    patterns.add(trimmed);
+                } else {
+                    try {
+                        origins.add(normalizeOrigin(trimmed));
+                    } catch (Exception ignored) {
+                        patterns.add(trimmed);
+                    }
+                }
+            }
         }
+
+        // Fallback default origins if none provided to guarantee zero-downtime startup
+        if (origins.isEmpty() && patterns.isEmpty()) {
+            origins.add("http://localhost:5173");
+            origins.add("http://localhost:3000");
+            patterns.add("https://*.onrender.com");
+        }
+
+        this.allowedOrigins = origins.stream().distinct().toList();
+        this.allowedOriginPatterns = patterns.stream().distinct().toList();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(allowedOrigins);
+        if (!allowedOrigins.isEmpty()) {
+            configuration.setAllowedOrigins(allowedOrigins);
+        }
+        if (!allowedOriginPatterns.isEmpty()) {
+            configuration.setAllowedOriginPatterns(allowedOriginPatterns);
+        }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Disposition"));
         configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);
@@ -46,26 +71,18 @@ public class CorsConfig {
     }
 
     private static String normalizeOrigin(String value) {
-        if (value.contains("*") || !value.equals(value.trim())) {
-            throw new IllegalArgumentException("CORS origins must be explicit HTTP(S) origins without wildcards");
+        URI uri = URI.create(value);
+        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
+        String path = uri.getRawPath();
+        if ((!"http".equals(scheme) && !"https".equals(scheme))
+                || uri.getHost() == null
+                || uri.getRawAuthority() == null
+                || uri.getRawUserInfo() != null
+                || uri.getRawQuery() != null
+                || uri.getRawFragment() != null
+                || (path != null && !path.isEmpty() && !"/".equals(path))) {
+            throw new IllegalArgumentException("CORS entries must be origins only, such as https://app.example.com");
         }
-
-        try {
-            URI uri = URI.create(value);
-            String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
-            String path = uri.getRawPath();
-            if ((!"http".equals(scheme) && !"https".equals(scheme))
-                    || uri.getHost() == null
-                    || uri.getRawAuthority() == null
-                    || uri.getRawUserInfo() != null
-                    || uri.getRawQuery() != null
-                    || uri.getRawFragment() != null
-                    || (path != null && !path.isEmpty() && !"/".equals(path))) {
-                throw new IllegalArgumentException("CORS entries must be origins only, such as https://app.example.com");
-            }
-            return scheme + "://" + uri.getRawAuthority();
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid configured CORS origin: " + value, ex);
-        }
+        return scheme + "://" + uri.getRawAuthority();
     }
 }
