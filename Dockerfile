@@ -7,6 +7,9 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
+# Cap Maven heap to 512MB to prevent OOM kills on Render build instances
+ENV MAVEN_OPTS="-Xmx512m -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+
 # Pre-fetch dependencies
 COPY backend/pom.xml .
 RUN mvn dependency:resolve -B || true
@@ -29,13 +32,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && (test -e /usr/bin/python || ln -s /usr/bin/python3 /usr/bin/python) \
     && rm -rf /var/lib/apt/lists/*
 
-# Create unprivileged application user safely
-RUN (groupadd -r appuser || true) && (useradd -r -g appuser appuser || true)
-
 # Copy artifact from build stage
-COPY --from=build --chown=appuser:appuser /app/target/*.jar app.jar
-
-USER appuser
+COPY --from=build /app/target/*.jar app.jar
 
 ENV PORT=8080
 ENV SPRING_PROFILES_ACTIVE=prod
