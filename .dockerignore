@@ -1,0 +1,9 @@
+node_modules
+frontend/node_modules
+frontend/dist
+dist
+.git
+.idea
+*.log
+backend/target
+target

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "test": "node --test src/utils/voiceTranscript.test.js && node --test src/utils/speechTelemetry.test.js && node --test src/utils/reportExportUtils.test.js && node --test src/utils/peerBenchmarkUtils.test.js && node --test src/utils/socialShareUtils.test.js && node --test src/utils/billingUtils.test.js && node --test src/utils/placementTrackUtils.test.js && node --test src/utils/bookmarkDeckUtils.test.js && node --test src/utils/codeSandboxUtils.test.js && node --test src/utils/dailyWorkoutUtils.test.js && node --test src/services/voiceInterviewerService.test.js && vitest run",
-    "build": "vite build && node -e \"const fs=require('fs'); try{fs.cpSync('dist', '../dist', {recursive:true});}catch(e){}\"",
+    "build": "vite build && node -e \"const fs=require('fs'); try{fs.cpSync('dist', '../dist', {recursive:true}); fs.mkdirSync('frontend', {recursive:true}); fs.cpSync('dist', 'frontend/dist', {recursive:true});}catch(e){}\"",
     "preview": "vite preview"
   },
   "dependencies": {
