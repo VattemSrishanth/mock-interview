@@ -9,11 +9,11 @@ WORKDIR /app
 
 # Pre-fetch dependencies to leverage Docker layer caching
 COPY pom.xml .
-RUN mvn dependency:go-offline -B || true
+RUN mvn dependency:resolve -B || true
 
 # Copy source and package executable artifact
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn clean package -DskipTests -B
 
 # --- Stage 2: Production Polyglot Execution Runtime ---
 FROM eclipse-temurin:21-jdk-jammy
@@ -30,8 +30,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && (test -e /usr/bin/python || ln -s /usr/bin/python3 /usr/bin/python) \
     && rm -rf /var/lib/apt/lists/*
 
-# Create unprivileged application user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Create unprivileged application user safely
+RUN (groupadd -r appuser || true) && (useradd -r -g appuser appuser || true)
 
 # Copy artifact from build stage
 COPY --from=build --chown=appuser:appuser /app/target/*.jar app.jar

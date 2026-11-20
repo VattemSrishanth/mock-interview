@@ -2,9 +2,10 @@ services:
   - type: web
     name: intervai-backend
     runtime: docker
-    dockerfilePath: backend/Dockerfile
-    dockerContext: backend
+    dockerfilePath: Dockerfile
+    dockerContext: .
     plan: free
+    healthCheckPath: /api/v1/health
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod

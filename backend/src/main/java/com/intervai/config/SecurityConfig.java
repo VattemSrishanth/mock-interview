@@ -72,6 +72,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/ai/coach").authenticated()
                         .requestMatchers(
                                 "/",
+                                "/health",
+                                "/healthz",
                                 "/api/auth/**",
                                 "/h2-console/**",
                                 "/error",

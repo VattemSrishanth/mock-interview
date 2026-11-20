@@ -1,0 +1,11 @@
+{
+  "name": "intervai-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "IntervAI root workspace for multi-service builds",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd frontend && npm run preview",
+    "test": "cd frontend && npm test"
+  }
+}
