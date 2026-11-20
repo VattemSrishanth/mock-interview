@@ -44,7 +44,11 @@ public class DataSourceConfig {
         if (dbUrl == null || dbUrl.isBlank()) {
             log.info("No cloud SQL datasource configured; activating embedded H2 database for zero-downtime startup.");
             HikariConfig config = new HikariConfig();
-            config.setJdbcUrl("jdbc:h2:file:/tmp/intervaidb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+            String tempDir = System.getProperty("java.io.tmpdir", "/tmp").replace('\\', '/');
+            if (tempDir.endsWith("/")) {
+                tempDir = tempDir.substring(0, tempDir.length() - 1);
+            }
+            config.setJdbcUrl("jdbc:h2:file:" + tempDir + "/intervaidb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
             config.setDriverClassName("org.h2.Driver");
             config.setUsername("sa");
             config.setPassword("");
