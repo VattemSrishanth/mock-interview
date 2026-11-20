@@ -1,4 +1,4 @@
-import api from './auth';
+import api from './client';
 
 /**
  * API service for Multi-Round Assessments, Adaptive Hint Ladder,

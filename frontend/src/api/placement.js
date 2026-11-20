@@ -1,4 +1,4 @@
-import api from './auth';
+import api from './client';
 
 /**
  * API service for Placement Drives, Company Templates, STAR Scoring, and Resume Alignment.

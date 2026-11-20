@@ -29,3 +29,13 @@ services:
       - key: CODE_EXECUTION_LOCAL_FALLBACK_ENABLED
         value: "true"
 
+  - type: web
+    name: intervai-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
