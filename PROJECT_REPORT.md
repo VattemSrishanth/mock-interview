@@ -67,6 +67,8 @@ The frontend is under `frontend/src`. The backend follows conventional Spring pa
 | `/analytics` | Candidate | Score, skill, and performance trends |
 | `/profile` | Candidate | Profile and career preferences, plus leaderboard |
 | `/settings` | Candidate | Theme, interview defaults, and sign-out |
+| `/assessment` | Candidate | Virtual multi-round assessment center (OA, Technical, System Design, Bar Raiser) |
+| `/peer-room` | Candidate | Collaborative peer mock interview lobby, WebRTC signaling, and acoustic calibration bay |
 | `/admin` | Administrator | Platform oversight |
 
 `Sidebar` provides the application shell and navigation. `App.jsx` owns the route table and global AI coach drawer. `AuthContext` and `ThemeContext` provide authentication and appearance state. The Axios client adds JWTs and redirects to login on unauthorized responses.
@@ -263,5 +265,31 @@ Phase 6 completes the transition from single-session mock interviews into a full
    - Optional 5-minute micro coding prompts with starter snippets.
    - Habit streak counter with fire flames (`🔥 X Day Streak`) and XP progression tiers (`Apprentice` → `FAANG Ready`).
 5. **Multi-Round Pipeline HUD (`MultiRoundPipelineHUD`)**: Real-time stage stepper tracking cutoff thresholds, stage progress, and cumulative candidate performance metrics.
+
+## 18. Phase 7 Release Notes: AI Voice Analytics, Behavioral Emotion Telemetry & Collaborative WebRTC Peer Mock Rooms
+
+Phase 7 introduces real-time vocal acoustic analysis and peer-to-peer collaborative mock interview rooms:
+
+1. **Real-Time Voice Acoustic Telemetry Engine (`voiceAcousticTelemetry.js` & `VoiceAcousticAnalysisService.java`)**:
+   - Autocorrelation fundamental pitch frequency analyzer (75 Hz to 450 Hz) and vocal jitter detection.
+   - Speech cadence analysis calculating exact Words-Per-Minute (WPM) and classifying pacing into 5 tiers: `TOO_SLOW`, `METHODICAL`, `OPTIMAL` (130-165 WPM), `ACCELERATED`, and `RUSHED`.
+   - Comprehensive verbal filler crutch detector (`um`, `uh`, `like`, `you know`, `actually`, `basically`, `literally`, `sort of`, `kind of`) with real-time density tracking.
+2. **Behavioral Emotion & Micro-Expression Synthesis (`BehavioralEmotionTelemetryDto.java`)**:
+   - Multi-signal composure evaluation combining pitch inflection steadiness, eye-gaze tracking telemetry, and speech velocity.
+   - Dynamic classification of candidate presentation state: `CONFIDENT`, `CALM`, `HESITANT`, `ANXIOUS`, or `EXCITED` with actionable coaching notes.
+3. **Collaborative WebRTC Peer Mock Rooms (`/peer-room`, `PeerMockInterviewRoomModal.jsx`)**:
+   - Real-time 1-on-1 peer mock interview lobbies with 6-character instant join codes (`ABC123`).
+   - Dual split-view layout featuring local and peer video cards, live microphone status, and problem statements.
+   - Synchronized shared code editor for collaborative technical pairing and algorithmic problem solving.
+   - Mutual 4-Pillar Peer Evaluation Rubric (Problem Solving, Technical Accuracy, Communication, Code Quality) with hire recommendations.
+4. **Voice Acoustic Feedback HUD Widget (`VoiceAcousticFeedbackWidget.jsx`)**:
+   - Real-time speedometer gauge with visual target bands for optimal interview pacing (130–165 WPM).
+   - Pitch tone inflection visualizer with dynamic waveform simulation and steadiness badges.
+   - Verbal filler badge tracker highlighting spoken crutches and advising candidates to speak with measured confidence.
+5. **Architectural Security & REST Endpoints**:
+   - `/api/v1/voice-analytics/analyze` and `/api/v1/voice-analytics/sample-metrics`.
+   - `/api/v1/peer-rooms/create`, `/api/v1/peer-rooms/join`, `/api/v1/peer-rooms/{roomCode}/signal`, `/api/v1/peer-rooms/{roomCode}/rubric`, and `/api/v1/peer-rooms/active`.
+   - Whitelisted and secured via Spring Security Filter Chain.
+
 
 

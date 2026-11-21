@@ -218,4 +218,14 @@ The GitHub Actions workflow runs these backend and frontend checks on pushes and
 - **Daily Practice Workout Widget**: Micro-learning habit engine with streak flames, architectural flash quizzes, and XP progression ranks.
 - **Multi-Round Pipeline HUD**: Live visual stage stepper displaying cumulative scores against enterprise hiring cutoff thresholds.
 
+---
+
+## 🎙️ Phase 7: AI Voice Analytics, Behavioral Emotion Telemetry & WebRTC Peer Rooms
+
+- **Real-Time Voice Acoustic Telemetry**: Autocorrelation pitch frequency tracker (75–450 Hz), vocal jitter detector, speech cadence speedometer (130–165 WPM optimal), and verbal filler crutch detector (`um`, `like`, `you know`).
+- **Behavioral Emotion & Composure Engine**: Multi-modal telemetry combining vocal inflection, eye-gaze tracking, and cadence to score composure and classify confidence tiers.
+- **Peer Collaborative Mock Rooms (`/peer-room`)**: P2P WebRTC signaling, 6-character room codes, split video layout, synchronized collaborative code pad, and mutual 4-pillar peer rubric scoring.
+- **Acoustic HUD Widget**: Live visual speedometer, pitch frequency readout, stability bar, and filler alert badges.
+
+
 
