@@ -3,14 +3,15 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import WalletCreditBadge from './WalletCreditBadge';
-import { Activity, BarChart3, Bot, ChevronLeft, ChevronRight, Command, FilePlus2, History, LayoutDashboard, LogOut, Menu, Moon, Settings, Shield, Sun, UserRound, X, Building2 } from 'lucide-react';
+import { Activity, BarChart3, Bot, ChevronLeft, ChevronRight, Command, FilePlus2, History, LayoutDashboard, LogOut, Menu, Moon, Settings, Shield, Sun, UserRound, X, Building2, Users } from 'lucide-react';
 
 const links = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, shortcut: '⌘1' },
   { name: 'New interview', path: '/create', icon: FilePlus2, shortcut: '⌘2' },
   { name: 'Assessment', path: '/assessment', icon: Building2, shortcut: '⌘3' },
+  { name: 'Peer Mock', path: '/peer-room', icon: Users, shortcut: '⌘4' },
   { name: 'Analytics', path: '/analytics', icon: BarChart3 },
-  { name: 'History', path: '/history', icon: History, shortcut: '⌘4' },
+  { name: 'History', path: '/history', icon: History, shortcut: '⌘5' },
   { name: 'Profile', path: '/profile', icon: UserRound },
   { name: 'Settings', path: '/settings', icon: Settings },
 ];
