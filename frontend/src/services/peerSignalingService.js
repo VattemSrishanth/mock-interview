@@ -1,4 +1,4 @@
-import peerMockApi from '../api/peerMock';
+import peerMockApi from '../api/peerMock.js';
 
 /**
  * PeerSignalingService handles WebRTC signaling coordination,
