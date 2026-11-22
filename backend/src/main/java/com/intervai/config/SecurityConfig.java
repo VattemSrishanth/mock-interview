@@ -86,6 +86,9 @@ public class SecurityConfig {
                                 "/api/v1/health",
                                 "/api/v1/voice-analytics/**",
                                 "/api/v1/peer-rooms/**",
+                                "/api/v1/system-design/**",
+                                "/api/v1/recruiter/**",
+                                "/api/v1/proctoring/**",
                                 "/api/billing/plans",
                                 "/api/billing/referral/validate"
                         ).permitAll()
