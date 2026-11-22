@@ -227,5 +227,15 @@ The GitHub Actions workflow runs these backend and frontend checks on pushes and
 - **Peer Collaborative Mock Rooms (`/peer-room`)**: P2P WebRTC signaling, 6-character room codes, split video layout, synchronized collaborative code pad, and mutual 4-pillar peer rubric scoring.
 - **Acoustic HUD Widget**: Live visual speedometer, pitch frequency readout, stability bar, and filler alert badges.
 
+---
+
+## 🏛️ Phase 8: System Design Architecture Canvas, Recruiter ATS Portal & Proctoring Gaze Heatmap
+
+- **Interactive System Design Studio (`/system-design`)**: Visual whiteboard canvas with drag-and-drop architectural blocks (LB, API Gateway, Microservice, Redis Cache, Cassandra, Kafka), live SPOF vulnerability detection, and high availability scoring.
+- **Mathematical Capacity Estimator**: Calculates Average/Peak QPS, Read/Write throughput distributions, ingress/egress bandwidth in Mbps, and 5-year storage projections based on DAU.
+- **Enterprise Recruiter ATS & Campus Drive Portal (`/recruiter`)**: Multi-stage candidate recruitment pipeline (`Applied` &rarr; `Offer Extended`), cohort filters, batch campus invite token generator, and digital certificate verification.
+- **Proctoring Eye-Gaze Heatmap Telemetry**: Real-time webcam attention zone tracking (center screen vs off-screen lookaways), tab switch auditing, and tamper-evident integrity reports.
+
+
 
 

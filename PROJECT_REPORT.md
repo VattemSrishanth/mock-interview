@@ -69,6 +69,8 @@ The frontend is under `frontend/src`. The backend follows conventional Spring pa
 | `/settings` | Candidate | Theme, interview defaults, and sign-out |
 | `/assessment` | Candidate | Virtual multi-round assessment center (OA, Technical, System Design, Bar Raiser) |
 | `/peer-room` | Candidate | Collaborative peer mock interview lobby, WebRTC signaling, and acoustic calibration bay |
+| `/system-design` | Candidate | Interactive system design studio, capacity estimator, and architecture canvas |
+| `/recruiter` | Recruiter / Admin | Enterprise recruiter ATS portal, candidate pipeline, and proctoring audit |
 | `/admin` | Administrator | Platform oversight |
 
 `Sidebar` provides the application shell and navigation. `App.jsx` owns the route table and global AI coach drawer. `AuthContext` and `ThemeContext` provide authentication and appearance state. The Axios client adds JWTs and redirects to login on unauthorized responses.
@@ -290,6 +292,32 @@ Phase 7 introduces real-time vocal acoustic analysis and peer-to-peer collaborat
    - `/api/v1/voice-analytics/analyze` and `/api/v1/voice-analytics/sample-metrics`.
    - `/api/v1/peer-rooms/create`, `/api/v1/peer-rooms/join`, `/api/v1/peer-rooms/{roomCode}/signal`, `/api/v1/peer-rooms/{roomCode}/rubric`, and `/api/v1/peer-rooms/active`.
    - Whitelisted and secured via Spring Security Filter Chain.
+
+## 19. Phase 8 Release Notes: Interactive System Design Studio, Enterprise Recruiter ATS Portal & Proctoring Eye-Gaze Heatmap
+
+Phase 8 elevates IntervAI into a dual-sided enterprise hiring and architecture interview platform:
+
+1. **Interactive System Design & Distributed Architecture Studio (`/system-design`, `SystemDesignCanvas.jsx`)**:
+   - Visual architecture canvas with pre-built component blocks: Load Balancer (NGINX), Microservices, Caching (Redis), Relational DB (PostgreSQL), NoSQL (Cassandra), and Message Queues (Kafka).
+   - Real-time Single Point of Failure (SPOF) detector analyzing node instance counts and replication strategies.
+   - Scalability and High Availability heuristic evaluation engine scoring topology resilience ($0\text{--}100$).
+   - Built-in architecture presets for industry benchmarks: TinyURL, Uber Ride Dispatch, Global Netflix CDN, and WhatsApp Chat.
+2. **Back-of-the-Envelope Capacity Estimator (`systemDesignCalculator.js` & `SystemArchitectureEvaluationService.java`)**:
+   - Mathematical model calculating Average QPS, Write/Read QPS distributions, Peak QPS ($2.5\times$), Ingress/Egress Bandwidth (Mbps), and Annual Storage Accumulation (TB) from Daily Active Users (DAU) and read/write ratios.
+   - Automatic 80/20 cache RAM sizing recommending memory allocation for hot data subsets.
+3. **Enterprise Recruiter ATS & Campus Drive Portal (`/recruiter`, `RecruiterPortalPage.jsx`, `RecruiterPipelineDrawer.jsx`)**:
+   - End-to-end recruitment pipeline tracker across 6 stages: `APPLIED` &rarr; `SCREENING_PASSED` &rarr; `TECHNICAL_ROUND` &rarr; `SYSTEM_DESIGN_ROUND` &rarr; `BAR_RAISER` &rarr; `OFFER_EXTENDED`.
+   - Candidate cohort filtering by track, company, minimum score, and verified authentic credentials.
+   - Instant 1-click stage advancement, candidate shortlisting, and campus batch invitation link generator (`/invite/:inviteToken`).
+4. **Proctoring Attention & Eye-Gaze Heatmap Telemetry (`ProctoringHeatmapWidget.jsx` & `ProctoringAnalysisService.java`)**:
+   - Multi-zone eye-gaze tracking analyzing center screen visual fixation vs. left/right/downward lookaways.
+   - Integrity scoring engine applying calibrated deductions for browser tab switching, window unfocus, and camera anomalies.
+   - Generates tamper-evident Proctoring Audit Reports classifying sessions as `VERIFIED_AUTHENTIC`, `FLAGGED_FOR_REVIEW`, or `INTEGRITY_BREACH`.
+5. **Architectural Security & REST Endpoints**:
+   - `/api/v1/system-design/calculate-capacity`, `/api/v1/system-design/evaluate-blueprint`, `/api/v1/system-design/templates`.
+   - `/api/v1/recruiter/applications`, `/api/v1/recruiter/applications/{id}/advance`, `/api/v1/recruiter/shortlists`, `/api/v1/recruiter/campus-invites`.
+   - `/api/v1/proctoring/telemetry`, `/api/v1/proctoring/audit-report/{sessionToken}`.
+
 
 
 
