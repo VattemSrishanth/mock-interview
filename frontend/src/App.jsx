@@ -26,6 +26,8 @@ const CertificateVerificationPage = lazy(() => import('./pages/CertificateVerifi
 const InboxPage = lazy(() => import('./pages/InboxPage'));
 const MultiRoundAssessmentPage = lazy(() => import('./pages/MultiRoundAssessmentPage'));
 const PeerInterviewRoomPage = lazy(() => import('./pages/PeerInterviewRoomPage'));
+const SystemDesignStudioPage = lazy(() => import('./pages/SystemDesignStudioPage'));
+const RecruiterPortalPage = lazy(() => import('./pages/RecruiterPortalPage'));
 
 function RouteFallback() {
   return (
@@ -79,6 +81,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <PeerInterviewRoomPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/system-design"
+            element={
+              <ProtectedRoute>
+                <SystemDesignStudioPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recruiter"
+            element={
+              <ProtectedRoute>
+                <RecruiterPortalPage />
               </ProtectedRoute>
             }
           />
