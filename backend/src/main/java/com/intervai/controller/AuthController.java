@@ -24,6 +24,21 @@ public class AuthController {
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
 
+    @org.springframework.web.bind.annotation.GetMapping("/check-email")
+    public ResponseEntity<java.util.Map<String, Object>> checkEmailAvailability(
+            @org.springframework.web.bind.annotation.RequestParam("email") String email) {
+        if (email == null || email.isBlank()) {
+            throw new com.intervai.exception.BadRequestException("Email address is required for availability check");
+        }
+        String normalized = email.trim().toLowerCase(java.util.Locale.ROOT);
+        boolean exists = authService.isEmailRegistered(normalized);
+        return ResponseEntity.ok(java.util.Map.of(
+                "email", normalized,
+                "available", !exists,
+                "message", exists ? "An account with this email address already exists. Please sign in." : "Email address is available for registration."
+        ));
+    }
+
     @PostMapping("/send-verification-code")
     public ResponseEntity<SendVerificationCodeResponse> sendVerificationCode(
             @Valid @RequestBody SendVerificationCodeRequest request) {
