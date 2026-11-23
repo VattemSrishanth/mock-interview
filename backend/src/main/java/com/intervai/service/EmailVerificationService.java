@@ -38,6 +38,15 @@ public class EmailVerificationService {
     private static final Duration RATE_LIMIT_INTERVAL = Duration.ofSeconds(30);
     private static final int MAX_ATTEMPTS = 5;
 
+    // Trusted major mail domains requiring no outbound DNS verification
+    private static final Set<String> TRUSTED_MAIL_DOMAINS = Set.of(
+            "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "yahoo.co.uk",
+            "outlook.com", "hotmail.com", "live.com", "msn.com",
+            "icloud.com", "me.com", "mac.com",
+            "proton.me", "protonmail.com", "zoho.com", "aol.com",
+            "mail.com", "gmx.com", "yandex.com", "fastmail.com"
+    );
+
     // Common disposable/burner email domains
     private static final Set<String> DISPOSABLE_DOMAINS = Set.of(
             "tempmail.com", "10minutemail.com", "mailinator.com", "guerrillamail.com",
@@ -109,7 +118,7 @@ public class EmailVerificationService {
         }
 
         // 3. Strict Duplicate Email Enforcement
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new BadRequestException("An account with this email address already exists. Please sign in instead.");
         }
 
@@ -220,28 +229,46 @@ public class EmailVerificationService {
     }
 
     private boolean hasActiveMailExchange(String domain) {
-        // Skip external DNS resolution for local/test mock domains during offline/testing
-        if (domain.equalsIgnoreCase("localhost") || domain.endsWith(".test") || domain.endsWith(".example")) {
+        if (domain == null || domain.isBlank()) {
+            return false;
+        }
+        String normalized = domain.trim().toLowerCase(Locale.ROOT);
+
+        // Instantly validate trusted consumer domains, test domains, and educational/organizational TLDs
+        if (normalized.equals("localhost")
+                || normalized.endsWith(".test")
+                || normalized.endsWith(".example")
+                || normalized.endsWith(".edu")
+                || normalized.endsWith(".ac.in")
+                || normalized.endsWith(".org")
+                || normalized.endsWith(".gov")
+                || TRUSTED_MAIL_DOMAINS.contains(normalized)) {
             return true;
         }
 
         try {
             Hashtable<String, String> env = new Hashtable<>();
             env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
+            env.put("com.sun.jndi.dns.timeout.initial", "2000");
+            env.put("com.sun.jndi.dns.timeout.retries", "1");
             DirContext ictx = new InitialDirContext(env);
-            Attributes attrs = ictx.getAttributes(domain, new String[]{"MX"});
+            Attributes attrs = ictx.getAttributes(normalized, new String[]{"MX"});
             Attribute attr = attrs.get("MX");
             if (attr != null && attr.size() > 0) {
                 return true;
             }
 
-            // Fallback: Check A (address) records if domain acts as mail endpoint
-            Attributes aAttrs = ictx.getAttributes(domain, new String[]{"A"});
+            Attributes aAttrs = ictx.getAttributes(normalized, new String[]{"A"});
             Attribute aAttr = aAttrs.get("A");
-            return aAttr != null && aAttr.size() > 0;
-        } catch (NamingException e) {
-            log.warn("DNS check failed for email domain '{}': {}", domain, e.getMessage());
+            if (aAttr != null && aAttr.size() > 0) {
+                return true;
+            }
             return false;
+        } catch (NamingException e) {
+            // In containerized cloud environments (e.g. Render, Docker) where outbound UDP DNS query is blocked,
+            // never block genuine candidate signups due to container networking limitations.
+            log.warn("DNS MX/A check encountered container network limitation for domain '{}': {}. Permitting registration.", normalized, e.getMessage());
+            return true;
         }
     }
 
