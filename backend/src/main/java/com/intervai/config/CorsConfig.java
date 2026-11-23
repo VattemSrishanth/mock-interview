@@ -23,27 +23,33 @@ public class CorsConfig {
         List<String> origins = new ArrayList<>();
         List<String> patterns = new ArrayList<>();
 
-        if (configuredOrigins != null && !configuredOrigins.isBlank()) {
-            for (String raw : configuredOrigins.split(",")) {
-                String trimmed = raw.trim();
-                if (trimmed.isEmpty()) continue;
-                if (trimmed.contains("*")) {
-                    patterns.add(trimmed);
-                } else {
-                    try {
-                        origins.add(normalizeOrigin(trimmed));
-                    } catch (Exception ignored) {
+        try {
+            if (configuredOrigins != null && !configuredOrigins.isBlank()) {
+                for (String raw : configuredOrigins.split(",")) {
+                    String trimmed = raw.trim();
+                    if (trimmed.isEmpty()) continue;
+                    if (trimmed.contains("*")) {
                         patterns.add(trimmed);
+                    } else {
+                        try {
+                            origins.add(normalizeOrigin(trimmed));
+                        } catch (Exception ignored) {
+                            patterns.add(trimmed);
+                        }
                     }
                 }
             }
+        } catch (Throwable t) {
+            // Absolute fail-safe: prevent any deployment failure on cloud hosts
+            patterns.add("https://*.onrender.com");
         }
 
-        // Fallback default origins if none provided to guarantee zero-downtime startup
+        // Guaranteed resilient origins for zero-downtime cloud and local development
         if (origins.isEmpty() && patterns.isEmpty()) {
             origins.add("http://localhost:5173");
             origins.add("http://localhost:3000");
             patterns.add("https://*.onrender.com");
+            patterns.add("https://*.vercel.app");
         }
 
         this.allowedOrigins = origins.stream().distinct().toList();
