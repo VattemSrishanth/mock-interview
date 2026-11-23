@@ -143,9 +143,18 @@ export default function RegisterPage() {
       setCodeCooldown(30);
       setCodeStatus(res.message || 'Verification code sent to your email.');
     } catch (err) {
-      setCodeError(
-        err.response?.data?.message || 'Failed to send verification code. The email may already be in use.'
-      );
+      const serverMsg = err.response?.data?.message;
+      if (serverMsg) {
+        setCodeError(serverMsg);
+      } else if (!err.response) {
+        setCodeError('Network error: Unable to connect to the authentication server. Please check your internet connection.');
+      } else if (err.response.status === 409) {
+        setCodeError('An account with this email address already exists. Please sign in instead.');
+      } else if (err.response.status === 429) {
+        setCodeError('Too many requests. Please wait a moment before requesting another verification code.');
+      } else {
+        setCodeError('Unable to send verification code. Please check your email address and try again.');
+      }
     } finally {
       setSendingCode(false);
     }
