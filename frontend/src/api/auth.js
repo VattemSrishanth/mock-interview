@@ -1,6 +1,10 @@
 import api from './client';
 
 export const authApi = {
+  checkEmailAvailability: async (email) => {
+    const response = await api.get('/auth/check-email', { params: { email: email.trim().toLowerCase() } });
+    return response.data;
+  },
   sendVerificationCode: async (email) => {
     const response = await api.post('/auth/send-verification-code', { email });
     return response.data;
