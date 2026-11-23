@@ -42,7 +42,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         String email = request.getEmail().toLowerCase().trim();
 
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new BadRequestException("An account with email " + email + " already exists. Please sign in instead.");
         }
 
@@ -95,6 +95,13 @@ public class AuthService {
                 .requiresLogin(true)
                 .message("Account registered successfully! For security, please sign in with your email and password.")
                 .build();
+    }
+
+    public boolean isEmailRegistered(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        return userRepository.existsByEmailIgnoreCase(email.trim().toLowerCase(java.util.Locale.ROOT));
     }
 
     public AuthResponse login(AuthRequest request) {
