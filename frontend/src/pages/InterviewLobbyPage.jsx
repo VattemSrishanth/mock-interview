@@ -18,6 +18,7 @@ import {
 import LiveAudioWave from '../components/LiveAudioWave';
 import InterviewerPersonaSelector from '../components/InterviewerPersonaSelector';
 import { voiceInterviewerService } from '../services/voiceInterviewerService';
+import { MicAudioTester } from '../utils/micTestUtils';
 
 export default function InterviewLobbyPage() {
   const { id } = useParams();
@@ -27,6 +28,8 @@ export default function InterviewLobbyPage() {
   const [loading, setLoading] = useState(true);
   const [micTesting, setMicTesting] = useState(false);
   const [micSuccess, setMicSuccess] = useState(false);
+  const [micVolume, setMicVolume] = useState(0);
+  const micTesterRef = React.useRef(null);
   const [speakerTesting, setSpeakerTesting] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
@@ -48,24 +51,38 @@ export default function InterviewLobbyPage() {
     fetchInterview();
   }, [id]);
 
+  useEffect(() => {
+    return () => {
+      if (micTesterRef.current) {
+        micTesterRef.current.stop();
+      }
+    };
+  }, []);
+
   const testMicrophone = async () => {
     setMicTesting(true);
     try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        setMicSuccess(true);
-        // stop tracks after test
-        setTimeout(() => {
-          stream.getTracks().forEach((track) => track.stop());
-          setMicTesting(false);
-        }, 1500);
-      } else {
-        setMicSuccess(true);
-        setTimeout(() => setMicTesting(false), 1200);
+      if (micTesterRef.current) {
+        micTesterRef.current.stop();
       }
+      const tester = new MicAudioTester((level) => {
+        setMicVolume(level);
+        if (level > 10) {
+          setMicSuccess(true);
+        }
+      });
+      micTesterRef.current = tester;
+      await tester.start();
+      setMicSuccess(true);
+      setTimeout(() => {
+        if (micTesterRef.current) {
+          micTesterRef.current.stop();
+        }
+        setMicTesting(false);
+      }, 3000);
     } catch (e) {
-      console.warn("Microphone permission prompt skipped or denied:", e);
-      setMicSuccess(true); // Allow fallback text mode
+      console.warn("Microphone test error or fallback:", e);
+      setMicSuccess(true);
       setMicTesting(false);
     }
   };
@@ -249,6 +266,22 @@ export default function InterviewLobbyPage() {
                 {micTesting ? 'Listening...' : micSuccess ? 'Retest' : 'Check Mic'}
               </button>
             </div>
+
+            {micTesting && (
+              <div className="p-3 rounded-xl bg-[#151f33]/60 border border-emerald-500/20 space-y-1.5 animate-fadeIn">
+                <div className="flex justify-between items-center text-[10px]">
+                  <span className="text-emerald-400 font-semibold">Live Input Volume</span>
+                  <span className="font-mono text-emerald-300">{micVolume}%</span>
+                </div>
+                <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-400 transition-all duration-100 rounded-full"
+                    style={{ width: `${Math.max(4, micVolume)}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400">Speak into your microphone to verify detection level.</p>
+              </div>
+            )}
 
             {/* Speaker check */}
             <div className="p-4 rounded-xl bg-[#151f33] border border-white/5 flex items-center justify-between">
