@@ -37,8 +37,20 @@ class PublicEndpointsIntegrationTest {
                 .andExpect(jsonPath("$.status", notNullValue()))
                 .andExpect(jsonPath("$.jvmVersion", notNullValue()))
                 .andExpect(jsonPath("$.uptimeSeconds", greaterThanOrEqualTo(0)))
+                .andExpect(jsonPath("$.availableProcessors", greaterThan(0)))
+                .andExpect(jsonPath("$.threadCount", greaterThan(0)))
                 .andExpect(jsonPath("$.memory.totalMb", greaterThan(0)))
-                .andExpect(jsonPath("$.services.database", notNullValue()));
+                .andExpect(jsonPath("$.services.database", notNullValue()))
+                .andExpect(jsonPath("$.services.mailService", notNullValue()))
+                .andExpect(jsonPath("$.features", notNullValue()));
+    }
+
+    @Test
+    void getHealthPingEndpointReturnsLightweightStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/health/ping").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("UP")))
+                .andExpect(jsonPath("$.timestamp", greaterThan(0L)));
     }
 
     @Test
