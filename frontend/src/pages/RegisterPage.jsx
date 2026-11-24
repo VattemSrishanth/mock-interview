@@ -270,6 +270,30 @@ export default function RegisterPage() {
             </div>
           )}
 
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[11px] uppercase tracking-wider font-mono text-slate-500 font-semibold">Candidate Credentials</span>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({
+                  name: 'Alex Chen',
+                  email: 'alex.chen@gmail.com',
+                  password: 'Password123!',
+                  verificationCode: '',
+                  targetRole: 'Full Stack Developer',
+                  experience: 'Fresher',
+                  careerGoal: 'Secure a high-impact engineering role at top tech firms',
+                  skills: ['React', 'JavaScript', 'Java', 'Spring Boot', 'SQL']
+                });
+              }}
+              className="text-[11px] font-medium text-brand-400 hover:text-brand-300 flex items-center gap-1 transition"
+              title="Pre-populate realistic candidate data"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>Auto-fill Demo Profile</span>
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="reg-name" className="block text-xs font-semibold text-slate-300 mb-1.5">Full Name</label>
