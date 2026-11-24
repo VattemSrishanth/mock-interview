@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AiCoachDrawer from './components/AiCoachDrawer';
 import PricingPlansModal from './components/PricingPlansModal';
 import UpiCheckoutModal from './components/UpiCheckoutModal';
+import CloudConnectivityBanner from './components/CloudConnectivityBanner';
 import { useAuth } from './context/AuthContext';
 
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -44,6 +45,7 @@ export default function App() {
   const { isAuthenticated } = useAuth();
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-orange-500/30 selection:text-orange-400">
+      <CloudConnectivityBanner />
       <Sidebar onOpenCoach={() => setIsCoachOpen(true)} onCollapsedChange={setSidebarCollapsed} />
 
       {/* Main Content Area: adjusts margin when authenticated user views with sidebar */}
