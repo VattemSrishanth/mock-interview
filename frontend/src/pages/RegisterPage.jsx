@@ -137,15 +137,31 @@ export default function RegisterPage() {
     }
 
     setSendingCode(true);
+
+    // Deployment safeguard: abort spinner if cold start or network exceeds 15 seconds
+    const timeoutTimer = setTimeout(() => {
+      setSendingCode((prev) => {
+        if (prev) {
+          setCodeError('Request timed out. The cloud server may be waking up. Please click Send Code again.');
+          return false;
+        }
+        return prev;
+      });
+    }, 15000);
+
     try {
       const res = await authApi.sendVerificationCode(formData.email.trim());
+      clearTimeout(timeoutTimer);
       setCodeSent(true);
       setCodeCooldown(30);
       setCodeStatus(res.message || 'Verification code sent to your email.');
     } catch (err) {
+      clearTimeout(timeoutTimer);
       const serverMsg = err.response?.data?.message;
       if (serverMsg) {
         setCodeError(serverMsg);
+      } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setCodeError('Server took too long to respond (cold start). Please click Send Code again.');
       } else if (!err.response) {
         setCodeError('Network error: Unable to connect to the authentication server. Please check your internet connection.');
       } else if (err.response.status === 409) {
@@ -156,6 +172,7 @@ export default function RegisterPage() {
         setCodeError('Unable to send verification code. Please check your email address and try again.');
       }
     } finally {
+      clearTimeout(timeoutTimer);
       setSendingCode(false);
     }
   };
@@ -180,12 +197,24 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
+
+    const submitTimer = setTimeout(() => {
+      setLoading((prev) => {
+        if (prev) {
+          setError('Registration timed out. Please check your connection and try again.');
+          return false;
+        }
+        return prev;
+      });
+    }, 20000);
+
     try {
       await register({
         ...formData,
         email: formData.email.trim(),
         verificationCode: formData.verificationCode.trim()
       });
+      clearTimeout(submitTimer);
 
       // Clear draft from storage on successful registration
       try {
@@ -200,10 +229,12 @@ export default function RegisterPage() {
         }
       });
     } catch (err) {
+      clearTimeout(submitTimer);
       setError(
         err.response?.data?.message || 'Registration failed. Please check your verification code and details.'
       );
     } finally {
+      clearTimeout(submitTimer);
       setLoading(false);
     }
   };

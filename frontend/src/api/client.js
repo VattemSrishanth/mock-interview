@@ -7,6 +7,7 @@ const baseURL = rawBaseUrl
 
 const api = axios.create({
   baseURL,
+  timeout: 20000, // 20-second timeout to prevent indefinite loading in deployment
   headers: {
     'Content-Type': 'application/json',
   },

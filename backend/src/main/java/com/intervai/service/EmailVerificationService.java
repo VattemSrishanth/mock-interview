@@ -175,8 +175,14 @@ public class EmailVerificationService {
             mailbox.remove(mailbox.size() - 1);
         }
 
-        // 7. Deliver Code to External SMTP if configured
-        deliverSmtp(email, code, htmlBody);
+        // 7. Deliver Code to External SMTP asynchronously so HTTP response returns in <10ms
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                deliverSmtp(email, code, htmlBody);
+            } catch (Exception ex) {
+                log.warn("[EMAIL SERVICE] Asynchronous delivery failed for {}: {}", email, ex.getMessage());
+            }
+        });
 
         // Security: NEVER return the code in the API response or to the registration portal
         return SendVerificationCodeResponse.builder()
