@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildInterviewReportMarkdown,
   buildInterviewReportPayload,
+  buildInterviewReportCsv,
   buildReportFilename,
   formatReportScore
 } from './reportExportUtils.js';
@@ -106,4 +107,15 @@ test('buildInterviewReportMarkdown renders scorecard sections, rubric table, and
   assert.ok(md.includes('### Question 1: Design a rate limiter for an API gateway.'));
   assert.ok(md.includes('> Use a Redis token bucket with Lua scripts for atomicity.'));
   assert.ok(md.includes('- Identified race conditions and proposed atomic Lua execution'));
+});
+
+test('buildInterviewReportCsv escapes quotes and formats question rows properly', () => {
+  assert.equal(buildInterviewReportCsv(null), '');
+
+  const csv = buildInterviewReportCsv(sampleResult);
+  assert.ok(csv.includes('Question #,Question Text,Candidate Answer,Model Concepts,Score / 100,Feedback Notes'));
+  assert.ok(csv.includes('"Design a rate limiter for an API gateway."'));
+  assert.ok(csv.includes('"Use a Redis token bucket with Lua scripts for atomicity."'));
+  assert.ok(csv.includes('90'));
+  assert.ok(csv.includes('Identified race conditions and proposed atomic Lua execution'));
 });
