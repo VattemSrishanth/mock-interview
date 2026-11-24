@@ -1,13 +1,17 @@
 import axios from 'axios';
 
-const rawBaseUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || '';
-const baseURL = rawBaseUrl
-  ? (rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl.replace(/\/+$/, '')}/api`)
-  : '/api';
+const resolveBaseUrl = () => {
+  const envUrl = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_API_URL : '';
+  if (envUrl && envUrl.trim()) {
+    const trimmed = envUrl.trim();
+    return trimmed.endsWith('/api') ? trimmed : `${trimmed.replace(/\/+$/, '')}/api`;
+  }
+  return '/api';
+};
 
 const api = axios.create({
-  baseURL,
-  timeout: 20000, // 20-second timeout to prevent indefinite loading in deployment
+  baseURL: resolveBaseUrl(),
+  timeout: 45000, // 45-second timeout to allow Render free tier containers to wake up from cold start
   headers: {
     'Content-Type': 'application/json',
   },

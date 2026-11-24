@@ -360,15 +360,15 @@ public class EmailVerificationService {
             String[] origins = corsAllowedOrigins.split(",");
             for (String origin : origins) {
                 String clean = origin.trim();
-                if (!clean.isBlank() && !clean.contains("localhost") && !clean.contains("127.0.0.1")) {
+                if (!clean.isBlank() && !clean.contains("*") && !clean.contains("localhost") && !clean.contains("127.0.0.1")) {
                     return clean.replaceAll("/+$", "");
                 }
             }
-            if (origins.length > 0 && !origins[0].isBlank()) {
+            if (origins.length > 0 && !origins[0].isBlank() && !origins[0].contains("*")) {
                 return origins[0].trim().replaceAll("/+$", "");
             }
         }
-        return "http://localhost:5173";
+        return "https://mock-interview-bice-seven.vercel.app";
     }
 
     public String getCodeForTesting(String email) {

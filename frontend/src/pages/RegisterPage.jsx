@@ -138,16 +138,16 @@ export default function RegisterPage() {
 
     setSendingCode(true);
 
-    // Deployment safeguard: abort spinner if cold start or network exceeds 15 seconds
+    // Deployment safeguard: abort spinner if cold start or network exceeds 45 seconds
     const timeoutTimer = setTimeout(() => {
       setSendingCode((prev) => {
         if (prev) {
-          setCodeError('Request timed out. The cloud server may be waking up. Please click Send Code again.');
+          setCodeError('Request timed out. The cloud server may be waking up from sleep. Please click Send Code again.');
           return false;
         }
         return prev;
       });
-    }, 15000);
+    }, 45000);
 
     try {
       const res = await authApi.sendVerificationCode(formData.email.trim());
@@ -161,9 +161,13 @@ export default function RegisterPage() {
       if (serverMsg) {
         setCodeError(serverMsg);
       } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        setCodeError('Server took too long to respond (cold start). Please click Send Code again.');
+        setCodeError('Server took too long to respond (cold start). Cloud containers sleep when idle; please click Send Code again.');
+      } else if (err.response?.status === 503) {
+        setCodeError('Authentication server is temporarily suspended or waking up on Render. Please verify backend service status.');
+      } else if (err.response?.status === 405) {
+        setCodeError('Deployment routing update in progress. Please refresh the page in a moment.');
       } else if (!err.response) {
-        setCodeError('Network error: Unable to connect to the authentication server. Please check your internet connection.');
+        setCodeError('Unable to connect to the authentication server. The cloud backend may be sleeping or paused on Render. Please click Send Code again.');
       } else if (err.response.status === 409) {
         setCodeError('An account with this email address already exists. Please sign in instead.');
       } else if (err.response.status === 429) {
@@ -201,12 +205,12 @@ export default function RegisterPage() {
     const submitTimer = setTimeout(() => {
       setLoading((prev) => {
         if (prev) {
-          setError('Registration timed out. Please check your connection and try again.');
+          setError('Registration timed out. The cloud server may be taking longer to wake up. Please try again.');
           return false;
         }
         return prev;
       });
-    }, 20000);
+    }, 45000);
 
     try {
       await register({
@@ -327,6 +331,13 @@ export default function RegisterPage() {
                   )}
                 </button>
               </div>
+
+              {sendingCode && (
+                <p className="mt-1.5 text-[11px] text-indigo-300 flex items-center gap-1 animate-pulse">
+                  <Sparkles className="w-3 h-3 shrink-0" />
+                  <span>Connecting to authentication server (free tier cloud containers take ~30s to wake up)...</span>
+                </p>
+              )}
 
               {/* Status and Error messages for code */}
               {codeError && (

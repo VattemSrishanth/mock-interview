@@ -45,11 +45,15 @@ public class CorsConfig {
         }
 
         // Guaranteed resilient origins for zero-downtime cloud and local development
-        if (origins.isEmpty() && patterns.isEmpty()) {
+        if (!patterns.contains("https://*.vercel.app")) {
+            patterns.add("https://*.vercel.app");
+        }
+        if (!patterns.contains("https://*.onrender.com")) {
+            patterns.add("https://*.onrender.com");
+        }
+        if (origins.isEmpty()) {
             origins.add("http://localhost:5173");
             origins.add("http://localhost:3000");
-            patterns.add("https://*.onrender.com");
-            patterns.add("https://*.vercel.app");
         }
 
         this.allowedOrigins = origins.stream().distinct().toList();
