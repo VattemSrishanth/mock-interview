@@ -177,3 +177,47 @@ export function exportInterviewReportMarkdown(result, readinessTier = null) {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+export function buildInterviewReportCsv(result) {
+  if (!result || !result.questions) return '';
+
+  const escapeCsv = (val) => {
+    if (val == null) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  const rows = [
+    ['Question #', 'Question Text', 'Candidate Answer', 'Model Concepts', 'Score / 100', 'Feedback Notes']
+  ];
+
+  result.questions.forEach((q, idx) => {
+    const fb = q.feedback || {};
+    const notes = [...(fb.strengths || []), ...(fb.suggestions || [])].join('; ');
+    rows.push([
+      idx + 1,
+      escapeCsv(q.questionText),
+      escapeCsv(q.userAnswer || q.candidateAnswer || ''),
+      escapeCsv(q.modelAnswer || q.expectedKeyPoints || ''),
+      fb.score != null ? fb.score : '',
+      escapeCsv(notes)
+    ]);
+  });
+
+  return rows.map((r) => r.join(',')).join('\n');
+}
+
+export function exportInterviewReportCsv(result) {
+  const csvContent = buildInterviewReportCsv(result);
+  if (!csvContent) return;
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = buildReportFilename(result.jobRole, 'csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
