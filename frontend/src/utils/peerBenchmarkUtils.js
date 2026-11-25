@@ -99,3 +99,42 @@ export function buildCohortBreakdown(result) {
     };
   });
 }
+
+const DIMENSION_ACTION_HINTS = {
+  technicalKnowledgeScore: {
+    title: 'Deepen Core Architecture & Complexity Analysis',
+    action: 'Review Big-O trade-offs, indexing internals, and distributed failure modes.'
+  },
+  communicationScore: {
+    title: 'Tighten Executive Summary Framing',
+    action: 'Summarize your solution in 20 seconds before explaining granular steps.'
+  },
+  relevanceScore: {
+    title: 'Anchor Answers to Prompt Constraints',
+    action: 'Re-read edge cases and throughput assumptions aloud before coding.'
+  },
+  clarityScore: {
+    title: 'Apply Structured STAR / Stepwise Narratives',
+    action: 'Use explicit signposting ("First... Second... Trade-off...") between points.'
+  },
+  confidenceScore: {
+    title: 'Eliminate Hesitation & Filler Pauses',
+    action: 'Complete two timed 90-second voice drills in the Interview Lobby.'
+  }
+};
+
+/**
+ * Generates up to 3 prioritized prep recommendations ordered by lowest competency dimension.
+ */
+export function buildReadinessActionPlan(result, limit = 3) {
+  if (!result) return [];
+
+  return Object.entries(DIMENSION_ACTION_HINTS)
+    .map(([key, meta]) => ({
+      key,
+      score: result[key] != null ? Number(result[key]) : 0,
+      ...meta
+    }))
+    .sort((a, b) => a.score - b.score)
+    .slice(0, Math.max(1, limit));
+}
