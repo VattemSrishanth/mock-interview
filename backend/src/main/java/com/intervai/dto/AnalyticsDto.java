@@ -31,4 +31,5 @@ public class AnalyticsDto {
     // Weakest & recommended practice
     private List<String> weakestAreas;
     private List<String> recommendedPractice;
+    private String readinessGrade;
 }

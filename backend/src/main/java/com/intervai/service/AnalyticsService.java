@@ -117,6 +117,14 @@ public class AnalyticsService {
             weakest.add("Deep Architectural Trade-offs");
             recommendations.add("Deepen knowledge on runtime memory models, indexing internals, and concurrency trade-offs.");
         }
+        if (avgClar != null && avgClar < 75) {
+            weakest.add("Structured Answer Clarity");
+            recommendations.add("Lead with a 1-sentence thesis before diving into implementation details.");
+        }
+        if (avgConf != null && avgConf < 75) {
+            weakest.add("Vocal Pacing & Delivery Poise");
+            recommendations.add("Rehearse key tradeoffs aloud with the Lobby Mic Check to eliminate filler pauses.");
+        }
         if (weakest.isEmpty()) {
             weakest.add("High-concurrency System Scaling");
             weakest.add("Edge-case Handling Under Network Latency");
@@ -124,8 +132,11 @@ public class AnalyticsService {
             recommendations.add("Conduct 1 mock interview weekly in voice mode to simulate high-pressure phone screens.");
         }
 
+        double roundedAvg = avgScore != null ? Math.round(avgScore * 10.0) / 10.0 : 0.0;
+        String readinessGrade = resolveReadinessGrade(roundedAvg, totalCompleted);
+
         return AnalyticsDto.builder()
-                .averageScore(avgScore != null ? Math.round(avgScore * 10.0) / 10.0 : 0.0)
+                .averageScore(roundedAvg)
                 .bestScore(bestScore != null ? bestScore : 0)
                 .currentStreak(user.getInterviewStreak() != null ? user.getInterviewStreak() : 0)
                 .totalInterviews(totalInterviews)
@@ -141,6 +152,20 @@ public class AnalyticsService {
                 .skillWisePerformance(skillData)
                 .weakestAreas(weakest)
                 .recommendedPractice(recommendations)
+                .readinessGrade(readinessGrade)
                 .build();
+    }
+
+    static String resolveReadinessGrade(double averageScore, long completedInterviews) {
+        if (completedInterviews <= 0) {
+            return "CALIBRATING";
+        }
+        if (averageScore >= 85.0) {
+            return "PLACEMENT_READY";
+        }
+        if (averageScore >= 70.0) {
+            return "COMPETITIVE";
+        }
+        return "FOUNDATIONAL";
     }
 }
