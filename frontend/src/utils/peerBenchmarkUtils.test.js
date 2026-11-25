@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculatePercentile, formatPercentileHeadline, buildCohortBreakdown } from './peerBenchmarkUtils.js';
+import { calculatePercentile, formatPercentileHeadline, buildCohortBreakdown, buildReadinessActionPlan } from './peerBenchmarkUtils.js';
 
 test('calculatePercentile returns null for invalid scores', () => {
   assert.equal(calculatePercentile(null), null);
@@ -51,4 +51,20 @@ test('buildCohortBreakdown maps all 5 dimensions safely', () => {
 
 test('buildCohortBreakdown handles null result safely', () => {
   assert.deepEqual(buildCohortBreakdown(null), []);
+});
+
+test('buildReadinessActionPlan orders weakest dimensions first and respects limit', () => {
+  assert.deepEqual(buildReadinessActionPlan(null), []);
+
+  const plan = buildReadinessActionPlan({
+    technicalKnowledgeScore: 90,
+    communicationScore: 82,
+    relevanceScore: 88,
+    clarityScore: 60,
+    confidenceScore: 55
+  }, 2);
+
+  assert.equal(plan.length, 2);
+  assert.equal(plan[0].key, 'confidenceScore');
+  assert.equal(plan[1].key, 'clarityScore');
 });
