@@ -99,7 +99,7 @@ public class HealthController {
         SystemHealthDto health = SystemHealthDto.builder()
                 .status(dbHealthy ? "UP" : "DEGRADED")
                 .environment(activeEnv)
-                .version("2.0.0")
+                .version("2.1.0")
                 .cloudProvider(cloudProvider)
                 .timestamp(System.currentTimeMillis())
                 .uptimeSeconds(uptime)
