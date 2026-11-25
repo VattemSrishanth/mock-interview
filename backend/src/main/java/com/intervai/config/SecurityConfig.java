@@ -84,6 +84,7 @@ public class SecurityConfig {
                                 "/api/interviews/certificate/**",
                                 "/api/interviews/verify-signature",
                                 "/api/v1/health",
+                                "/api/v1/health/**",
                                 "/api/v1/voice-analytics/**",
                                 "/api/v1/peer-rooms/**",
                                 "/api/v1/system-design/**",
