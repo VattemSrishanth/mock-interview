@@ -19,12 +19,16 @@ public class DailyWorkoutService {
     }
 
     public DailyWorkoutDto getTodaysWorkout() {
-        LocalDate today = LocalDate.now();
-        int dayIndex = Math.abs(today.hashCode() % 3);
+        return getWorkoutForDate(LocalDate.now());
+    }
+
+    public DailyWorkoutDto getWorkoutForDate(LocalDate date) {
+        LocalDate targetDate = date != null ? date : LocalDate.now();
+        int dayIndex = Math.abs(targetDate.hashCode() % 5);
 
         DailyWorkoutDto workout = new DailyWorkoutDto();
-        workout.setWorkoutId("WRK-" + today);
-        workout.setWorkoutDate(today);
+        workout.setWorkoutId("WRK-" + targetDate);
+        workout.setWorkoutDate(targetDate);
         workout.setXpReward(50);
 
         switch (dayIndex) {
@@ -57,6 +61,36 @@ public class DailyWorkoutService {
                 workout.setQuickCodePrompt("Find the length of the longest substring without repeating characters.");
                 workout.setCodeStarterSnippet("public int lengthOfLongestSubstring(String s) {\n    // Write O(N) sliding window\n    return 0;\n}");
                 workout.setTargetExpectedComplexity("Time: O(N), Space: O(min(M, N))");
+            }
+            case 2 -> {
+                workout.setDailyFocusTopic("Distributed Caching & Consistent Hashing Rings");
+                workout.setRapidConceptQuestion("Why do production consistent hashing rings introduce virtual nodes (vnodes) per physical cache shard?");
+                workout.setConceptOptions(List.of(
+                        "To encrypt cache keys before network transmission.",
+                        "To ensure uniform key distribution and avoid hotspotting when nodes join or leave.",
+                        "To bypass TCP connection limits in HTTP/1.1 clients.",
+                        "To convert LRU eviction policies into FIFO queues."
+                ));
+                workout.setCorrectOptionIndex(1);
+                workout.setConceptExplanation("Virtual nodes map each physical shard to many points around the hash ring, smoothing variance in partition sizes and spreading rebalance load evenly across surviving nodes.");
+                workout.setQuickCodePrompt("Design a thread-safe ConsistentHashRouter supporting addNode, removeNode, and routeKey.");
+                workout.setCodeStarterSnippet("class ConsistentHashRouter {\n    // Use a TreeMap<Long, String> hash ring with virtual nodes\n}");
+                workout.setTargetExpectedComplexity("O(log(N * V)) Lookup, Minimal K/N Rebalancing");
+            }
+            case 3 -> {
+                workout.setDailyFocusTopic("Event-Driven Reliability & Transactional Outbox Pattern");
+                workout.setRapidConceptQuestion("What dual-write failure mode does the Transactional Outbox pattern eliminate?");
+                workout.setConceptOptions(List.of(
+                        "Browser CORS preflight failures on cross-origin POST requests.",
+                        "Updating the database without publishing the corresponding domain event (or vice versa) on crash.",
+                        "Stack overflow errors during recursive JSON serialization.",
+                        "CPU throttling inside single-threaded event loops."
+                ));
+                workout.setCorrectOptionIndex(1);
+                workout.setConceptExplanation("Persisting the entity mutation and the outbox event inside the same ACID database transaction ensures atomic durability before a relay publishes to Kafka/RabbitMQ.");
+                workout.setQuickCodePrompt("Implement an idempotent message deduplicator using a bounded key store.");
+                workout.setCodeStarterSnippet("class IdempotentConsumer {\n    public boolean tryProcess(String eventId) {\n        return true;\n    }\n}");
+                workout.setTargetExpectedComplexity("O(1) Deduplication Check, At-Least-Once Safe");
             }
             default -> {
                 workout.setDailyFocusTopic("Concurrency & Distributed Consensus (CAP Theorem)");
