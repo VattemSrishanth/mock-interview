@@ -44,6 +44,14 @@ public class HealthController {
         ));
     }
 
+    @GetMapping("/version")
+    public ResponseEntity<Map<String, String>> version() {
+        return ResponseEntity.ok(Map.of(
+                "service", "intervai-backend",
+                "version", "2.1.1"
+        ));
+    }
+
     @GetMapping
     public ResponseEntity<SystemHealthDto> getHealth() {
         Runtime runtime = Runtime.getRuntime();
