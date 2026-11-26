@@ -26,6 +26,8 @@ const LiveAudioWave = React.memo(function LiveAudioWave({
       className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-2.5 backdrop-blur-md transition-all duration-300"
       role="region"
       aria-label={`Live audio wave status: ${statusLabel}`}
+      aria-live="polite"
+      data-audio-state={isActive ? 'active' : isAiSpeaking ? 'speaking' : 'standby'}
     >
       <div 
         className="flex h-10 w-full items-end justify-center gap-1 px-2"
