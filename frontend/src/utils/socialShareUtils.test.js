@@ -25,3 +25,21 @@ test('buildSocialShareCopy handles default fallback parameters', () => {
   assert.ok(copy.headline.includes('Software Engineer'));
   assert.ok(copy.fullText.includes('#IntervAI'));
 });
+
+test('buildSocialShareCopy sanitizes whitespace roles and null shareUrl safely', () => {
+  const copyWhitespace = buildSocialShareCopy({
+    jobRole: '   ',
+    overallScore: 60,
+    shareUrl: null
+  });
+  assert.ok(copyWhitespace.headline.includes('Software Engineer'));
+  assert.ok(copyWhitespace.fullText.includes('#SoftwareEngineer'));
+  assert.equal(copyWhitespace.encodedUrl, '');
+
+  const copyPunct = buildSocialShareCopy({
+    jobRole: '!!!',
+    overallScore: 60,
+    shareUrl: null
+  });
+  assert.ok(copyPunct.fullText.includes('#Engineering'));
+});
