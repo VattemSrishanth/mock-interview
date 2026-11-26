@@ -54,6 +54,18 @@ class PublicEndpointsIntegrationTest {
     }
 
     @Test
+    void getRootAndVersionEndpointsReturnServiceMetadata() throws Exception {
+        mockMvc.perform(get("/").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("UP")))
+                .andExpect(jsonPath("$.service", is("intervai-backend")));
+
+        mockMvc.perform(get("/api/v1/health/version").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.version", notNullValue()));
+    }
+
+    @Test
     void getPublicInterviewTipsReturnsCategorizedList() throws Exception {
         mockMvc.perform(get("/api/interviews/public/tips").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
