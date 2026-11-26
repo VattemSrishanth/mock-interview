@@ -112,3 +112,12 @@ export const calculateUserLevel = (totalXp = 0) => {
     nextTierXp: LEVEL_TIERS[1].minXp,
   };
 };
+
+export const calculateXpToNextLevel = (totalXp = 0) => {
+  const safeXp = Math.max(0, Number(totalXp) || 0);
+  const current = calculateUserLevel(safeXp);
+  if (current.level >= LEVEL_TIERS.length) {
+    return 0;
+  }
+  return Math.max(0, current.nextTierXp - safeXp);
+};
