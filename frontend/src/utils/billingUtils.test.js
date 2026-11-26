@@ -7,6 +7,7 @@ import {
   isValidReferralCodeFormat,
   buildUpiDeepLink,
   computePerInterviewCostRupees,
+  computeSavingsPercentage,
 } from './billingUtils.js';
 
 describe('billingUtils — UPI Micro-Transaction & Referral Math', () => {
@@ -63,5 +64,13 @@ describe('billingUtils — UPI Micro-Transaction & Referral Math', () => {
     assert.equal(computePerInterviewCostRupees(29900, 30), 10);
     assert.equal(computePerInterviewCostRupees(4900, 1), 49);
     assert.equal(computePerInterviewCostRupees(4900, 0), 0);
+  });
+
+  it('computes referral savings percentage across plan tiers', () => {
+    assert.equal(computeSavingsPercentage('SINGLE_MOCK_49', true), 20);
+    assert.equal(computeSavingsPercentage('STARTER_PACK_149', true), 13);
+    assert.equal(computeSavingsPercentage('UNLIMITED_PASS_299', true), 17);
+    assert.equal(computeSavingsPercentage('SINGLE_MOCK_49', false), 0);
+    assert.equal(computeSavingsPercentage('INVALID_TIER', true), 0);
   });
 });
