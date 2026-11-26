@@ -62,3 +62,10 @@ export function computePerInterviewCostRupees(finalAmountPaise, credits) {
   if (!credits || credits <= 0) return 0;
   return Math.round((finalAmountPaise / 100) / credits);
 }
+
+export function computeSavingsPercentage(tierId, isValidReferral = false) {
+  const tier = PLAN_TIERS[tierId];
+  if (!tier || tier.basePaise <= 0) return 0;
+  const finalPaise = computeFinalAmountPaise(tierId, isValidReferral);
+  return Math.max(0, Math.round(((tier.basePaise - finalPaise) / tier.basePaise) * 100));
+}
