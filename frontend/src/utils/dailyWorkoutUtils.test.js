@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   calculateStreakUpdate,
   calculateUserLevel,
+  calculateXpToNextLevel,
   LEVEL_TIERS
 } from './dailyWorkoutUtils.js';
 
@@ -82,5 +83,13 @@ describe('dailyWorkoutUtils — Streak Calculation & User XP Ranking', () => {
     assert.equal(faangReady.level, 5);
     assert.equal(faangReady.title, 'FAANG / Unicorn Ready');
     assert.equal(faangReady.progressPercent, 100);
+  });
+
+  it('calculates remaining XP required for the next tier cleanly', () => {
+    assert.equal(calculateXpToNextLevel(0), 150);
+    assert.equal(calculateXpToNextLevel(100), 50);
+    assert.equal(calculateXpToNextLevel(200), 200);
+    assert.equal(calculateXpToNextLevel(1500), 0);
+    assert.equal(calculateXpToNextLevel(-20), 150);
   });
 });
