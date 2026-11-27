@@ -60,7 +60,20 @@ public:
         }
         return {};
     }
-};` }
+};` },
+  { id: 'go', name: 'Go (1.22)', extension: 'go', defaultCode: `// Two Sum Solution
+package main
+
+func twoSum(nums []int, target int) []int {
+    seen := make(map[int]int)
+    for i, num := range nums {
+        if j, ok := seen[target-num]; ok {
+            return []int{j, i}
+        }
+        seen[num] = i
+    }
+    return []int{}
+}` }
 ];
 
 export const parseTestCases = (rawTestCases) => {
