@@ -82,6 +82,21 @@ public class InterviewTipsController {
                                 "Trailing off sentences without an explicit conclusion.",
                                 "Over-answering and straying from the original question prompt."
                         ))
+                        .build(),
+
+                InterviewTipDto.builder()
+                        .category("CLOUD_RESILIENCY")
+                        .title("Cloud Reliability & Fault-Tolerant API Design")
+                        .summary("Demonstrate production readiness by discussing timeouts, circuit breakers, and graceful degradation.")
+                        .keyPoints(Arrays.asList(
+                                "Bound external service calls with explicit connect and read timeouts.",
+                                "Use idempotency keys for state-mutating POST endpoints and payment flows.",
+                                "Mitigate cascading failures with exponential backoff and circuit breakers."
+                        ))
+                        .commonPitfalls(Arrays.asList(
+                                "Retrying non-idempotent requests blindly during partial outages.",
+                                "Omitting health checks and readiness probes in container specs."
+                        ))
                         .build()
         );
 
