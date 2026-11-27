@@ -54,3 +54,21 @@ export function isQuestionBookmarked(id) {
   if (!id) return false;
   return getStoredBookmarks().some((q) => q.id === id);
 }
+
+export function countBookmarksByStatus() {
+  const list = getStoredBookmarks();
+  let needsRevision = 0;
+  let mastered = 0;
+  for (const item of list) {
+    if (item.status === 'MASTERED') {
+      mastered += 1;
+    } else {
+      needsRevision += 1;
+    }
+  }
+  return {
+    total: list.length,
+    needsRevision,
+    mastered,
+  };
+}
