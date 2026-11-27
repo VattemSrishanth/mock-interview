@@ -2,6 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   getTierBadgeClass,
+  getTierLabel,
   isCandidateEligibleForOffer,
   computeReadinessGap,
   filterCompaniesByQuery,
@@ -9,11 +10,14 @@ import {
 } from './placementTrackUtils.js';
 
 describe('placementTrackUtils — Campus Placement Tracks and Rubrics', () => {
-  test('returns correct badge classes for known and unknown company tiers', () => {
+  test('returns correct badge classes and labels for known and unknown company tiers', () => {
     assert.match(getTierBadgeClass('TIER_1_PRODUCT'), /emerald/);
     assert.match(getTierBadgeClass('TIER_2_GROWTH'), /amber/);
     assert.match(getTierBadgeClass('TIER_3_ENTERPRISE'), /blue/);
     assert.match(getTierBadgeClass('UNKNOWN_TIER'), /slate/);
+
+    assert.equal(getTierLabel('TIER_1_PRODUCT'), 'Tier-1 FAANG / Product');
+    assert.equal(getTierLabel('UNKNOWN_TIER'), 'Standard Engineering Track');
   });
 
   test('isCandidateEligibleForOffer accurately evaluates cutoff thresholds', () => {
