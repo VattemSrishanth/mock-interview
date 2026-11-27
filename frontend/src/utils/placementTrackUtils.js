@@ -27,6 +27,10 @@ export function getTierBadgeClass(tier) {
   return COMPANY_TIER_CONFIG[tier]?.badgeClass || 'bg-slate-800 text-slate-300 border-slate-700';
 }
 
+export function getTierLabel(tier) {
+  return COMPANY_TIER_CONFIG[tier]?.label || 'Standard Engineering Track';
+}
+
 export function isCandidateEligibleForOffer(candidateScore, cutOffPercentage) {
   if (typeof candidateScore !== 'number' || typeof cutOffPercentage !== 'number') return false;
   return candidateScore >= cutOffPercentage;
