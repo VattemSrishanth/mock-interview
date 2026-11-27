@@ -10,12 +10,13 @@ import {
 
 describe('codeSandboxUtils — Execution, Complexity & Scoring Engine', () => {
   it('supplies templates for major technical interview languages', () => {
-    assert.ok(SUPPORTED_LANGUAGES.length >= 4);
+    assert.ok(SUPPORTED_LANGUAGES.length >= 5);
     const langIds = SUPPORTED_LANGUAGES.map((l) => l.id);
     assert.ok(langIds.includes('javascript'));
     assert.ok(langIds.includes('python'));
     assert.ok(langIds.includes('java'));
     assert.ok(langIds.includes('cpp'));
+    assert.ok(langIds.includes('go'));
   });
 
   it('correctly parses default and custom test cases', () => {
