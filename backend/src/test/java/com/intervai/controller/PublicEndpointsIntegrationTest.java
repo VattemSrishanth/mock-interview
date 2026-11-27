@@ -69,9 +69,10 @@ class PublicEndpointsIntegrationTest {
     void getPublicInterviewTipsReturnsCategorizedList() throws Exception {
         mockMvc.perform(get("/api/interviews/public/tips").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(4))))
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(5))))
                 .andExpect(jsonPath("$[0].category", notNullValue()))
                 .andExpect(jsonPath("$[0].title", notNullValue()))
-                .andExpect(jsonPath("$[0].keyPoints", not(empty())));
+                .andExpect(jsonPath("$[0].keyPoints", not(empty())))
+                .andExpect(jsonPath("$[*].category", hasItem("CLOUD_RESILIENCY")));
     }
 }
