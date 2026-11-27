@@ -6,6 +6,7 @@ import {
   toggleBookmarkQuestion,
   updateBookmarkStatus,
   isQuestionBookmarked,
+  countBookmarksByStatus,
 } from './bookmarkDeckUtils.js';
 
 // Polyfill minimal localStorage for Node test runner
@@ -48,5 +49,17 @@ describe('bookmarkDeckUtils — Revision Deck Persistence', () => {
   test('handles null and invalid parameters gracefully', () => {
     assert.equal(isQuestionBookmarked(null), false);
     assert.deepEqual(toggleBookmarkQuestion(null), []);
+  });
+
+  test('counts bookmarked questions grouped by mastery status', () => {
+    toggleBookmarkQuestion({ id: 'q_201', questionText: 'CAP theorem trade-offs' });
+    toggleBookmarkQuestion({ id: 'q_202', questionText: 'Consistent hashing' });
+    updateBookmarkStatus('q_202', 'MASTERED');
+
+    assert.deepEqual(countBookmarksByStatus(), {
+      total: 2,
+      needsRevision: 1,
+      mastered: 1,
+    });
   });
 });
