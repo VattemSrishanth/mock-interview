@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   evaluateGazeDistribution,
   computeIntegrityHealthScore,
+  summarizeProctoringRisk,
 } from './proctoringTelemetryUtils.js';
 
 test('evaluateGazeDistribution accurately computes gaze attention percentages', () => {
@@ -53,4 +54,11 @@ test('computeIntegrityHealthScore calculates deduction details and clearance', (
   assert.ok(['WARNING', 'BREACH'].includes(degraded.status));
   assert.equal(degraded.isCleared, false);
   assert.ok(degraded.deductionDetails.length >= 3);
+});
+
+test('summarizeProctoringRisk classifies LOW, MODERATE, HIGH, and UNKNOWN states', () => {
+  assert.deepEqual(summarizeProctoringRisk(null), { riskLevel: 'UNKNOWN', requiresReview: false });
+  assert.deepEqual(summarizeProctoringRisk({ score: 92, isCleared: true }), { riskLevel: 'LOW', requiresReview: false });
+  assert.deepEqual(summarizeProctoringRisk({ score: 78, isCleared: true }), { riskLevel: 'MODERATE', requiresReview: false });
+  assert.deepEqual(summarizeProctoringRisk({ score: 50, isCleared: false }), { riskLevel: 'HIGH', requiresReview: true });
 });
