@@ -1,4 +1,4 @@
-import api from '../api/client';
+import api from '../api/client.js';
 
 /**
  * Performs a fast pre-flight ping to detect whether the cloud backend is awake.
@@ -32,4 +32,14 @@ export async function checkBackendHealth(timeoutMs = 6000) {
       };
     }
   }
+}
+
+export function classifyLatencyTier(latencyMs) {
+  if (typeof latencyMs !== 'number' || Number.isNaN(latencyMs) || latencyMs < 0) {
+    return 'UNKNOWN';
+  }
+  if (latencyMs < 200) return 'EXCELLENT';
+  if (latencyMs < 800) return 'GOOD';
+  if (latencyMs < 3000) return 'ELEVATED';
+  return 'COLD_START';
 }
