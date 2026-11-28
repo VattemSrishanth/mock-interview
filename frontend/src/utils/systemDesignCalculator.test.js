@@ -4,6 +4,7 @@ import {
   calculateCapacityMetrics,
   classifyTrafficTier,
   ARCHITECTURE_PRESETS,
+  estimateShardCount,
 } from './systemDesignCalculator.js';
 
 test('calculateCapacityMetrics calculates accurate QPS, bandwidth, and storage accumulation', () => {
@@ -51,4 +52,15 @@ test('ARCHITECTURE_PRESETS provides verified node topologies', () => {
 
   assert.ok(ARCHITECTURE_PRESETS.uber);
   assert.ok(ARCHITECTURE_PRESETS.uber.nodes.length >= 5);
+
+  assert.ok(ARCHITECTURE_PRESETS.whatsapp);
+  assert.ok(ARCHITECTURE_PRESETS.whatsapp.nodes.length >= 5);
+  assert.ok(ARCHITECTURE_PRESETS.whatsapp.edges.length >= 4);
+});
+
+test('estimateShardCount computes partition counts cleanly', () => {
+  assert.equal(estimateShardCount(0, 500), 1);
+  assert.equal(estimateShardCount(450, 500), 1);
+  assert.equal(estimateShardCount(1200, 500), 3);
+  assert.equal(estimateShardCount(-10, 500), 1);
 });
