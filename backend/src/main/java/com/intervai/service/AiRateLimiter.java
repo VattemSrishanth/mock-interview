@@ -56,6 +56,20 @@ public class AiRateLimiter {
         return true;
     }
 
+    public synchronized int remainingQuota(long userId) {
+        long now = clock.millis();
+        Window window = windows.get(userId);
+        if (window == null || isExpired(window, now)) {
+            return maxRequests;
+        }
+        return Math.max(0, maxRequests - window.requestCount);
+    }
+
+    public synchronized int getTrackedUserCount() {
+        removeExpiredWindows(clock.millis());
+        return windows.size();
+    }
+
     private void removeExpiredWindows(long now) {
         Iterator<Map.Entry<Long, Window>> iterator = windows.entrySet().iterator();
         while (iterator.hasNext()) {
