@@ -93,4 +93,27 @@ export const ARCHITECTURE_PRESETS = {
       { id: 'e4', sourceNodeId: 'dispatch', targetNodeId: 'geodb', protocol: 'TCP', synchronous: true },
     ],
   },
+  whatsapp: {
+    title: 'Real-Time Chat System (WhatsApp)',
+    nodes: [
+      { id: 'mobile', type: 'CLIENT', label: 'Mobile Clients', x: 50, y: 150, technology: 'iOS / Android', instances: 100000 },
+      { id: 'ws', type: 'API_GATEWAY', label: 'WebSocket Chat Gateway', x: 250, y: 150, technology: 'Netty / Erlang', instances: 10 },
+      { id: 'router', type: 'MICROSERVICE', label: 'Message Router Service', x: 450, y: 150, technology: 'Go / gRPC', instances: 8 },
+      { id: 'presence', type: 'CACHE', label: 'Presence & Session Store', x: 650, y: 70, technology: 'Redis Cluster', instances: 4 },
+      { id: 'msgdb', type: 'NOSQL_DATABASE', label: 'Message History Store', x: 650, y: 230, technology: 'Apache Cassandra', instances: 6 },
+    ],
+    edges: [
+      { id: 'e1', sourceNodeId: 'mobile', targetNodeId: 'ws', protocol: 'WSS', synchronous: true },
+      { id: 'e2', sourceNodeId: 'ws', targetNodeId: 'router', protocol: 'GRPC', synchronous: true },
+      { id: 'e3', sourceNodeId: 'router', targetNodeId: 'presence', protocol: 'TCP', synchronous: true },
+      { id: 'e4', sourceNodeId: 'router', targetNodeId: 'msgdb', protocol: 'CQL', synchronous: true },
+    ],
+  },
 };
+
+export function estimateShardCount(dailyStorageGb = 0, maxShardSizeGb = 500) {
+  const safeStorage = Math.max(0, Number(dailyStorageGb) || 0);
+  const safeMaxShard = Math.max(10, Number(maxShardSizeGb) || 500);
+  if (safeStorage === 0) return 1;
+  return Math.max(1, Math.ceil(safeStorage / safeMaxShard));
+}
