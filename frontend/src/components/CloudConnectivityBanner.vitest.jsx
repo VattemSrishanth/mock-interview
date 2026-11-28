@@ -56,4 +56,16 @@ describe('CloudConnectivityBanner Component', () => {
 
     expect(screen.queryByText(/Backend Cloud Container Waking/i)).toBeNull();
   });
+
+  it('shows Checking state and disables retry button while actively polling', () => {
+    useSystemHealth.mockReturnValue({
+      isOnline: false,
+      isChecking: true,
+      checkHealth: vi.fn(),
+    });
+
+    render(<CloudConnectivityBanner />);
+    const btn = screen.getByRole('button', { name: /Checking\.\.\./i });
+    expect(btn.disabled).toBe(true);
+  });
 });
