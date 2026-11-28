@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { collectFinalizedResults, combineAnswerParts } from './voiceTranscript.js';
+import { collectFinalizedResults, combineAnswerParts, countTranscriptWords } from './voiceTranscript.js';
 
 const speechResult = (transcript, isFinal) => ({
   0: { transcript },
@@ -44,4 +44,11 @@ test('a restarted recognition session preserves earlier speech and adds new resu
 
 test('manual-only answers remain submit-ready when there is no speech transcript', () => {
   assert.equal(combineAnswerParts('A typed answer.', ''), 'A typed answer.');
+});
+
+test('countTranscriptWords counts words accurately across whitespace and empty inputs', () => {
+  assert.equal(countTranscriptWords(''), 0);
+  assert.equal(countTranscriptWords('   \n\t  '), 0);
+  assert.equal(countTranscriptWords(null), 0);
+  assert.equal(countTranscriptWords('Designed Redis cluster\nwith sharding'), 5);
 });
