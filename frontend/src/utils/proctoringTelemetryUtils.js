@@ -102,3 +102,16 @@ export function computeIntegrityHealthScore({
     deductionDetails,
   };
 }
+
+export function summarizeProctoringRisk(integrityResult) {
+  if (!integrityResult || typeof integrityResult.score !== 'number') {
+    return { riskLevel: 'UNKNOWN', requiresReview: false };
+  }
+  if (integrityResult.score < 60 || !integrityResult.isCleared) {
+    return { riskLevel: 'HIGH', requiresReview: true };
+  }
+  if (integrityResult.score < 85) {
+    return { riskLevel: 'MODERATE', requiresReview: false };
+  }
+  return { riskLevel: 'LOW', requiresReview: false };
+}
