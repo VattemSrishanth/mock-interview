@@ -18,7 +18,7 @@ public class RootController {
         return ResponseEntity.ok(Map.of(
                 "status", "UP",
                 "service", "intervai-backend",
-                "version", "2.1.0",
+                "version", "2.1.2",
                 "message", "IntervAI Backend is operational"
         ));
     }
