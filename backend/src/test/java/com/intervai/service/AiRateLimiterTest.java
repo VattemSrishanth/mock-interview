@@ -17,10 +17,14 @@ class AiRateLimiterTest {
                 Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC));
 
         assertTrue(limiter.tryAcquire(1));
+        assertEquals(1, limiter.remainingQuota(1));
         assertTrue(limiter.tryAcquire(1));
+        assertEquals(0, limiter.remainingQuota(1));
         assertFalse(limiter.tryAcquire(1));
         assertTrue(limiter.tryAcquire(2));
+        assertEquals(2, limiter.getTrackedUserCount());
         assertFalse(limiter.tryAcquire(3));
+        assertEquals(2, limiter.remainingQuota(3));
     }
 
     @Test
