@@ -48,7 +48,7 @@ public class HealthController {
     public ResponseEntity<Map<String, String>> version() {
         return ResponseEntity.ok(Map.of(
                 "service", "intervai-backend",
-                "version", "2.1.1"
+                "version", "2.1.2"
         ));
     }
 
@@ -107,7 +107,7 @@ public class HealthController {
         SystemHealthDto health = SystemHealthDto.builder()
                 .status(dbHealthy ? "UP" : "DEGRADED")
                 .environment(activeEnv)
-                .version("2.1.0")
+                .version("2.1.2")
                 .cloudProvider(cloudProvider)
                 .timestamp(System.currentTimeMillis())
                 .uptimeSeconds(uptime)
